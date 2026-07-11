@@ -149,7 +149,8 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                   </div>
                 </div>
               )}
-              {booking.status === "APPROVED" &&
+              {(booking.status === "APPROVED" ||
+                booking.status === "DEPOSIT_PENDING") &&
                 !isOwner &&
                 booking.depositAmount > 0 && (
                   <div className="form-grid">
@@ -165,7 +166,9 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                       />
                       <small>
                         {proof?.name ||
-                          "Upload after paying the owner directly."}
+                          (booking.status === "DEPOSIT_PENDING"
+                            ? "Owner is reviewing your proof. Re-upload if you need to correct it."
+                            : "Upload after paying the owner directly.")}
                       </small>
                     </div>
                     <button
@@ -176,7 +179,9 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                         act(() => bookingsApi.uploadDeposit(booking.id, proof))
                       }
                     >
-                      Upload proof
+                      {booking.status === "DEPOSIT_PENDING"
+                        ? "Re-upload proof"
+                        : "Upload proof"}
                     </button>
                   </div>
                 )}
