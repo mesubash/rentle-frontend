@@ -611,8 +611,14 @@ h3 { font-size: 1.18rem; }
 .inline-notice { padding: 14px 16px; border-left: 3px solid var(--brick); background: var(--brick-wash); color: #6f3523; }
 
 @media (min-width: 760px) {
-  .auth-page { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); align-items: stretch; gap: 26px; padding-bottom: 36px; }
-  .auth-card { width: 100%; align-self: center; padding: 36px; }
+  .auth-page { padding-bottom: 36px; }
+  .auth-card { padding: 36px; }
+  .verification-form { padding: 28px; }
+}
+
+@media (min-width: 980px) {
+  .auth-page { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); align-items: stretch; justify-items: stretch; gap: 26px; }
+  .auth-card { width: 100%; align-self: center; }
   .auth-proof {
     order: -1;
     position: relative;
@@ -639,7 +645,9 @@ h3 { font-size: 1.18rem; }
   .auth-proof h2 { max-width: 17ch; margin: 0; font-size: clamp(1.55rem, 2.4vw, 2rem); color: var(--paper); }
   .auth-proof ul { margin: 30px 0 0; padding: 0; list-style: none; }
   .auth-proof li { padding: 12px 0; border-top: 1px solid rgba(250, 247, 242, .16); color: rgba(250, 247, 242, .74); font-size: .86rem; }
-  .verification-form { padding: 28px; }
+}
+
+@media (min-width: 760px) {
   .profile-hero { grid-template-columns: auto 1fr auto; align-items: center; padding: 26px; }
   .profile-hero > .button-row { width: auto; }
   .profile-hero > .button-row .button { flex: none; }
@@ -799,3 +807,23 @@ h3 { font-size: 1.18rem; }
 .verify-step__hint { color: var(--stone); font-size: 0.9rem; margin: 0; }
 .google-signin__button { display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; text-decoration: none; }
 .form-note--warn { background: var(--marigold-wash); border-color: var(--marigold); color: var(--ink); }
+
+/* About page */
+.about-steps { margin-top: 3rem; }
+.section-heading { max-width: 46rem; margin-bottom: 1.5rem; }
+.section-heading h2 { margin: 0.35rem 0 0; }
+.about-step { position: relative; }
+.about-step__num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.9rem; height: 1.9rem; border-radius: 999px;
+  background: var(--pine); color: var(--white);
+  font-family: var(--font-display); font-weight: 600; font-size: 0.95rem;
+}
+.about-cta {
+  margin-top: 3rem; display: flex; flex-wrap: wrap; gap: 1.5rem;
+  align-items: center; justify-content: space-between;
+  background: var(--pine-wash); border-color: var(--pine);
+}
+.about-cta h2 { margin: 0 0 0.35rem; }
+.about-cta p { margin: 0; color: var(--stone); }
+.about-cta__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }

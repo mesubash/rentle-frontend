@@ -3,7 +3,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { BrandLogo } from "./brand-logo";
 
 const groups = [
-  { title: "Rentle", links: [{ href: "/explore", label: "Explore" }, { href: "/list", label: "List something" }, { href: "/bookings", label: "Bookings" }] },
+  { title: "Rentle", links: [{ href: "/about", label: "About" }, { href: "/explore", label: "Explore" }, { href: "/list", label: "List something" }, { href: "/bookings", label: "Bookings" }] },
   { title: "Trust", links: [{ href: "/trust", label: "How trust works" }, { href: "/verification", label: "Get verified" }, { href: "/messages", label: "Messages" }] },
   { title: "Account", links: [{ href: "/profile", label: "Profile" }, { href: "/login", label: "Log in" }, { href: "/register", label: "Join Rentle" }] },
 ];
