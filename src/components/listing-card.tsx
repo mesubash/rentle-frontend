@@ -19,7 +19,7 @@ export function ListingCard({ listing, priority = false }: { listing: ListingSum
       <div className="listing-card__body">
         <div className="listing-card__eyebrow">
           <span><MapPin size={14} /> {listing.district}</span>
-          <span className="rating"><Star size={14} fill="currentColor" /> {listing.averageRating} <small>({listing.reviewCount})</small></span>
+          {listing.reviewCount ? <span className="rating"><Star size={14} fill="currentColor" /> {(listing.averageRating ?? 0).toFixed(1)} <small>({listing.reviewCount})</small></span> : <span className="rating rating--new">New</span>}
         </div>
         <h3><Link href={href}>{listing.title}</Link></h3>
         <p className="price"><strong>{formatNpr(listing.pricePerUnit)}</strong> / {priceUnitLabel(listing.priceUnit)}</p>

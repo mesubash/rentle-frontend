@@ -4,12 +4,14 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
+import { useToast } from "@/components/toast-provider";
 import { authApi } from "@/lib/api/auth";
 
 function GoogleCallback() {
   const code = useSearchParams().get("code");
   const router = useRouter();
   const { setUser } = useAuth();
+  const { showToast } = useToast();
   const [error, setError] = useState(code ? "" : "This sign-in link is missing its code.");
   const ran = useRef(false);
 
@@ -20,11 +22,12 @@ function GoogleCallback() {
       .googleExchange(code)
       .then((session) => {
         setUser(session.user);
+        showToast(`Welcome, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
         // New Google users have no phone yet — send them to finish verification.
         router.replace(session.user.phoneVerified ? "/explore" : "/verification");
       })
       .catch(() => setError("We couldn't complete your Google sign-in. Please try again."));
-  }, [code, router, setUser]);
+  }, [code, router, setUser, showToast]);
 
   return (
     <main className="auth-page">

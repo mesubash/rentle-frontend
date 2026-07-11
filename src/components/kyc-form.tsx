@@ -9,6 +9,19 @@ import { ApiError } from "@/lib/api/client";
 
 const STEP_LABELS = ["Identity", "Address", "Documents"];
 
+// Backend bean-validation errors arrive as "Validation failed: {field=message, ...}".
+function parseValidation(message: string): Record<string, string> | null {
+  if (!message.startsWith("Validation failed")) return null;
+  const body = message.match(/\{([\s\S]+)\}/)?.[1];
+  if (!body) return null;
+  const map: Record<string, string> = {};
+  for (const part of body.split(/,\s*/)) {
+    const eq = part.indexOf("=");
+    if (eq > 0) map[part.slice(0, eq).trim()] = part.slice(eq + 1).trim();
+  }
+  return Object.keys(map).length ? map : null;
+}
+
 function Req() {
   return <span className="req" aria-hidden="true">*</span>;
 }
@@ -22,6 +35,7 @@ export function KycForm({ initial, contactReady }: { initial: Kyc | null; contac
   const [back, setBack] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState(0);
 
   if (kyc?.status === "APPROVED") {
@@ -72,6 +86,7 @@ export function KycForm({ initial, contactReady }: { initial: Kyc | null; contac
     }
     setBusy(true);
     setError("");
+    setFieldErrors({});
     const form = new FormData(event.currentTarget);
     if (sameAddress) {
       for (const f of ["District", "Municipality", "Ward", "Tole"]) {
@@ -87,8 +102,17 @@ export function KycForm({ initial, contactReady }: { initial: Kyc | null; contac
       showToast("Identity details submitted for review.", { tone: "success" });
     } catch (caught) {
       const message = caught instanceof ApiError ? caught.message : "We could not submit your details.";
-      setError(message);
-      showToast(message, { tone: "error" });
+      const parsed = caught instanceof ApiError ? parseValidation(caught.message) : null;
+      if (parsed) {
+        setFieldErrors(parsed);
+        // Jump to the first step that has an invalid field so the errors are visible.
+        setStep(Object.keys(parsed).some((key) => !/^(perm|temp)/.test(key)) ? 0 : 1);
+        setError("Please fix the highlighted fields.");
+        showToast("Some details need fixing before we can submit.", { tone: "error" });
+      } else {
+        setError(message);
+        showToast(message, { tone: "error" });
+      }
     } finally {
       setBusy(false);
     }
@@ -124,12 +148,12 @@ export function KycForm({ initial, contactReady }: { initial: Kyc | null; contac
           <div id="kyc-step-0" hidden={step !== 0}>
             <p className="kyc-section-label">As written on your citizenship</p>
             <div className="form-grid form-grid--two">
-              <Field name="realName" label="Full legal name" required defaultValue={kyc?.realName} />
-              <Field name="citizenshipNumber" label="Citizenship number" required defaultValue={kyc?.citizenshipNumber} />
-              <Field name="fatherName" label="Father's full name" required defaultValue={kyc?.fatherName} />
-              <Field name="grandfatherName" label="Grandfather's full name" required defaultValue={kyc?.grandfatherName} />
-              <Field name="dateOfBirth" label="Date of birth" type="date" required defaultValue={kyc?.dateOfBirth} />
-              <Field name="citizenshipIssueDistrict" label="Issued in district" required defaultValue={kyc?.citizenshipIssueDistrict} />
+              <Field name="realName" label="Full legal name" required defaultValue={kyc?.realName} error={fieldErrors.realName} />
+              <Field name="citizenshipNumber" label="Citizenship number" required defaultValue={kyc?.citizenshipNumber} error={fieldErrors.citizenshipNumber} />
+              <Field name="fatherName" label="Father's full name" required defaultValue={kyc?.fatherName} error={fieldErrors.fatherName} />
+              <Field name="grandfatherName" label="Grandfather's full name" required defaultValue={kyc?.grandfatherName} error={fieldErrors.grandfatherName} />
+              <Field name="dateOfBirth" label="Date of birth" type="date" required defaultValue={kyc?.dateOfBirth} error={fieldErrors.dateOfBirth} />
+              <Field name="citizenshipIssueDistrict" label="Issued in district" required defaultValue={kyc?.citizenshipIssueDistrict} error={fieldErrors.citizenshipIssueDistrict} />
               <div className="field">
                 <label htmlFor="gender">Gender</label>
                 <select id="gender" name="gender" defaultValue={kyc?.gender ?? ""}>
@@ -139,13 +163,13 @@ export function KycForm({ initial, contactReady }: { initial: Kyc | null; contac
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <Field name="occupation" label="Occupation" required defaultValue={kyc?.occupation} />
+              <Field name="occupation" label="Occupation" required defaultValue={kyc?.occupation} error={fieldErrors.occupation} />
             </div>
           </div>
 
           <div id="kyc-step-1" hidden={step !== 1}>
             <p className="kyc-section-label">Permanent address</p>
-            <AddressFields prefix="perm" value={kyc?.permanentAddress} />
+            <AddressFields prefix="perm" value={kyc?.permanentAddress} errors={fieldErrors} />
             <label className="kyc-same">
               <input type="checkbox" checked={sameAddress} onChange={(e) => setSameAddress(e.target.checked)} />
               Temporary address is the same as permanent
@@ -153,7 +177,7 @@ export function KycForm({ initial, contactReady }: { initial: Kyc | null; contac
             {!sameAddress && (
               <>
                 <p className="kyc-section-label">Temporary / current address</p>
-                <AddressFields prefix="temp" value={kyc?.temporaryAddress} />
+                <AddressFields prefix="temp" value={kyc?.temporaryAddress} errors={fieldErrors} />
               </>
             )}
           </div>
@@ -191,24 +215,24 @@ export function KycForm({ initial, contactReady }: { initial: Kyc | null; contac
 }
 
 function Field({
-  name, label, required, type = "text", defaultValue,
-}: { name: string; label: string; required?: boolean; type?: string; defaultValue?: string | null }) {
+  name, label, required, type = "text", defaultValue, min, max, error,
+}: { name: string; label: string; required?: boolean; type?: string; defaultValue?: string | null; min?: number; max?: number; error?: string }) {
   return (
     <div className="field">
       <label htmlFor={name}>{label} {required && <Req />}</label>
-      <input id={name} name={name} type={type} required={required} defaultValue={defaultValue ?? undefined} />
+      <input id={name} name={name} type={type} required={required} defaultValue={defaultValue ?? undefined} min={min} max={max} aria-invalid={error ? true : undefined} />
+      {error && <small className="form-error-inline" role="alert">{error}</small>}
     </div>
   );
 }
 
-function AddressFields({ prefix, value }: { prefix: string; value?: { district: string; municipality: string; ward: number; tole: string | null } }) {
-  const cap = prefix === "perm" ? "Perm" : "Temp";
+function AddressFields({ prefix, value, errors }: { prefix: "perm" | "temp"; value?: { district: string; municipality: string; ward: number; tole: string | null }; errors?: Record<string, string> }) {
   return (
     <div className="form-grid form-grid--two">
-      <Field name={`${cap}District`} label="District" required defaultValue={value?.district} />
-      <Field name={`${cap}Municipality`} label="Municipality / Rural municipality" required defaultValue={value?.municipality} />
-      <Field name={`${cap}Ward`} label="Ward no." type="number" required defaultValue={value?.ward != null ? String(value.ward) : undefined} />
-      <Field name={`${cap}Tole`} label="Tole / street" defaultValue={value?.tole ?? undefined} />
+      <Field name={`${prefix}District`} label="District" required defaultValue={value?.district} error={errors?.[`${prefix}District`]} />
+      <Field name={`${prefix}Municipality`} label="Municipality / Rural municipality" required defaultValue={value?.municipality} error={errors?.[`${prefix}Municipality`]} />
+      <Field name={`${prefix}Ward`} label="Ward no. (1–35)" type="number" required min={1} max={35} defaultValue={value?.ward != null ? String(value.ward) : undefined} error={errors?.[`${prefix}Ward`]} />
+      <Field name={`${prefix}Tole`} label="Tole / street" defaultValue={value?.tole ?? undefined} error={errors?.[`${prefix}Tole`]} />
     </div>
   );
 }

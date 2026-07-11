@@ -20,7 +20,8 @@ type DisplayProfile = Pick<PublicProfile, "id" | "fullName" | "profilePhotoUrl" 
   status?: UserProfile["status"];
 };
 
-export function ProfileView({ own = false, userId }: { own?: boolean; userId?: string }) {
+export function ProfileView({ own = false, userId, embedded = false }: { own?: boolean; userId?: string; embedded?: boolean }) {
+  const Shell = embedded ? "div" : "main";
   const auth = useAuth();
   const [publicProfile, setPublicProfile] = useState<DisplayProfile | null>(null);
   const [loadingPublic, setLoadingPublic] = useState(true);
@@ -39,13 +40,13 @@ export function ProfileView({ own = false, userId }: { own?: boolean; userId?: s
   const profile = own ? toDisplayProfile(auth.user) : publicProfile;
   const loading = own ? auth.loading : Boolean(userId && loadingPublic);
 
-  if (loading) return <main className="page"><div className="container profile-page" aria-label="Loading profile"><div className="profile-hero skeleton" /><div className="profile-summary-skeleton skeleton" /></div></main>;
-  if (!profile) return <main className="page"><div className="container narrow-page"><section className="empty-state card"><p className="eyebrow">{own ? "Your account" : "Member profile"}</p><h1>{own ? "Log in to view your profile" : "Profile unavailable"}</h1><p>{error || (userId ? "We could not find this member." : "This profile link is incomplete.")}</p><Link className="button" href={own ? "/login" : "/explore"}>{own ? "Log in" : "Browse listings"}</Link></section></div></main>;
+  if (loading) return <Shell className="page"><div className="container profile-page" aria-label="Loading profile"><div className="profile-hero skeleton" /><div className="profile-summary-skeleton skeleton" /></div></Shell>;
+  if (!profile) return <Shell className="page"><div className="container narrow-page"><section className="empty-state card"><p className="eyebrow">{own ? "Your account" : "Member profile"}</p><h1>{own ? "Log in to view your profile" : "Profile unavailable"}</h1><p>{error || (userId ? "We could not find this member." : "This profile link is incomplete.")}</p><Link className="button" href={own ? "/login" : "/explore"}>{own ? "Log in" : "Browse listings"}</Link></section></div></Shell>;
 
   const joined = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date(profile.memberSince));
   const photo = assetUrl(profile.profilePhotoUrl);
 
-  return <main className="page"><div className="container profile-page">
+  return <Shell className="page"><div className="container profile-page">
     <section className="profile-hero card">
       <div className="profile-photo">
         {photo ? <Image src={photo} alt={profile.fullName} fill sizes="120px" /> : <span className="avatar">{initials(profile.fullName)}</span>}
@@ -61,7 +62,7 @@ export function ProfileView({ own = false, userId }: { own?: boolean; userId?: s
     {own && !profile.verified && <section className="verification-banner card"><ShieldCheck size={24} /><h2>{profile.kycStatus === "SUBMITTED" ? "Your identity is under review." : profile.kycStatus === "REJECTED" ? "Your verification was rejected — resubmit." : "Get verified to book and list."}</h2>{profile.kycStatus !== "SUBMITTED" && <Link className="button" href="/verification">{profile.kycStatus === "REJECTED" ? "Resubmit" : "Start verification"}</Link>}</section>}
 
     <ProfileActivity userId={profile.id} own={own} />
-  </div></main>;
+  </div></Shell>;
 }
 
 function toDisplayProfile(profile: UserProfile | null): DisplayProfile | null {

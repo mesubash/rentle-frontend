@@ -45,7 +45,7 @@ export default function BookingsPage() {
     ) : (
       <>
         <div className="tabs" role="tablist"><button role="tab" aria-selected={tab === "renting"} className={tab === "renting" ? "is-active" : ""} onClick={() => setTab("renting")}>Renting <span>{renting.length}</span></button><button role="tab" aria-selected={tab === "hosting"} className={tab === "hosting" ? "is-active" : ""} onClick={() => setTab("hosting")}>Owner requests <span>{hosting.length}</span></button></div>
-        {error ? <section className="empty-state card"><h2>Bookings are temporarily unavailable</h2><p>{error}</p><button className="button" onClick={() => window.location.reload()}>Try again</button></section> : bookings.length ? <div className="booking-list">{bookings.map((booking) => <BookingCard booking={booking} tab={tab} key={booking.id} />)}</div> : <section className="empty-state card"><h2>No {tab === "renting" ? "rental" : "owner"} bookings yet.</h2><p>{tab === "renting" ? "When you request a listing, it will appear here." : "Requests for your listings will appear here."}</p><Link className="button" href={tab === "renting" ? "/explore" : "/listings/manage"}>{tab === "renting" ? "Explore listings" : "Manage listings"}</Link></section>}
+        {error ? <section className="empty-state card"><h2>Bookings are temporarily unavailable</h2><p>{error}</p><button className="button" onClick={() => window.location.reload()}>Try again</button></section> : bookings.length ? <div className="booking-list">{bookings.map((booking) => <BookingCard booking={booking} tab={tab} key={booking.id} />)}</div> : <p className="empty-note">No {tab === "renting" ? "rental" : "owner"} bookings yet.</p>}
       </>
     )}
   </div></main>;
