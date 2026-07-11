@@ -42,7 +42,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${fraunces.variable} ${instrumentSans.variable}`}>
-      <body><ToastProvider><AuthProvider><SiteHeader />{children}</AuthProvider></ToastProvider></body>
+      <body suppressHydrationWarning><ToastProvider><AuthProvider><SiteHeader />{children}</AuthProvider></ToastProvider></body>
     </html>
   );
 }
