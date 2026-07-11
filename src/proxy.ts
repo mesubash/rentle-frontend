@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
 
   if (hasSession) return NextResponse.next();
 
-  const loginUrl = new URL("/auth/login", request.url);
+  const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set(
     "next",
     `${request.nextUrl.pathname}${request.nextUrl.search}`,

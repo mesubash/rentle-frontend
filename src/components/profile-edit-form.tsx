@@ -36,7 +36,7 @@ export function ProfileEditForm() {
     } finally { setSaving(false); }
   }
 
-  if (!user) return <section className="card card-pad"><h2>Log in to edit your profile</h2><Link className="button" href="/auth/login">Log in</Link></section>;
+  if (!user) return <section className="card card-pad"><h2>Log in to edit your profile</h2><Link className="button" href="/login">Log in</Link></section>;
 
   return <form className="card card-pad form-grid" onSubmit={submit}>
     <div className="form-grid form-grid--two"><div className="field"><label htmlFor="edit-name">Full name</label><input id="edit-name" name="fullName" defaultValue={user.fullName} required /></div><div className="field"><label htmlFor="edit-email">Email address</label><input id="edit-email" name="email" type="email" defaultValue={user.email} required /></div></div>

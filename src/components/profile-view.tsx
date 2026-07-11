@@ -40,7 +40,7 @@ export function ProfileView({ own = false, userId }: { own?: boolean; userId?: s
   const loading = own ? auth.loading : Boolean(userId && loadingPublic);
 
   if (loading) return <main className="page"><div className="container profile-page" aria-label="Loading profile"><div className="profile-hero skeleton" /><div className="profile-summary-skeleton skeleton" /></div></main>;
-  if (!profile) return <main className="page"><div className="container narrow-page"><section className="empty-state card"><p className="eyebrow">{own ? "Your account" : "Member profile"}</p><h1>{own ? "Log in to view your profile" : "Profile unavailable"}</h1><p>{error || (userId ? "We could not find this member." : "This profile link is incomplete.")}</p><Link className="button" href={own ? "/auth/login" : "/explore"}>{own ? "Log in" : "Browse listings"}</Link></section></div></main>;
+  if (!profile) return <main className="page"><div className="container narrow-page"><section className="empty-state card"><p className="eyebrow">{own ? "Your account" : "Member profile"}</p><h1>{own ? "Log in to view your profile" : "Profile unavailable"}</h1><p>{error || (userId ? "We could not find this member." : "This profile link is incomplete.")}</p><Link className="button" href={own ? "/login" : "/explore"}>{own ? "Log in" : "Browse listings"}</Link></section></div></main>;
 
   const joined = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date(profile.memberSince));
   const photo = assetUrl(profile.profilePhotoUrl);

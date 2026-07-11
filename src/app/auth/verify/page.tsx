@@ -1,9 +1,6 @@
-import { AuthForm } from "@/components/auth-form";
-export default async function VerifyPhonePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ phone?: string }>;
-}) {
-  const { phone = "+977" } = await searchParams;
-  return <AuthForm mode="otp" initialPhone={phone} />;
+import { redirect } from "next/navigation";
+
+export default async function LegacyVerifyPage({ searchParams }: { searchParams: Promise<{ phone?: string }> }) {
+  const { phone } = await searchParams;
+  redirect(phone ? `/verify?phone=${encodeURIComponent(phone)}` : "/verify");
 }

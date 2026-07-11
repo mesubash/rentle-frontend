@@ -54,7 +54,7 @@ export function AuthForm({
         });
         setUser(session.user);
         showToast("Account created. Verify your phone to continue.", { tone: "success" });
-        router.push(`/auth/verify?phone=${encodeURIComponent(phone)}`);
+        router.push(`/verify?phone=${encodeURIComponent(phone)}`);
       } else if (mode === "login") {
         const session = await authApi.login({
           identifier: loginMethod === "phone" ? phone : String(form.get("identifier")).trim(),
@@ -211,8 +211,8 @@ export function AuthForm({
         {mode !== "otp" && (
           <p className="auth-switch">
             {mode === "login"
-              ? <>New to Rentle? <Link href="/auth/register">Create an account</Link></>
-              : <>Already have an account? <Link href="/auth/login">Log in</Link></>}
+              ? <>New to Rentle? <Link href="/register">Create an account</Link></>
+              : <>Already have an account? <Link href="/login">Log in</Link></>}
           </p>
         )}
       </section>

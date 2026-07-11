@@ -39,7 +39,7 @@ export default function BookingsPage() {
     <header className="page-header"><p className="eyebrow">Your activity</p><h1>Bookings</h1><p>Requests, deposit proof, and messages stay attached to each agreement.</p></header>
 
     {!authLoading && !user ? (
-      <section className="empty-state card access-gate"><LogIn size={30} /><p className="eyebrow">Account required</p><h2>Log in to access your bookings</h2><p>Your rental requests and owner bookings are private. Log in to view and manage them.</p><Link className="button" href="/auth/login?next=/bookings">Log in to Rentle</Link><p className="access-gate__secondary">New to Rentle? <Link href="/auth/register">Create an account</Link></p></section>
+      <section className="empty-state card access-gate"><LogIn size={30} /><p className="eyebrow">Account required</p><h2>Log in to access your bookings</h2><p>Your rental requests and owner bookings are private. Log in to view and manage them.</p><Link className="button" href="/login?next=/bookings">Log in to Rentle</Link><p className="access-gate__secondary">New to Rentle? <Link href="/register">Create an account</Link></p></section>
     ) : loading ? (
       <div className="booking-list" aria-label="Loading bookings">{[1, 2, 3].map((item) => <div className="skeleton" key={item} />)}</div>
     ) : (

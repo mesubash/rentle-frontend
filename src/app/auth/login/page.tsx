@@ -1,5 +1,6 @@
-import { AuthForm } from "@/components/auth-form";
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+import { redirect } from "next/navigation";
+
+export default async function LegacyLoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
-  return <AuthForm mode="login" nextPath={next} />;
+  redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
 }

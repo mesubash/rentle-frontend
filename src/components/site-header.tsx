@@ -18,7 +18,7 @@ const nav = [
 ];
 const guestNav = [
   { href: "/explore", label: "Explore", icon: Compass },
-  { href: "/auth/login", label: "Log in", icon: LogIn },
+  { href: "/login", label: "Log in", icon: LogIn },
 ];
 
 export function SiteHeader() {
@@ -54,7 +54,7 @@ export function SiteHeader() {
             {!isAdmin && user && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
             {user && <Link className="icon-button header-bell" href="/notifications" aria-label="Notifications"><Bell size={19} /></Link>}
             {!loading && !user && !isAdmin && (
-              <Link className="button button--small button--paper" href="/auth/login">Log in</Link>
+              <Link className="button button--small button--paper" href="/login">Log in</Link>
             )}
             {user && (
               <Link className="avatar avatar--small" href="/profile" aria-label="My profile">
