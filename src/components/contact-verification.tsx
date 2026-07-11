@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, Mail, Phone } from "lucide-react";
 import { useAuth } from "./auth-provider";
+import { useToast } from "./toast-provider";
 import { usersApi, type UserProfile } from "@/lib/api/users";
 import { ApiError } from "@/lib/api/client";
 
@@ -42,19 +43,20 @@ function EmailStep({
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const { showToast } = useToast();
 
   if (verified) return <VerifiedRow icon={<Mail size={18} />} label="Email verified" />;
 
   async function send() {
     setBusy(true); setError("");
-    try { await usersApi.sendEmailOtp(); setSent(true); }
-    catch (caught) { setError(message(caught, "Could not send the code.")); }
+    try { await usersApi.sendEmailOtp(); setSent(true); showToast("A verification code was sent to your email.", { tone: "success" }); }
+    catch (caught) { const detail = message(caught, "Could not send the code."); setError(detail); showToast(detail, { tone: "error" }); }
     finally { setBusy(false); }
   }
   async function verify() {
     setBusy(true); setError("");
-    try { onVerified(await usersApi.verifyEmail(code)); }
-    catch (caught) { setError(message(caught, "That code did not match.")); }
+    try { onVerified(await usersApi.verifyEmail(code)); showToast("Email address verified.", { tone: "success" }); }
+    catch (caught) { const detail = message(caught, "That code did not match."); setError(detail); showToast(detail, { tone: "error" }); }
     finally { setBusy(false); }
   }
 
@@ -93,19 +95,20 @@ function PhoneStep({
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const { showToast } = useToast();
 
   if (verified) return <VerifiedRow icon={<Phone size={18} />} label={`Phone verified · ${phone ?? ""}`} />;
 
   async function send() {
     setBusy(true); setError("");
-    try { await usersApi.setPhone(number.replace(/\s+/g, "")); setSent(true); }
-    catch (caught) { setError(message(caught, "Could not send the code.")); }
+    try { await usersApi.setPhone(number.replace(/\s+/g, "")); setSent(true); showToast("A verification code was sent by SMS.", { tone: "success" }); }
+    catch (caught) { const detail = message(caught, "Could not send the code."); setError(detail); showToast(detail, { tone: "error" }); }
     finally { setBusy(false); }
   }
   async function verify() {
     setBusy(true); setError("");
-    try { onVerified(await usersApi.verifyPhone(code)); }
-    catch (caught) { setError(message(caught, "That code did not match.")); }
+    try { onVerified(await usersApi.verifyPhone(code)); showToast("Phone number verified.", { tone: "success" }); }
+    catch (caught) { const detail = message(caught, "That code did not match."); setError(detail); showToast(detail, { tone: "error" }); }
     finally { setBusy(false); }
   }
 

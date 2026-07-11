@@ -12,6 +12,7 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import { useAuth } from "./auth-provider";
 import { ReviewForm } from "./review-form";
 import { StatusTimeline } from "./status-timeline";
+import { useToast } from "./toast-provider";
 import { assetUrl } from "@/lib/api/assets";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
@@ -19,6 +20,7 @@ import { formatNpr } from "@/lib/format";
 
 export function BookingDetailView({ bookingId }: { bookingId: string }) {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [error, setError] = useState("");
   const [acting, setActing] = useState(false);
@@ -50,14 +52,14 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
     setActing(true);
     setError("");
     try {
-      setBooking(await action());
+      const updated = await action();
+      setBooking(updated);
       setReason("");
+      showToast(`Booking updated: ${humanize(updated.status)}.`, { tone: "success" });
     } catch (caught) {
-      setError(
-        caught instanceof ApiError
-          ? caught.message
-          : "The booking could not be updated.",
-      );
+      const message = caught instanceof ApiError ? caught.message : "The booking could not be updated.";
+      setError(message);
+      showToast(message, { tone: "error" });
     } finally {
       setActing(false);
     }

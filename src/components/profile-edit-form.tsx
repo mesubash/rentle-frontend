@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Camera, CheckCircle2 } from "lucide-react";
 import { useAuth } from "./auth-provider";
+import { useToast } from "./toast-provider";
 import { ApiError } from "@/lib/api/client";
 import { usersApi } from "@/lib/api/users";
 
 export function ProfileEditForm() {
   const router = useRouter();
   const { user, setUser } = useAuth();
+  const { showToast } = useToast();
   const photoRef = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -25,9 +27,12 @@ export function ProfileEditForm() {
       let updated = await usersApi.updateMe({ fullName: String(form.get("fullName")), email: String(form.get("email")) });
       if (photo) updated = await usersApi.uploadPhoto(photo);
       setUser(updated); setSaved(true);
+      showToast("Profile changes saved.", { tone: "success" });
       window.setTimeout(() => router.push("/profile"), 500);
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : "We could not save your profile.");
+      const message = caught instanceof ApiError ? caught.message : "We could not save your profile.";
+      setError(message);
+      showToast(message, { tone: "error" });
     } finally { setSaving(false); }
   }
 

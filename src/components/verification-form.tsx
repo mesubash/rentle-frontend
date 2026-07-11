@@ -3,12 +3,14 @@
 import { useRef, useState } from "react";
 import { CheckCircle2, FileImage, LockKeyhole, Upload } from "lucide-react";
 import { useAuth } from "./auth-provider";
+import { useToast } from "./toast-provider";
 import { ApiError } from "@/lib/api/client";
 import { usersApi } from "@/lib/api/users";
 
 export function VerificationForm() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { user, setUser } = useAuth();
+  const { showToast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(Boolean(user?.citizenshipUploaded));
   const [loading, setLoading] = useState(false);
@@ -20,8 +22,11 @@ export function VerificationForm() {
     try {
       const profile = await usersApi.uploadCitizenship(file);
       setUser(profile); setSubmitted(true);
+      showToast("Citizenship document submitted for review.", { tone: "success" });
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : "We could not upload your document.");
+      const message = caught instanceof ApiError ? caught.message : "We could not upload your document.";
+      setError(message);
+      showToast(message, { tone: "error" });
     } finally { setLoading(false); }
   }
 

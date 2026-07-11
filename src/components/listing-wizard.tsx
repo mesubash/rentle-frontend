@@ -4,6 +4,7 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Camera, Check, ChevronLeft, ChevronRight, Clock3, ImagePlus, MapPin, ShieldCheck, Wrench } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
+import { useToast } from "./toast-provider";
 import { categoriesApi, listingsApi, type Category, type ItemCondition, type ListingType } from "@/lib/api/listings";
 
 type Draft = { type: ListingType; title: string; categoryId: string; description: string; district: string; locationText: string; price: string; deposit: string; condition: ItemCondition };
@@ -12,6 +13,7 @@ const steps = ["Type", "Details", "Photos", "Price & deposit", "Review"];
 
 export function ListingWizard() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Draft>(() => {
     if (typeof window === "undefined") return initial;
@@ -54,9 +56,12 @@ export function ListingWizard() {
       });
       if (photos.length) await listingsApi.uploadImages(listing.id, photos);
       window.localStorage.removeItem("rentle-listing-draft");
+      showToast("Listing published successfully.", { tone: "success" });
       router.push(`/list/success?id=${listing.id}`);
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : "We could not publish your listing.");
+      const message = caught instanceof ApiError ? caught.message : "We could not publish your listing.";
+      setError(message);
+      showToast(message, { tone: "error" });
       setPublishing(false);
     }
   }

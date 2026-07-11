@@ -11,6 +11,7 @@ import {
 import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { GoogleSignInButton } from "./google-sign-in-button";
+import { useToast } from "./toast-provider";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 
@@ -24,6 +25,7 @@ export function AuthForm({
   initialPhone?: string;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const { setUser, reload } = useAuth();
   const [phone, setPhone] = useState(initialPhone || "+977");
   const [loading, setLoading] = useState(false);
@@ -47,6 +49,7 @@ export function AuthForm({
           fullName: String(form.get("fullName")),
         });
         setUser(session.user);
+        showToast("Account created. Verify your phone to continue.", { tone: "success" });
         router.push(`/auth/verify?phone=${encodeURIComponent(normalizePhone(phone))}`);
       } else if (mode === "login") {
         const session = await authApi.login({
@@ -54,14 +57,18 @@ export function AuthForm({
           password: String(form.get("password")),
         });
         setUser(session.user);
+        showToast(`Welcome back, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
         router.push("/explore");
       } else {
         await authApi.verifyOtp(normalizePhone(phone), digits.join(""));
         await reload();
+        showToast("Phone number verified.", { tone: "success" });
         router.push("/explore");
       }
     } catch (caught) {
-      setError(apiMessage(caught));
+      const message = apiMessage(caught);
+      setError(message);
+      showToast(message, { tone: "error" });
     } finally {
       setLoading(false);
     }
@@ -72,9 +79,12 @@ export function AuthForm({
     try {
       await authApi.sendOtp(normalizePhone(phone));
       setResent(true);
+      showToast("A new verification code was sent.", { tone: "success" });
       window.setTimeout(() => setResent(false), 5000);
     } catch (caught) {
-      setError(apiMessage(caught));
+      const message = apiMessage(caught);
+      setError(message);
+      showToast(message, { tone: "error" });
     }
   }
 

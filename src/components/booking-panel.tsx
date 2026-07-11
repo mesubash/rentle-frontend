@@ -7,6 +7,7 @@ import { formatNpr } from "@/lib/format";
 import { bookingsApi } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
 import { priceUnitLabel, type ListingDetail } from "@/lib/api/listings";
+import { useToast } from "./toast-provider";
 
 // Local calendar date (not UTC): in Nepal (UTC+5:45) a UTC date would roll the
 // "tomorrow" default/min back to today for evening visitors.
@@ -21,6 +22,7 @@ function isoDate(offset: number) {
 
 export function BookingPanel({ listing }: { listing: ListingDetail }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const [start, setStart] = useState(isoDate(1));
@@ -49,9 +51,12 @@ export function BookingPanel({ listing }: { listing: ListingDetail }) {
     setSubmitting(true); setError("");
     try {
       const booking = await bookingsApi.create({ listingId: listing.id, startDate: start, endDate: isService ? start : end, startTime: isService ? startTime : undefined, note: note.trim() || undefined });
+      showToast("Booking request sent to the owner.", { tone: "success" });
       router.push(`/bookings/${booking.id}?requested=1`);
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : "We could not send your booking request.");
+      const message = caught instanceof ApiError ? caught.message : "We could not send your booking request.";
+      setError(message);
+      showToast(message, { tone: "error" });
       setSubmitting(false);
     }
   }

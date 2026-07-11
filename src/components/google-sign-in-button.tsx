@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./auth-provider";
+import { useToast } from "./toast-provider";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 
@@ -33,6 +34,7 @@ export function GoogleSignInButton() {
   const holder = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { setUser } = useAuth();
+  const { showToast } = useToast();
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -43,10 +45,13 @@ export function GoogleSignInButton() {
       try {
         const session = await authApi.google(response.credential);
         setUser(session.user);
+        showToast(`Welcome, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
         // New Google users have no phone yet — send them to finish verification.
         router.push(session.user.phoneVerified ? "/explore" : "/verification");
       } catch (caught) {
-        setError(caught instanceof ApiError ? caught.message : "Google sign-in failed.");
+        const message = caught instanceof ApiError ? caught.message : "Google sign-in failed.";
+        setError(message);
+        showToast(message, { tone: "error" });
       }
     };
 
@@ -73,7 +78,7 @@ export function GoogleSignInButton() {
     script.defer = true;
     script.onload = render;
     document.head.appendChild(script);
-  }, [router, setUser]);
+  }, [router, setUser, showToast]);
 
   if (!CLIENT_ID) return null;
 
