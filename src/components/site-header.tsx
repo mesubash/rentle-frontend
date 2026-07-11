@@ -3,13 +3,14 @@
 import Form from "next/form";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, Compass, ListPlus, MessageCircle, Search, UserRound } from "lucide-react";
+import { Bell, CalendarDays, Compass, LayoutList, ListPlus, MessageCircle, Search, UserRound } from "lucide-react";
 import { useAuth } from "./auth-provider";
 
 const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/messages", label: "Messages", icon: MessageCircle, badge: 2 },
+  { href: "/listings/manage", label: "Listings", icon: LayoutList, mobileOnly: true },
   { href: "/profile", label: "Profile", icon: UserRound, mobileOnly: true },
 ];
 

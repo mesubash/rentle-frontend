@@ -1,16 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { listingsApi, type BlockedRange } from "@/lib/api/listings";
 
-const months = [
-  { label: "August 2026", offset: 3, days: 31, blocked: [7, 8, 16, 17], selected: [12, 13] },
-  { label: "September 2026", offset: 2, days: 30, blocked: [4, 5, 21, 22], selected: [] },
-  { label: "October 2026", offset: 4, days: 31, blocked: [10, 11, 12], selected: [] },
-];
+export function AvailabilityCalendar({ listingId }: { listingId: string }) {
+  const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [blocked, setBlocked] = useState<BlockedRange[]>([]);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    listingsApi.availability(listingId).then((value) => active && setBlocked(value.blocked)).catch(() => active && setError("Availability is temporarily unavailable."));
+    return () => { active = false; };
+  }, [listingId]);
 
-export function AvailabilityCalendar() {
-  const [month, setMonth] = useState(0);
-  const data = months[month];
-  const cells = Array.from({ length: 35 }, (_, index) => index - data.offset + 1);
-  return <div className="availability card"><div className="availability__head"><button aria-label="Previous month" disabled={month === 0} onClick={() => setMonth((value) => Math.max(0, value - 1))}>‹</button><strong aria-live="polite">{data.label}</strong><button aria-label="Next month" disabled={month === months.length - 1} onClick={() => setMonth((value) => Math.min(months.length - 1, value + 1))}>›</button></div><div className="calendar-grid">{["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => <small key={day}>{day}</small>)}{cells.map((day, index) => <span key={index} className={data.blocked.includes(day) ? "is-blocked" : data.selected.includes(day) ? "is-selected" : ""}>{day > 0 && day <= data.days ? day : ""}</span>)}</div><p><span className="calendar-key calendar-key--blocked" /> Booked <span className="calendar-key calendar-key--free" /> Available</p></div>;
+  const year = month.getFullYear(); const monthIndex = month.getMonth();
+  const days = new Date(year, monthIndex + 1, 0).getDate(); const offset = new Date(year, monthIndex, 1).getDay();
+  const cells = Array.from({ length: Math.ceil((offset + days) / 7) * 7 }, (_, index) => index - offset + 1);
+  const formatter = useMemo(() => new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }), []);
+  function unavailable(day: number) { const date = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`; return blocked.some((range) => date >= range.startDate && date <= range.endDate); }
+
+  return <div className="availability card"><div className="availability__head"><button aria-label="Previous month" onClick={() => setMonth(new Date(year, monthIndex - 1, 1))}>‹</button><strong aria-live="polite">{formatter.format(month)}</strong><button aria-label="Next month" onClick={() => setMonth(new Date(year, monthIndex + 1, 1))}>›</button></div><div className="calendar-grid">{["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => <small key={day}>{day}</small>)}{cells.map((day, index) => <span key={index} className={day > 0 && day <= days && unavailable(day) ? "is-blocked" : ""}>{day > 0 && day <= days ? day : ""}</span>)}</div>{error ? <p>{error}</p> : <p><span className="calendar-key calendar-key--blocked" /> Unavailable <span className="calendar-key calendar-key--free" /> Available</p>}</div>;
 }
