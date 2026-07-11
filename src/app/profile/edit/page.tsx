@@ -1,0 +1,2 @@
+import { ProfileEditForm } from "@/components/profile-edit-form";
+export default function EditProfilePage() { return <main className="page"><div className="container narrow-page"><header className="page-header"><p className="eyebrow">Account details</p><h1>Edit profile</h1><p>Keep your public information current so other people know who they are booking with.</p></header><ProfileEditForm /></div></main>; }

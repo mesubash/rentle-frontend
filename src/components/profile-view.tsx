@@ -1,0 +1,16 @@
+import Image from "next/image";
+import Link from "next/link";
+import { CalendarDays, Edit3, MapPin, ShieldCheck, Star } from "lucide-react";
+import { ListingCard } from "./listing-card";
+import { TrustBadge } from "./trust-badge";
+import { images, listings } from "@/lib/data";
+
+export function ProfileView({ own = false }: { own?: boolean }) {
+  return <main className="page"><div className="container profile-page">
+    <section className="profile-hero card"><div className="profile-photo"><Image src={images.sarah} alt="Sarah Maharjan" fill sizes="120px" /></div><div className="profile-identity"><p className="eyebrow">{own ? "Your profile" : "Rentle neighbor"}</p><h1>{own ? "Aayush Shrestha" : "Sarah Maharjan"}</h1><div className="profile-meta"><TrustBadge /><span><MapPin size={15} /> {own ? "Patan, Lalitpur" : "Baneshwor, Kathmandu"}</span><span><CalendarDays size={15} /> Member since Mar 2023</span></div><p>{own ? "Camera enthusiast, weekend cyclist, and careful renter. I keep communication clear and return every item on time." : "Photographer and camera owner. I keep every item ready, explain the handover clearly, and usually respond within two hours."}</p></div>{own && <Link className="button button--secondary button--small" href="/profile/edit"><Edit3 size={16} /> Edit profile</Link>}</section>
+    <section className="trust-score card"><div><p className="eyebrow">Trust score</p><strong>{own ? "92" : "96"}<small>/100</small></strong></div><div className="trust-score__bar"><span style={{ width: own ? "92%" : "96%" }} /></div><dl><div><dt>Verified bookings</dt><dd>{own ? 8 : 34}</dd></div><div><dt>Average rating</dt><dd><Star size={15} fill="currentColor" /> {own ? "4.8" : "4.9"}</dd></div><div><dt>Response rate</dt><dd>{own ? "98%" : "100%"}</dd></div></dl></section>
+    {own && <section className="verification-banner card"><ShieldCheck size={28} /><div><p className="eyebrow">Strengthen your profile</p><h2>Citizenship verification is ready.</h2><p>Verified people get clearer trust signals and more booking approvals.</p></div><Link className="button" href="/verification">Verify citizenship</Link></section>}
+    <section className="profile-section"><div className="section-heading"><div><p className="eyebrow">Active nearby</p><h2>{own ? "Your listings" : "Sarah’s listings"}</h2></div>{own && <Link className="button button--secondary button--small" href="/list">Add listing</Link>}</div><div className="listing-grid">{listings.slice(0, own ? 2 : 3).map((listing) => <ListingCard key={listing.slug} listing={listing} />)}</div></section>
+    <section className="profile-section"><p className="eyebrow">From completed bookings</p><h2>Reviews</h2><div className="profile-reviews">{["Sujan K.", "Prakriti L.", "Nabin R."].map((name, index) => <article className="card review" key={name}><div><span className="avatar">{name[0]}</span><div><strong>{name}</strong><p className="rating">★★★★★</p></div><time>June {18 - index}, 2026</time></div><p>{index === 0 ? "Everything was exactly as described, and the pickup instructions were clear." : index === 1 ? "Quick responses and a very careful handover. I felt comfortable throughout." : "Returned on time and kept the item in excellent condition."}</p></article>)}</div></section>
+  </div></main>;
+}
