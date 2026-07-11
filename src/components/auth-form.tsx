@@ -16,6 +16,7 @@ import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 
 type AuthMode = "login" | "register" | "otp";
+type LoginMethod = "phone" | "email";
 
 export function AuthForm({
   mode,
@@ -29,7 +30,8 @@ export function AuthForm({
   const router = useRouter();
   const { showToast } = useToast();
   const { setUser, reload } = useAuth();
-  const [phone, setPhone] = useState(initialPhone || "+977");
+  const [phone, setPhone] = useState(() => localPhone(initialPhone));
+  const [loginMethod, setLoginMethod] = useState<LoginMethod>("phone");
   const [loading, setLoading] = useState(false);
   const [resent, setResent] = useState(false);
   const [error, setError] = useState("");
@@ -45,24 +47,24 @@ export function AuthForm({
     try {
       if (mode === "register") {
         const session = await authApi.register({
-          phoneNumber: normalizePhone(phone),
-          email: String(form.get("email")),
+          phoneNumber: phone,
+          email: String(form.get("email")).trim(),
           password: String(form.get("password")),
-          fullName: String(form.get("fullName")),
+          fullName: String(form.get("fullName")).trim(),
         });
         setUser(session.user);
         showToast("Account created. Verify your phone to continue.", { tone: "success" });
-        router.push(`/auth/verify?phone=${encodeURIComponent(normalizePhone(phone))}`);
+        router.push(`/auth/verify?phone=${encodeURIComponent(phone)}`);
       } else if (mode === "login") {
         const session = await authApi.login({
-          identifier: String(form.get("identifier")),
+          identifier: loginMethod === "phone" ? phone : String(form.get("identifier")).trim(),
           password: String(form.get("password")),
         });
         setUser(session.user);
         showToast(`Welcome back, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
         router.push(safeNext(nextPath));
       } else {
-        await authApi.verifyOtp(normalizePhone(phone), digits.join(""));
+        await authApi.verifyOtp(phone, digits.join(""));
         await reload();
         showToast("Phone number verified.", { tone: "success" });
         router.push("/explore");
@@ -79,7 +81,7 @@ export function AuthForm({
   async function resendOtp() {
     setError("");
     try {
-      await authApi.sendOtp(normalizePhone(phone));
+      await authApi.sendOtp(phone);
       setResent(true);
       showToast("A new verification code was sent.", { tone: "success" });
       window.setTimeout(() => setResent(false), 5000);
@@ -117,7 +119,7 @@ export function AuthForm({
           <h1>{title}</h1>
           <p>
             {mode === "otp"
-              ? `We sent a six-digit code to ${phone}.`
+              ? `We sent a six-digit code to +977 ${phone}.`
               : "Borrow and lend with verified people nearby."}
           </p>
         </div>
@@ -131,24 +133,9 @@ export function AuthForm({
           )}
 
           {mode === "login" ? (
-            <div className="field">
-              <label htmlFor="identifier">Phone number or email</label>
-              <input id="identifier" name="identifier" autoComplete="username" required />
-            </div>
+            <><div className="auth-method-switch" aria-label="Login method"><button type="button" className={loginMethod === "phone" ? "is-active" : ""} aria-pressed={loginMethod === "phone"} onClick={() => { setLoginMethod("phone"); setError(""); }}>Phone</button><button type="button" className={loginMethod === "email" ? "is-active" : ""} aria-pressed={loginMethod === "email"} onClick={() => { setLoginMethod("email"); setError(""); }}>Email</button></div>{loginMethod === "phone" ? <PhoneField value={phone} onChange={setPhone} id="login-phone" /> : <div className="field"><label htmlFor="identifier">Email address</label><input id="identifier" name="identifier" type="email" autoComplete="username" required /></div>}</>
           ) : mode !== "otp" ? (
-            <div className="field">
-              <label htmlFor="phone">Phone number</label>
-              <input
-                id="phone"
-                name="phone"
-                autoComplete="tel"
-                inputMode="tel"
-                value={phone}
-                onChange={(event) => setPhone(event.target.value.replace(/[^+\d ]/g, ""))}
-                required
-              />
-              <small>Use international format, for example +9779812345678.</small>
-            </div>
+            <PhoneField value={phone} onChange={setPhone} id="register-phone" />
           ) : null}
 
           {mode === "register" && (
@@ -243,8 +230,12 @@ export function AuthForm({
   );
 }
 
-function normalizePhone(value: string) {
-  return value.replace(/\s+/g, "");
+function PhoneField({ value, onChange, id }: { value: string; onChange: (value: string) => void; id: string }) {
+  return <div className="field"><label htmlFor={id}>Phone number</label><div className="phone-input"><span aria-hidden="true">+977</span><input id={id} name="phone" type="tel" autoComplete="tel-national" inputMode="numeric" pattern="[0-9]{10}" minLength={10} maxLength={10} value={value} onChange={(event) => onChange(event.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="9812345678" aria-describedby={`${id}-hint`} required /></div><small id={`${id}-hint`}>Enter the 10 digits after +977, without spaces.</small></div>;
+}
+
+function localPhone(value: string) {
+  return value.replace(/\D/g, "").replace(/^977/, "").slice(0, 10);
 }
 
 function safeNext(value?: string) {
