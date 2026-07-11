@@ -143,8 +143,8 @@ h3 { font-size: 1.18rem; }
 .status-timeline .is-current .status-timeline__icon { border: 2px solid var(--pine); color: var(--pine); }
 .timeline-scroll { overflow-x: auto; padding: 4px 0 8px; }
 
-.toast { position: fixed; z-index: 100; left: 16px; right: 16px; bottom: 84px; display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; background: var(--ink); color: var(--paper); border-radius: var(--radius); animation: toast-in 180ms ease-out; }
-.toast-viewport { position: fixed; z-index: 120; left: 16px; right: 16px; bottom: 84px; display: grid; justify-items: stretch; gap: 8px; pointer-events: none; }
+.toast { position: fixed; z-index: 100; top: calc(var(--header-height) + 12px); left: 16px; right: 16px; display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; background: var(--ink); color: var(--paper); border-radius: var(--radius); animation: toast-in 180ms ease-out; }
+.toast-viewport { position: fixed; z-index: 120; top: calc(var(--header-height) + 12px); left: 16px; right: 16px; display: grid; justify-items: stretch; gap: 8px; pointer-events: none; }
 .app-toast { min-height: 52px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid transparent; border-radius: var(--radius); background: var(--ink); color: var(--paper); box-shadow: 0 10px 30px rgba(20,30,26,.18); pointer-events: auto; animation: toast-in 180ms ease-out; }
 .app-toast > svg { width: 20px; height: 20px; }
 .app-toast--success { background: var(--pine-dark); border-color: #497d6f; }
@@ -153,7 +153,7 @@ h3 { font-size: 1.18rem; }
 .app-toast button { width: 36px; height: 36px; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; opacity: .8; }
 .app-toast button:hover { opacity: 1; }
 .app-toast button svg { width: 17px; }
-@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } }
 .skeleton { min-height: 280px; background: var(--paper-deep); border: 1px solid var(--border-soft); border-radius: var(--radius); }
 
 .market-masthead { background: var(--pine); color: var(--paper); padding: 26px 0 24px; }
@@ -727,8 +727,8 @@ h3 { font-size: 1.18rem; }
   .page { padding-bottom: 56px; }
   .listing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .site-footer { display: block; }
-  .toast { left: auto; right: 24px; bottom: 24px; max-width: 420px; }
-  .toast-viewport { left: auto; right: 24px; bottom: 24px; width: min(390px, calc(100vw - 48px)); }
+  .toast { top: calc(var(--header-height) + 16px); left: auto; right: 24px; max-width: 420px; }
+  .toast-viewport { top: calc(var(--header-height) + 16px); left: auto; right: 24px; width: min(390px, calc(100vw - 48px)); }
 }
 
 @media (min-width: 1160px) {
