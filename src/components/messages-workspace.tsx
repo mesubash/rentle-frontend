@@ -14,7 +14,25 @@ export function MessagesWorkspace({ activeId }: { activeId?: string }) {
   const { user } = useAuth(); const [threads, setThreads] = useState<Booking[]>([]); const [messages, setMessages] = useState<Message[]>([]); const [draft, setDraft] = useState(""); const [error, setError] = useState(""); const [sending, setSending] = useState(false);
   useEffect(() => { Promise.all([bookingsApi.asRenter(0, 50), bookingsApi.asOwner(0, 50)]).then(([renter, owner]) => { const unique = new Map([...renter.content, ...owner.content].filter((booking) => messageable.has(booking.status)).map((booking) => [booking.id, booking])); setThreads([...unique.values()].sort((a,b) => b.createdAt.localeCompare(a.createdAt))); }).catch(() => setError("Conversations could not be loaded.")); }, []);
   const active = threads.find((thread) => thread.id === activeId) || (!activeId ? threads[0] : undefined);
-  useEffect(() => { if (!active) return; let current = true; messagesApi.list(active.id).then((page) => { if (current) setMessages(page.content); return messagesApi.markRead(active.id); }).catch((caught) => current && setError(caught instanceof ApiError ? caught.message : "Messages could not be loaded.")); return () => { current = false; }; }, [active]);
+  useEffect(() => {
+    if (!active) return;
+    let current = true;
+    const load = (markRead: boolean) =>
+      messagesApi
+        .list(active.id)
+        .then((page) => {
+          if (current) setMessages(page.content);
+          if (markRead) return messagesApi.markRead(active.id);
+        })
+        .catch((caught) => current && setError(caught instanceof ApiError ? caught.message : "Messages could not be loaded."));
+    load(true);
+    // Poll for the other party's replies (no websockets in Phase 1).
+    const timer = setInterval(() => load(false), 30000);
+    return () => {
+      current = false;
+      clearInterval(timer);
+    };
+  }, [active]);
   async function send(event: FormEvent) { event.preventDefault(); if (!active || !draft.trim()) return; setSending(true); setError(""); try { const message = await messagesApi.send(active.id, draft.trim()); setMessages((current) => [...current, message]); setDraft(""); } catch (caught) { setError(caught instanceof ApiError ? caught.message : "Message could not be sent."); } finally { setSending(false); } }
   const counterpart = active ? (user?.id === active.ownerId ? active.renterName : active.ownerName) : "";
 

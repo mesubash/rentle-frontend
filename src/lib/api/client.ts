@@ -60,11 +60,9 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     );
   }
 
-  if (!envelope || envelope.data === null) {
-    throw new ApiError("The server returned an empty response", response.status);
-  }
-
-  return envelope.data;
+  // A 2xx response is a success even when the payload is null/empty (e.g. a
+  // void action). Only genuine transport/error responses throw above.
+  return (envelope?.data ?? null) as T;
 }
 
 export function toFormData(entries: Record<string, File | File[] | string>) {
