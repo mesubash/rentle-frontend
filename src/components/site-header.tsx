@@ -9,7 +9,7 @@ import { useAuth } from "./auth-provider";
 const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/bookings", label: "Bookings", icon: CalendarDays },
-  { href: "/messages", label: "Messages", icon: MessageCircle, badge: 2 },
+  { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/listings/manage", label: "Listings", icon: LayoutList, mobileOnly: true },
   { href: "/profile", label: "Profile", icon: UserRound, mobileOnly: true },
 ];
@@ -36,7 +36,7 @@ export function SiteHeader() {
               <span className="admin-label">Admin workspace</span>
             ) : nav.filter((item) => !item.mobileOnly).map((item) => (
               <Link key={item.href} href={item.href} className={pathname.startsWith(item.href) ? "is-active" : ""}>
-                {item.label}{item.badge ? <span className="nav-badge">{item.badge}</span> : null}
+                {item.label}
               </Link>
             ))}
           </nav>
@@ -57,9 +57,9 @@ export function SiteHeader() {
 
       {!isAdmin && (
         <nav className="mobile-nav" aria-label="Mobile navigation">
-          {nav.map(({ href, label, icon: Icon, badge }) => (
+          {nav.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} className={pathname.startsWith(href) ? "is-active" : ""}>
-              <span className="mobile-nav__icon"><Icon size={21} />{badge ? <span className="nav-badge">{badge}</span> : null}</span>
+              <span className="mobile-nav__icon"><Icon size={21} /></span>
               <span>{label}</span>
             </Link>
           ))}
