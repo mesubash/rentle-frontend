@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Info, ShieldCheck, X } from "lucide-react";
-import { formatNpr } from "@/lib/data";
+import { formatNpr } from "@/lib/format";
 import { bookingsApi } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
 import { priceUnitLabel, type ListingDetail } from "@/lib/api/listings";

@@ -21,7 +21,7 @@ export function ExploreMarketplace({ initialQuery = "" }: { initialQuery?: strin
   const [requestKey, setRequestKey] = useState(0);
 
   useEffect(() => {
-    categoriesApi.list().then(setCategories).catch(() => undefined);
+    categoriesApi.tree().then((items) => setCategories(flattenCategories(items))).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -50,4 +50,8 @@ export function ExploreMarketplace({ initialQuery = "" }: { initialQuery?: strin
       {loading ? <div className="listing-grid listing-grid--four" aria-label="Loading listings">{Array.from({ length: 8 }).map((_, index) => <div className="skeleton" key={index} />)}</div> : error ? <section className="empty-state card"><p className="eyebrow">Connection problem</p><h2>Listings could not be loaded.</h2><p>{error}</p><button className="button" onClick={() => setRequestKey((value) => value + 1)}>Try again</button></section> : listings.length ? <div className="listing-grid listing-grid--four">{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 2} />)}</div> : <section className="empty-state card"><p className="eyebrow">No exact matches</p><h2>Try a broader search.</h2><p>Remove a category or district to see more nearby listings.</p><button className="button" onClick={clear}>Show all listings</button></section>}
     </div></main>
   </>;
+}
+
+function flattenCategories(items: Category[]): Category[] {
+  return items.flatMap((item) => [item, ...flattenCategories(item.children)]);
 }

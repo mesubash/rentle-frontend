@@ -15,7 +15,7 @@ import { StatusTimeline } from "./status-timeline";
 import { assetUrl } from "@/lib/api/assets";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
-import { formatNpr } from "@/lib/data";
+import { formatNpr } from "@/lib/format";
 
 export function BookingDetailView({ bookingId }: { bookingId: string }) {
   const { user } = useAuth();

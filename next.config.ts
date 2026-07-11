@@ -6,13 +6,6 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-        pathname: "/aida-public/**",
-      },
-    ],
     formats: ["image/avif", "image/webp"],
   },
 };

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { adminApi } from "@/lib/api/admin";
 import type { Booking } from "@/lib/api/bookings";
 import { priceUnitLabel, type ListingSummary } from "@/lib/api/listings";
-import { formatNpr } from "@/lib/data";
+import { formatNpr } from "@/lib/format";
 
 export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
   const [bookings, setBookings] = useState<Booking[]>([]); const [listings, setListings] = useState<ListingSummary[]>([]); const [error, setError] = useState("");
