@@ -611,6 +611,9 @@ h3 { font-size: 1.18rem; }
 .tabs button.is-active { border-color: var(--pine); color: var(--pine); }
 .tabs button span { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 4px; padding: 0 5px; border-radius: 10px; background: var(--brick); color: white; font-size: .7rem; }
 .booking-list { display: grid; gap: 12px; }
+.access-gate > svg { color: var(--pine); }
+.access-gate__secondary { margin-top: 16px !important; font-size: .88rem; }
+.access-gate__secondary a { color: var(--pine); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .booking-card { display: grid; grid-template-columns: 96px 1fr; overflow: hidden; }
 .booking-card__image { position: relative; min-height: 148px; background: var(--paper-deep); }
 .booking-card__image img { object-fit: cover; }

@@ -2,16 +2,57 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, CalendarDays, Clock3 } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3, LogIn } from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 
 export default function BookingsPage() {
+  const { user, loading: authLoading } = useAuth();
   const [tab, setTab] = useState<"renting" | "hosting">("renting");
-  const [renting, setRenting] = useState<Booking[]>([]); const [hosting, setHosting] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true); const [error, setError] = useState("");
-  useEffect(() => { Promise.all([bookingsApi.asRenter(0, 50), bookingsApi.asOwner(0, 50)]).then(([renter, owner]) => { setRenting(renter.content); setHosting(owner.content); }).catch(() => setError("Your bookings could not be loaded. Log in again or check the backend connection.")).finally(() => setLoading(false)); }, []);
+  const [renting, setRenting] = useState<Booking[]>([]);
+  const [hosting, setHosting] = useState<Booking[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    Promise.all([bookingsApi.asRenter(0, 50), bookingsApi.asOwner(0, 50)])
+      .then(([renter, owner]) => {
+        if (!active) return;
+        setRenting(renter.content);
+        setHosting(owner.content);
+      })
+      .catch(() => {
+        if (active) setError("We could not reach Rentle right now. Please try again shortly.");
+      })
+      .finally(() => {
+        if (active) setDataLoading(false);
+      });
+    return () => { active = false; };
+  }, [user]);
+
   const bookings = tab === "renting" ? renting : hosting;
-  return <main className="page"><div className="container bookings-page"><header className="page-header"><p className="eyebrow">Your activity</p><h1>Bookings</h1><p>Requests, deposit proof, and messages stay attached to each agreement.</p></header><div className="tabs" role="tablist"><button role="tab" aria-selected={tab === "renting"} className={tab === "renting" ? "is-active" : ""} onClick={() => setTab("renting")}>Renting <span>{renting.length}</span></button><button role="tab" aria-selected={tab === "hosting"} className={tab === "hosting" ? "is-active" : ""} onClick={() => setTab("hosting")}>Owner requests <span>{hosting.length}</span></button></div>{loading ? <div className="booking-list">{[1,2,3].map((item) => <div className="skeleton" key={item} />)}</div> : error ? <section className="empty-state card"><h2>Could not load bookings</h2><p>{error}</p><Link className="button" href="/auth/login">Log in</Link></section> : bookings.length ? <div className="booking-list">{bookings.map((booking) => <article className="booking-card card" key={booking.id}><div className="booking-card__main"><div className="booking-card__top"><span className={statusClass(booking.status)}><Clock3 size={13} />{humanize(booking.status)}</span><small>#{booking.id.slice(0, 8)}</small></div><h2>{booking.listingTitle}</h2><p><CalendarDays size={15} /> {formatDates(booking)} · {tab === "renting" ? `owned by ${booking.ownerName}` : `requested by ${booking.renterName}`}</p><Link className="booking-card__action" href={`/bookings/${booking.id}`}>{actionLabel(booking, tab)}<ArrowRight size={16} /></Link></div></article>)}</div> : <section className="empty-state card"><h2>No {tab === "renting" ? "rental" : "owner"} bookings yet.</h2><p>{tab === "renting" ? "When you request a listing, it will appear here." : "Requests for your listings will appear here."}</p><Link className="button" href={tab === "renting" ? "/explore" : "/listings/manage"}>{tab === "renting" ? "Explore listings" : "Manage listings"}</Link></section>}</div></main>;
+  const loading = authLoading || Boolean(user && dataLoading);
+
+  return <main className="page"><div className="container bookings-page">
+    <header className="page-header"><p className="eyebrow">Your activity</p><h1>Bookings</h1><p>Requests, deposit proof, and messages stay attached to each agreement.</p></header>
+
+    {!authLoading && !user ? (
+      <section className="empty-state card access-gate"><LogIn size={30} /><p className="eyebrow">Account required</p><h2>Log in to access your bookings</h2><p>Your rental requests and owner bookings are private. Log in to view and manage them.</p><Link className="button" href="/auth/login?next=/bookings">Log in to Rentle</Link><p className="access-gate__secondary">New to Rentle? <Link href="/auth/register">Create an account</Link></p></section>
+    ) : loading ? (
+      <div className="booking-list" aria-label="Loading bookings">{[1, 2, 3].map((item) => <div className="skeleton" key={item} />)}</div>
+    ) : (
+      <>
+        <div className="tabs" role="tablist"><button role="tab" aria-selected={tab === "renting"} className={tab === "renting" ? "is-active" : ""} onClick={() => setTab("renting")}>Renting <span>{renting.length}</span></button><button role="tab" aria-selected={tab === "hosting"} className={tab === "hosting" ? "is-active" : ""} onClick={() => setTab("hosting")}>Owner requests <span>{hosting.length}</span></button></div>
+        {error ? <section className="empty-state card"><h2>Bookings are temporarily unavailable</h2><p>{error}</p><button className="button" onClick={() => window.location.reload()}>Try again</button></section> : bookings.length ? <div className="booking-list">{bookings.map((booking) => <BookingCard booking={booking} tab={tab} key={booking.id} />)}</div> : <section className="empty-state card"><h2>No {tab === "renting" ? "rental" : "owner"} bookings yet.</h2><p>{tab === "renting" ? "When you request a listing, it will appear here." : "Requests for your listings will appear here."}</p><Link className="button" href={tab === "renting" ? "/explore" : "/listings/manage"}>{tab === "renting" ? "Explore listings" : "Manage listings"}</Link></section>}
+      </>
+    )}
+  </div></main>;
+}
+
+function BookingCard({ booking, tab }: { booking: Booking; tab: "renting" | "hosting" }) {
+  return <article className="booking-card card"><div className="booking-card__main"><div className="booking-card__top"><span className={statusClass(booking.status)}><Clock3 size={13} />{humanize(booking.status)}</span><small>#{booking.id.slice(0, 8)}</small></div><h2>{booking.listingTitle}</h2><p><CalendarDays size={15} /> {formatDates(booking)} · {tab === "renting" ? `owned by ${booking.ownerName}` : `requested by ${booking.renterName}`}</p><Link className="booking-card__action" href={`/bookings/${booking.id}`}>{actionLabel(booking, tab)}<ArrowRight size={16} /></Link></div></article>;
 }
 
 function actionLabel(booking: Booking, tab: "renting" | "hosting") { if (booking.status === "REQUESTED") return tab === "hosting" ? "Review request" : "View request"; if (booking.status === "APPROVED") return tab === "renting" ? "Upload deposit proof" : "View booking"; if (booking.status === "DEPOSIT_PENDING") return tab === "hosting" ? "Confirm deposit" : "View proof status"; if (booking.status === "COMPLETED") return "Leave or view review"; return "View booking"; }

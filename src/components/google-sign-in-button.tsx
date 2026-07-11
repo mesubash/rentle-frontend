@@ -30,7 +30,7 @@ declare global {
  * verifies it and returns a session — no OAuth redirect, so it fits the
  * same-origin proxy cleanly. Renders nothing until a client id is configured.
  */
-export function GoogleSignInButton() {
+export function GoogleSignInButton({ nextPath }: { nextPath?: string }) {
   const holder = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { setUser } = useAuth();
@@ -47,7 +47,8 @@ export function GoogleSignInButton() {
         setUser(session.user);
         showToast(`Welcome, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
         // New Google users have no phone yet — send them to finish verification.
-        router.push(session.user.phoneVerified ? "/explore" : "/verification");
+        const destination = nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/explore";
+        router.push(session.user.phoneVerified ? destination : "/verification");
       } catch (caught) {
         const message = caught instanceof ApiError ? caught.message : "Google sign-in failed.";
         setError(message);
@@ -78,7 +79,7 @@ export function GoogleSignInButton() {
     script.defer = true;
     script.onload = render;
     document.head.appendChild(script);
-  }, [router, setUser, showToast]);
+  }, [nextPath, router, setUser, showToast]);
 
   if (!CLIENT_ID) return null;
 

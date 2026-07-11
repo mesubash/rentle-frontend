@@ -20,9 +20,11 @@ type AuthMode = "login" | "register" | "otp";
 export function AuthForm({
   mode,
   initialPhone = "",
+  nextPath,
 }: {
   mode: AuthMode;
   initialPhone?: string;
+  nextPath?: string;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -58,7 +60,7 @@ export function AuthForm({
         });
         setUser(session.user);
         showToast(`Welcome back, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
-        router.push("/explore");
+        router.push(safeNext(nextPath));
       } else {
         await authApi.verifyOtp(normalizePhone(phone), digits.join(""));
         await reload();
@@ -213,7 +215,7 @@ export function AuthForm({
           </button>
         </form>
 
-        {mode !== "otp" && <GoogleSignInButton />}
+        {mode !== "otp" && <GoogleSignInButton nextPath={nextPath} />}
 
         <div className="auth-trust">
           <ShieldCheck size={18} />
@@ -243,6 +245,10 @@ export function AuthForm({
 
 function normalizePhone(value: string) {
   return value.replace(/\s+/g, "");
+}
+
+function safeNext(value?: string) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/explore";
 }
 
 function apiMessage(error: unknown) {
