@@ -43,7 +43,7 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
         const session = await authApi.login({ identifier: email, password });
         setUser(session.user);
         showToast(`Welcome back, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
-        router.push(safeNext(nextPath));
+        router.push(session.user.role === "ADMIN" ? "/admin/verifications" : safeNext(nextPath));
       }
     } catch (caught) {
       const message = caught instanceof ApiError ? caught.message : "Something went wrong. Please try again.";
