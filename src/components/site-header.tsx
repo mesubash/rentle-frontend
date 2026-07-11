@@ -1,11 +1,13 @@
 "use client";
 
 import Form from "next/form";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, CalendarDays, Compass, LayoutList, ListPlus, MessageCircle, Search, UserRound } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { BrandLogo } from "./brand-logo";
+import { assetUrl } from "@/lib/api/assets";
 
 const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
@@ -19,6 +21,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const isAdmin = pathname.startsWith("/admin");
+  const profilePhoto = assetUrl(user?.profilePhotoUrl);
 
   return (
     <>
@@ -49,7 +52,7 @@ export function SiteHeader() {
             )}
             {user && (
               <Link className="avatar avatar--small" href="/profile" aria-label="My profile">
-                {initials(user.fullName)}
+                {profilePhoto ? <Image src={profilePhoto} alt="" width={34} height={34} sizes="34px" /> : initials(user.fullName)}
               </Link>
             )}
           </div>
@@ -60,7 +63,7 @@ export function SiteHeader() {
         <nav className="mobile-nav" aria-label="Mobile navigation">
           {nav.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} className={pathname.startsWith(href) ? "is-active" : ""}>
-              <span className="mobile-nav__icon"><Icon size={21} /></span>
+              <span className="mobile-nav__icon">{href === "/profile" && profilePhoto ? <Image className="mobile-nav__avatar" src={profilePhoto} alt="" width={24} height={24} sizes="24px" /> : <Icon size={21} />}</span>
               <span>{label}</span>
             </Link>
           ))}

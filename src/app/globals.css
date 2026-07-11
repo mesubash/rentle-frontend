@@ -58,6 +58,7 @@ h3 { font-size: 1.18rem; }
 .header-actions .avatar { display: none; }
 .avatar { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--marigold-wash); color: var(--pine-dark); border: 1px solid var(--marigold); font-weight: 700; }
 .avatar--small { width: 34px; height: 34px; font-size: .78rem; }
+.avatar--small img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .avatar--large { width: 80px; height: 80px; font: 700 1.4rem/1 var(--font-display), serif; }
 .admin-label { font-weight: 600; color: rgba(255,255,255,.8); }
 .nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 5px; padding: 0 5px; border-radius: 9px; background: var(--brick); color: white; font-size: .66rem; font-weight: 700; }
@@ -66,6 +67,7 @@ h3 { font-size: 1.18rem; }
 .mobile-nav a { position: relative; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--stone); font-size: .7rem; font-weight: 600; }
 .mobile-nav a.is-active { color: var(--pine); }
 .mobile-nav__icon { position: relative; display: grid; place-items: center; }
+.mobile-nav__avatar { width: 24px; height: 24px; border: 1px solid var(--marigold); border-radius: 50%; object-fit: cover; }
 .mobile-nav .nav-badge { position: absolute; top: -7px; right: -12px; }
 
 .button { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 1px solid transparent; border-radius: var(--radius); background: var(--pine); color: var(--white); font-weight: 700; cursor: pointer; transition: background 180ms ease-out, border-color 180ms ease-out, transform 100ms ease-out; }
