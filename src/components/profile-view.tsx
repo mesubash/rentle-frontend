@@ -15,6 +15,9 @@ type DisplayProfile = Pick<PublicProfile, "id" | "fullName" | "profilePhotoUrl" 
   verified: boolean;
   email?: string;
   citizenshipUploaded?: boolean;
+  phoneVerified?: boolean;
+  emailVerified?: boolean;
+  status?: UserProfile["status"];
 };
 
 export function ProfileView({ own = false, userId }: { own?: boolean; userId?: string }) {
@@ -36,8 +39,8 @@ export function ProfileView({ own = false, userId }: { own?: boolean; userId?: s
   const profile = own ? toDisplayProfile(auth.user) : publicProfile;
   const loading = own ? auth.loading : Boolean(userId && loadingPublic);
 
-  if (loading) return <main className="page"><div className="container narrow-page"><p>Loading profile…</p></div></main>;
-  if (!profile) return <main className="page"><div className="container narrow-page"><section className="card card-pad"><h1>{own ? "Log in to view your profile" : "Profile unavailable"}</h1><p>{error || (userId ? "We could not find this member." : "This profile link is incomplete.")}</p><Link className="button" href={own ? "/auth/login" : "/explore"}>{own ? "Log in" : "Browse listings"}</Link></section></div></main>;
+  if (loading) return <main className="page"><div className="container profile-page" aria-label="Loading profile"><div className="profile-hero skeleton" /><div className="profile-summary-skeleton skeleton" /></div></main>;
+  if (!profile) return <main className="page"><div className="container narrow-page"><section className="empty-state card"><p className="eyebrow">{own ? "Your account" : "Member profile"}</p><h1>{own ? "Log in to view your profile" : "Profile unavailable"}</h1><p>{error || (userId ? "We could not find this member." : "This profile link is incomplete.")}</p><Link className="button" href={own ? "/auth/login" : "/explore"}>{own ? "Log in" : "Browse listings"}</Link></section></div></main>;
 
   const joined = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date(profile.memberSince));
   const photo = assetUrl(profile.profilePhotoUrl);
@@ -56,7 +59,7 @@ export function ProfileView({ own = false, userId }: { own?: boolean; userId?: s
       {own && <AccountActions />}
     </section>
 
-    <section className="trust-score card"><div><p className="eyebrow">Trust score</p><strong>{Math.round(profile.trustScore)}<small>/100</small></strong></div><div className="trust-score__bar"><span style={{ width: `${Math.min(100, Math.max(0, profile.trustScore))}%` }} /></div><p>Built from verification and completed activity on Rentle.</p></section>
+    <section className="trust-score card"><div className="trust-score__summary"><p className="eyebrow">Trust score</p><strong>{Math.round(profile.trustScore)}<small>/100</small></strong></div><div className="trust-score__detail"><div className="trust-score__bar" aria-label={`Trust score ${Math.round(profile.trustScore)} out of 100`}><span style={{ width: `${Math.min(100, Math.max(0, profile.trustScore))}%` }} /></div><dl><div><dt>Identity</dt><dd>{profile.verified ? "Verified" : "Not verified"}</dd></div>{own && <div><dt>Phone</dt><dd>{profile.phoneVerified ? "Verified" : "Not verified"}</dd></div>}{own && <div><dt>Email</dt><dd>{profile.emailVerified ? "Verified" : "Not verified"}</dd></div>}<div><dt>Member since</dt><dd>{joined}</dd></div></dl></div></section>
 
     {own && !profile.verified && <section className="verification-banner card"><ShieldCheck size={28} /><div><p className="eyebrow">Identity check</p><h2>{profile.citizenshipUploaded ? "Your citizenship is under review." : "Verify your citizenship."}</h2><p>{profile.citizenshipUploaded ? "You can keep using Rentle while the team reviews it." : "A verified identity gives owners a clearer trust signal."}</p></div>{!profile.citizenshipUploaded && <Link className="button" href="/verification">Start verification</Link>}</section>}
 
