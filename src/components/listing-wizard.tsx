@@ -30,7 +30,7 @@ export function ListingWizard() {
 
   useEffect(() => { window.localStorage.setItem("rentle-listing-draft", JSON.stringify(draft)); }, [draft]);
 
-  const availableCategories = categories.filter((item) => item.listingType === draft.type);
+  const availableCategories = categories.filter((item) => item.listingType === draft.type || item.listingType === "BOTH");
   const selectedCategory = categories.find((item) => item.id === draft.categoryId);
   function update<K extends keyof Draft>(key: K, value: Draft[K]) { setDraft((current) => ({ ...current, [key]: value })); }
   function selectType(type: ListingType) { setDraft((current) => ({ ...current, type, categoryId: "" })); }

@@ -8,7 +8,7 @@ export type PriceUnit = "PER_DAY" | "PER_HOUR" | "FLAT";
 export type ItemCondition = "NEW" | "GOOD" | "FAIR";
 export type ServiceDuration = "HOURLY" | "HALF_DAY" | "FULL_DAY" | "CUSTOM";
 
-export type Category = { id: UUID; parentId: UUID | null; name: string; slug: string; listingType: ListingType; iconName: string | null; sortOrder: number; children: Category[] };
+export type Category = { id: UUID; parentId: UUID | null; name: string; slug: string; listingType: ListingType | "BOTH"; iconName: string | null; sortOrder: number; children: Category[] };
 export type ProductDetail = { condition: ItemCondition; brand?: string; model?: string; minRentalDays?: number; maxRentalDays?: number };
 export type ServiceDetail = { serviceAreaKm?: number; typicalDuration?: ServiceDuration; minNoticeHours?: number; portfolioUrl?: string };
 export type ListingSummary = { id: UUID; type: ListingType; status: ListingStatus; title: string; pricePerUnit: number; priceUnit: PriceUnit; depositAmount: number; district: string; averageRating: number; reviewCount: number; coverImage: string | null; createdAt: string };
