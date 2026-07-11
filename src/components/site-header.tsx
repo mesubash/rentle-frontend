@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, CalendarDays, Compass, LayoutList, ListPlus, MessageCircle, Search, UserRound } from "lucide-react";
 import { useAuth } from "./auth-provider";
+import { BrandLogo } from "./brand-logo";
 
 const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
@@ -23,7 +24,7 @@ export function SiteHeader() {
     <>
       <header className="site-header">
         <div className="site-header__inner">
-          <Link className="brand" href={isAdmin ? "/admin/verifications" : "/"} aria-label="Rentle home">Rentle</Link>
+          <BrandLogo href={isAdmin ? "/admin/verifications" : "/"} priority />
           {!isAdmin && (
             <Form className="header-search" action="/search">
               <Search size={18} aria-hidden="true" />
