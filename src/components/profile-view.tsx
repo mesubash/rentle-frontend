@@ -6,6 +6,7 @@ import { CalendarDays, Edit3, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "./auth-provider";
 import { TrustBadge } from "./trust-badge";
+import { ProfileActivity } from "./profile-activity";
 import { assetUrl } from "@/lib/api/assets";
 import { usersApi, type PublicProfile, type UserProfile } from "@/lib/api/users";
 
@@ -58,7 +59,7 @@ export function ProfileView({ own = false, userId }: { own?: boolean; userId?: s
 
     {own && !profile.verified && <section className="verification-banner card"><ShieldCheck size={28} /><div><p className="eyebrow">Identity check</p><h2>{profile.citizenshipUploaded ? "Your citizenship is under review." : "Verify your citizenship."}</h2><p>{profile.citizenshipUploaded ? "You can keep using Rentle while the team reviews it." : "A verified identity gives owners a clearer trust signal."}</p></div>{!profile.citizenshipUploaded && <Link className="button" href="/verification">Start verification</Link>}</section>}
 
-    <section className="profile-section"><div className="section-heading"><div><p className="eyebrow">Marketplace activity</p><h2>Listings and reviews</h2></div>{own && <Link className="button button--secondary button--small" href="/list">Add listing</Link>}</div><p>{own ? "Your active listings and completed-booking reviews will appear here." : "This member’s public listings and reviews are shown on their relevant marketplace pages."}</p></section>
+    <ProfileActivity userId={profile.id} own={own} />
   </div></main>;
 }
 
