@@ -59,6 +59,15 @@ h3 { font-size: 1.18rem; }
 .avatar { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--marigold-wash); color: var(--pine-dark); border: 1px solid var(--marigold); font-weight: 700; }
 .avatar--small { width: 34px; height: 34px; font-size: .78rem; }
 .avatar--small img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.avatar-menu { position: relative; }
+.avatar-menu > .avatar { padding: 0; cursor: pointer; }
+.avatar-menu__list { position: absolute; right: 0; top: calc(100% + 10px); z-index: 60; min-width: 190px; display: grid; padding: 6px; border: 1px solid var(--border-soft); border-radius: var(--radius); background: var(--white); color: var(--ink); box-shadow: 0 10px 28px rgba(20, 30, 26, .14); }
+.avatar-menu__name { margin: 0 0 4px; padding: 8px 10px 10px; border-bottom: 1px solid var(--border-soft); color: var(--stone); font-size: .82rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatar-menu__list a, .avatar-menu__list button { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 0; border-radius: 5px; background: transparent; color: var(--ink); font-size: .88rem; font-weight: 600; text-align: left; cursor: pointer; }
+.avatar-menu__list a:hover, .avatar-menu__list button:hover { background: var(--paper-deep); }
+.avatar-menu__list svg { flex: none; color: var(--pine); }
+.avatar-menu__list .avatar-menu__danger, .avatar-menu__list .avatar-menu__danger svg { color: var(--brick); }
+.avatar-menu__list .avatar-menu__danger:hover { background: var(--brick-wash); }
 .avatar--large { width: 80px; height: 80px; font: 700 1.4rem/1 var(--font-display), serif; }
 .admin-label { font-weight: 600; color: rgba(255,255,255,.8); }
 .nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 5px; padding: 0 5px; border-radius: 9px; background: var(--brick); color: white; font-size: .66rem; font-weight: 700; }
@@ -543,14 +552,15 @@ h3 { font-size: 1.18rem; }
 
 .auth-page { min-height: calc(100vh - var(--header-height)); display: grid; align-content: center; justify-items: center; width: min(100% - 32px, 1000px); margin: auto; padding: 28px 0 96px; }
 .auth-card { width: min(100%, 460px); padding: 24px; }
-.auth-card__intro { display: grid; justify-items: start; gap: 6px; margin-bottom: 20px; }
-.auth-card__intro h1 { margin: 10px 0 0; font-size: 1.85rem; }
+.auth-card__intro { display: grid; justify-items: start; gap: 6px; margin-bottom: 16px; }
+.auth-card__intro h1 { margin: 8px 0 0; font-size: 1.7rem; }
 .auth-card__intro > p { margin: 0; color: var(--stone); }
+.auth-card .field > label::after { content: " *" / ""; color: var(--brick); }
 .password-input { position: relative; }
 .password-input input { width: 100%; padding-right: 48px; }
 .password-input .icon-button { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; color: var(--stone); }
-.auth-trust { margin: 18px 0 0; padding-top: 16px; border-top: 1px solid var(--border-soft); color: var(--stone); font-size: .78rem; }
-.auth-switch { margin: 18px 0 0; text-align: center; color: var(--stone); }
+.auth-trust { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--border-soft); color: var(--stone); font-size: .78rem; }
+.auth-switch { margin: 14px 0 0; text-align: center; color: var(--stone); }
 .auth-switch a, .text-button { color: var(--pine); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .text-button { justify-self: start; border: 0; background: transparent; cursor: pointer; }
 .auth-proof { display: none; }
@@ -617,17 +627,18 @@ h3 { font-size: 1.18rem; }
 }
 
 @media (min-width: 980px) {
-  .auth-page { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); align-items: stretch; justify-items: stretch; gap: 26px; }
-  .auth-card { width: 100%; align-self: center; }
+  .auth-page { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); align-items: stretch; justify-items: stretch; gap: 0; padding: 20px 0 28px; }
+  .auth-card { width: 100%; padding: 28px 36px; border-radius: 0 var(--radius) var(--radius) 0; }
   .auth-proof {
     order: -1;
     position: relative;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-height: 540px;
-    padding: 42px 38px 200px;
-    border-radius: var(--radius);
+    padding: 40px 38px 170px;
+    border: 1px solid var(--pine-dark);
+    border-right: 0;
+    border-radius: var(--radius) 0 0 var(--radius);
     background: var(--pine-dark);
     color: var(--paper);
   }
@@ -635,7 +646,7 @@ h3 { font-size: 1.18rem; }
     content: "";
     position: absolute;
     inset: auto 0 0 0;
-    height: 190px;
+    height: 160px;
     background:
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 200' preserveAspectRatio='none'%3E%3Cpath fill='%231e5748' opacity='.55' d='M0 120 120 58 230 108 340 38 470 98 590 52 700 92 800 68 800 200 0 200Z'/%3E%3Cpath fill='%230d2f27' d='M0 160 90 108 200 148 330 88 450 138 580 98 690 138 800 112 800 200 0 200Z'/%3E%3C/svg%3E")
       bottom / 100% 100% no-repeat;
@@ -663,6 +674,7 @@ h3 { font-size: 1.18rem; }
 .tabs button.is-active { border-color: var(--pine); color: var(--pine); }
 .tabs button span { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 4px; padding: 0 5px; border-radius: 10px; background: var(--brick); color: white; font-size: .7rem; }
 .booking-list { display: grid; gap: 12px; }
+.empty-note { margin: 0; padding: 40px 0; text-align: center; color: var(--stone); opacity: .75; }
 .access-gate > svg { color: var(--pine); }
 .access-gate__secondary { margin-top: 16px !important; font-size: .88rem; }
 .access-gate__secondary a { color: var(--pine); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
@@ -827,3 +839,29 @@ h3 { font-size: 1.18rem; }
 .about-cta h2 { margin: 0 0 0.35rem; }
 .about-cta p { margin: 0; color: var(--stone); }
 .about-cta__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+/* KYC form + review */
+.req { color: var(--brick); margin-left: 0.1rem; font-weight: 600; }
+.kyc-form .kyc-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.kyc-fieldset:disabled { opacity: 0.55; }
+.form-grid--two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.kyc-section-label { font-family: var(--font-display); font-weight: 600; margin: 1.25rem 0 0.35rem; color: var(--ink); }
+.kyc-same { display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0; font-size: 0.92rem; color: var(--ink); }
+.kyc-status { display: flex; align-items: center; gap: 0.75rem; }
+.kyc-docs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 0.5rem 0 1rem; }
+.kyc-docs figure { margin: 0; }
+.kyc-docs img { width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--border); object-fit: cover; }
+.kyc-docs figcaption { font-size: 0.8rem; color: var(--stone); margin-top: 0.25rem; }
+.kyc-review-fields { display: grid; gap: 0.5rem; margin: 0.5rem 0 1rem; }
+.kyc-review-fields div { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.92rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.4rem; }
+.kyc-review-fields dt { color: var(--stone); margin: 0; }
+.kyc-review-fields dd { margin: 0; text-align: right; font-weight: 500; }
+@media (max-width: 640px) { .form-grid--two, .kyc-docs { grid-template-columns: 1fr; } }
+
+.kyc-steps { display: flex; gap: 0.5rem; list-style: none; padding: 0; margin: 0 0 1.25rem; flex-wrap: wrap; }
+.kyc-steps li { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--stone); }
+.kyc-steps li span { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; border: 1px solid var(--border); font-size: 0.8rem; }
+.kyc-steps li.is-active { color: var(--ink); font-weight: 600; }
+.kyc-steps li.is-active span { background: var(--pine); color: var(--white); border-color: var(--pine); }
+.kyc-steps li.is-done span { background: var(--pine-wash); border-color: var(--pine); color: var(--pine); }
+.kyc-nav { display: flex; justify-content: space-between; gap: 0.75rem; margin-top: 1rem; }

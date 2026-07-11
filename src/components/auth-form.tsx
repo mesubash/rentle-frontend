@@ -68,13 +68,13 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
         <form className="form-grid" onSubmit={submit}>
           {mode === "register" && (
             <div className="field">
-              <label htmlFor="fullName">Full name</label>
+              <label htmlFor="fullName">Full name <span className="req" aria-hidden="true">*</span></label>
               <input id="fullName" name="fullName" autoComplete="name" required />
             </div>
           )}
 
           <div className="field">
-            <label htmlFor="email">Email address</label>
+            <label htmlFor="email">Email address <span className="req" aria-hidden="true">*</span></label>
             <input
               id="email"
               name="email"
@@ -85,7 +85,7 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
           </div>
 
           <div className="field">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">Password <span className="req" aria-hidden="true">*</span></label>
             <div className="password-input">
               <input
                 id="password"
@@ -115,14 +115,12 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
         </form>
 
         <GoogleSignInButton />
-
-        <div className="auth-trust">
-          <span>
-            {mode === "register"
-              ? "Verify your phone, email and ID from your account before booking or listing."
-              : "New here? Create an account, then get verified to start."}
-          </span>
-        </div>
+{/* 
+        {mode === "register" && (
+          <div className="auth-trust">
+            <span>Verify your phone, email and ID from your account before booking or listing.</span>
+          </div>
+        )} */}
 
         <p className="auth-switch">
           {mode === "login"

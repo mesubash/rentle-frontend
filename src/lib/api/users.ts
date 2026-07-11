@@ -1,5 +1,6 @@
 import { apiRequest, toFormData } from "./client";
 import type { UUID } from "./shared";
+import type { KycStatus } from "./kyc";
 
 export type UserProfile = {
   id: UUID;
@@ -14,7 +15,7 @@ export type UserProfile = {
   phoneVerified: boolean;
   emailVerified: boolean;
   citizenshipVerified: boolean;
-  citizenshipUploaded: boolean;
+  kycStatus: KycStatus | null;
   trustScore: number;
   createdAt: string;
 };
@@ -39,11 +40,6 @@ export const usersApi = {
     apiRequest<UserProfile>("/users/me", { method: "PUT", body: input }),
   uploadPhoto: (file: File) =>
     apiRequest<UserProfile>("/users/me/photo", {
-      method: "POST",
-      body: toFormData({ file }),
-    }),
-  uploadCitizenship: (file: File) =>
-    apiRequest<UserProfile>("/users/me/citizenship", {
       method: "POST",
       body: toFormData({ file }),
     }),

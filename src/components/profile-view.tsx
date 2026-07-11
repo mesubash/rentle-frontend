@@ -14,7 +14,7 @@ import { usersApi, type PublicProfile, type UserProfile } from "@/lib/api/users"
 type DisplayProfile = Pick<PublicProfile, "id" | "fullName" | "profilePhotoUrl" | "trustScore" | "memberSince"> & {
   verified: boolean;
   email?: string;
-  citizenshipUploaded?: boolean;
+  kycStatus?: UserProfile["kycStatus"];
   phoneVerified?: boolean;
   emailVerified?: boolean;
   status?: UserProfile["status"];
@@ -51,17 +51,14 @@ export function ProfileView({ own = false, userId }: { own?: boolean; userId?: s
         {photo ? <Image src={photo} alt={profile.fullName} fill sizes="120px" /> : <span className="avatar">{initials(profile.fullName)}</span>}
       </div>
       <div className="profile-identity">
-        <p className="eyebrow">{own ? "Your profile" : "Rentle neighbor"}</p>
         <h1>{profile.fullName}</h1>
-        <div className="profile-meta"><TrustBadge verified={profile.verified} /><span><CalendarDays size={15} /> Member since {joined}</span></div>
+        <div className="profile-meta"><TrustBadge verified={profile.verified} />{profile.trustScore != null && <span>Trust score {Math.round(profile.trustScore)}/100</span>}<span><CalendarDays size={15} /> Member since {joined}</span></div>
         {own && profile.email && <p>{profile.email}</p>}
       </div>
       {own && <AccountActions />}
     </section>
 
-    <section className="trust-score card"><div className="trust-score__summary"><p className="eyebrow">Trust score</p><strong>{Math.round(profile.trustScore)}<small>/100</small></strong></div><div className="trust-score__detail"><div className="trust-score__bar" aria-label={`Trust score ${Math.round(profile.trustScore)} out of 100`}><span style={{ width: `${Math.min(100, Math.max(0, profile.trustScore))}%` }} /></div><dl><div><dt>Identity</dt><dd>{profile.verified ? "Verified" : "Not verified"}</dd></div>{own && <div><dt>Phone</dt><dd>{profile.phoneVerified ? "Verified" : "Not verified"}</dd></div>}{own && <div><dt>Email</dt><dd>{profile.emailVerified ? "Verified" : "Not verified"}</dd></div>}<div><dt>Member since</dt><dd>{joined}</dd></div></dl></div></section>
-
-    {own && !profile.verified && <section className="verification-banner card"><ShieldCheck size={28} /><div><p className="eyebrow">Identity check</p><h2>{profile.citizenshipUploaded ? "Your citizenship is under review." : "Verify your citizenship."}</h2><p>{profile.citizenshipUploaded ? "You can keep using Rentle while the team reviews it." : "A verified identity gives owners a clearer trust signal."}</p></div>{!profile.citizenshipUploaded && <Link className="button" href="/verification">Start verification</Link>}</section>}
+    {own && !profile.verified && <section className="verification-banner card"><ShieldCheck size={24} /><h2>{profile.kycStatus === "SUBMITTED" ? "Your identity is under review." : profile.kycStatus === "REJECTED" ? "Your verification was rejected — resubmit." : "Get verified to book and list."}</h2>{profile.kycStatus !== "SUBMITTED" && <Link className="button" href="/verification">{profile.kycStatus === "REJECTED" ? "Resubmit" : "Start verification"}</Link>}</section>}
 
     <ProfileActivity userId={profile.id} own={own} />
   </div></main>;
