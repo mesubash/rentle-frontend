@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, Edit3, ShieldCheck } from "lucide-react";
+import { CalendarDays, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "./auth-provider";
 import { TrustBadge } from "./trust-badge";
 import { ProfileActivity } from "./profile-activity";
+import { AccountActions } from "./account-actions";
 import { assetUrl } from "@/lib/api/assets";
 import { usersApi, type PublicProfile, type UserProfile } from "@/lib/api/users";
 
@@ -52,7 +53,7 @@ export function ProfileView({ own = false, userId }: { own?: boolean; userId?: s
         <div className="profile-meta"><TrustBadge verified={profile.verified} /><span><CalendarDays size={15} /> Member since {joined}</span></div>
         {own && profile.email && <p>{profile.email}</p>}
       </div>
-      {own && <Link className="button button--secondary button--small" href="/profile/edit"><Edit3 size={16} /> Edit profile</Link>}
+      {own && <AccountActions />}
     </section>
 
     <section className="trust-score card"><div><p className="eyebrow">Trust score</p><strong>{Math.round(profile.trustScore)}<small>/100</small></strong></div><div className="trust-score__bar"><span style={{ width: `${Math.min(100, Math.max(0, profile.trustScore))}%` }} /></div><p>Built from verification and completed activity on Rentle.</p></section>
