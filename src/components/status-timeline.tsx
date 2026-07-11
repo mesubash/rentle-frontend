@@ -1,10 +1,14 @@
 import { Check, Circle } from "lucide-react";
-import { bookingSteps } from "@/lib/data";
+import type { BookingStatus } from "@/lib/api/bookings";
 
-export function StatusTimeline({ current = 2 }: { current?: number }) {
+const steps = ["Requested", "Approved", "Deposit pending", "Active", "Completed"];
+const positions: Record<BookingStatus, number> = { REQUESTED: 0, APPROVED: 1, DEPOSIT_PENDING: 2, ACTIVE: 3, COMPLETED: 4, CANCELLED: 0, REJECTED: 0 };
+
+export function StatusTimeline({ status }: { status: BookingStatus }) {
+  const current = positions[status];
   return (
     <ol className="status-timeline" aria-label="Booking status">
-      {bookingSteps.map((step, index) => (
+      {steps.map((step, index) => (
         <li key={step} className={index < current ? "is-done" : index === current ? "is-current" : ""}>
           <span className="status-timeline__icon">{index < current ? <Check size={14} /> : <Circle size={10} fill="currentColor" />}</span>
           <span>{step}</span>

@@ -1,38 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { ArrowLeft, CalendarDays, CheckCircle2, Info, MapPin, ShieldCheck } from "lucide-react";
-import { BookingActions } from "@/components/booking-actions";
-import { ActiveBookingAction, AwaitingApprovalAction, ConfirmDepositAction, OwnerRequestActions, ReviewBookingAction } from "@/components/booking-state-actions";
-import { StatusTimeline } from "@/components/status-timeline";
-import { images } from "@/lib/data";
-
+import { BookingDetailView } from "@/components/booking-detail-view";
 export const metadata: Metadata = { title: "Booking details" };
-
-const records = {
-  "RNT-8924": { title: "Sony Alpha A7 IV Camera", image: images.sony, counterpart: "Sarah M.", firstName: "Sarah", role: "Owner", dates: "18–20 Aug 2026 · 2 days", location: "Baneshwor, Kathmandu", state: "deposit" as const, status: "Deposit pending", current: 2, rental: "NPR 5,000", fee: "NPR 400", deposit: "NPR 30,000", total: "NPR 5,400" },
-  "RNT-9018": { title: "Canon EOS R5 Mirrorless Camera", image: images.canon, counterpart: "Nabin Karki", firstName: "Nabin", role: "Renter", dates: "24–26 Aug 2026 · 3 days", location: "New Road, Kathmandu", state: "requested" as const, status: "Requested", current: 0, rental: "NPR 4,500", fee: "NPR 360", deposit: "NPR 25,000", total: "NPR 4,860" },
-  "RNT-8741": { title: "Traditional Daura Suruwal Set", image: images.daura, counterpart: "Aayush S.", firstName: "Aayush", role: "Owner", dates: "2–4 Aug 2026 · 2 days", location: "Patan, Lalitpur", state: "completed" as const, status: "Completed", current: 4, rental: "NPR 1,600", fee: "NPR 128", deposit: "NPR 5,000", total: "NPR 1,728" },
-  "RNT-8655": { title: "Four-Person Camping Tent", image: images.tent, counterpart: "Suman G.", firstName: "Suman", role: "Owner", dates: "22–24 Jul 2026 · 2 days", location: "Lakeside, Pokhara", state: "reviewed" as const, status: "Completed", current: 4, rental: "NPR 2,400", fee: "NPR 192", deposit: "NPR 10,000", total: "NPR 2,592" },
-  "RNT-9102": { title: "Sony Alpha A7 IV Camera", image: images.sony, counterpart: "Sarah M.", firstName: "Sarah", role: "Owner", dates: "18–20 Aug 2026 · 2 days", location: "Baneshwor, Kathmandu", state: "awaiting" as const, status: "Requested", current: 0, rental: "NPR 5,000", fee: "NPR 400", deposit: "NPR 30,000", total: "NPR 5,400" },
-  "RNT-9103": { title: "Wedding & Event Photography", image: images.sonyHands, counterpart: "Riya Shrestha", firstName: "Riya", role: "Provider", dates: "29 Aug 2026 · 10:00am", location: "Maharajgunj, Kathmandu", state: "awaiting" as const, status: "Requested", current: 0, rental: "NPR 4,500", fee: "NPR 360", deposit: "NPR 5,000", total: "NPR 4,860" },
-  "RNT-9020": { title: "Canon EOS R5 Mirrorless Camera", image: images.canon, counterpart: "Nabin Karki", firstName: "Nabin", role: "Renter", dates: "14–16 Aug 2026 · 2 days", location: "New Road, Kathmandu", state: "confirm" as const, status: "Deposit pending", current: 2, rental: "NPR 3,000", fee: "NPR 240", deposit: "NPR 25,000", total: "NPR 3,240" },
-  "RNT-8802": { title: "Bosch Professional Drill Set", image: images.drill, counterpart: "Roshan P.", firstName: "Roshan", role: "Owner", dates: "10–12 Aug 2026 · 2 days", location: "Suryabinayak, Bhaktapur", state: "active" as const, status: "Active", current: 3, rental: "NPR 1,000", fee: "NPR 80", deposit: "NPR 6,000", total: "NPR 1,080" },
-};
-
-export default async function BookingDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ requested?: string }> }) {
-  const { id } = await params;
-  const query = await searchParams;
-  const booking = records[id as keyof typeof records] ?? records["RNT-8924"];
-  const note = booking.state === "requested" ? "Nabin is waiting for your decision. Approving unlocks the deposit step and booking messages." : booking.state === "awaiting" ? `Your request is with ${booking.firstName}. No deposit is due until they approve.` : booking.state === "deposit" ? "The owner approved this request. Upload payment proof so they can confirm the deposit and activate the booking." : booking.state === "confirm" ? "Payment proof is attached. Confirm the money in your wallet to activate the booking." : booking.state === "active" ? "The booking is active. Mark it complete only after the handover or service is finished." : "The booking was marked complete. Reviews remain private until both people submit or the 30-day window closes.";
-
-  return <main className="page"><div className="container booking-detail">
-    <Link className="back-link" href="/bookings"><ArrowLeft size={16} /> Back to bookings</Link>
-    <header className="booking-detail__header"><div><p className="eyebrow">Booking #{id}</p><h1>{booking.title}</h1><p>{booking.dates} · {booking.role === "Owner" ? "Renting from" : "Requested by"} {booking.counterpart}</p></div><span className={booking.status === "Completed" ? "status-chip status-chip--verified" : "status-chip status-chip--requested"}>{booking.status}</span></header>
-    <section className="card timeline-card"><div className="timeline-scroll"><StatusTimeline current={booking.current} /></div><div className="timeline-note"><Info size={17} /><span>{note}</span></div></section>
-    <div className="booking-detail__grid"><div className="booking-detail__primary">
-      {booking.state === "requested" ? <OwnerRequestActions bookingId={id} /> : booking.state === "awaiting" ? <AwaitingApprovalAction owner={booking.firstName} /> : booking.state === "confirm" ? <ConfirmDepositAction renter={booking.firstName} /> : booking.state === "active" ? <ActiveBookingAction counterpart={booking.firstName} /> : booking.state === "completed" ? <ReviewBookingAction /> : booking.state === "reviewed" ? <ReviewBookingAction alreadyReviewed /> : <BookingActions bookingId={id} owner={booking.firstName} amount={booking.deposit} requested={query.requested === "1"} />}
-      <section className="card booking-facts"><h2>Booking details</h2><div className="booking-item"><div><Image src={booking.image} alt={booking.title} fill sizes="120px" /></div><span><strong>{booking.title}</strong><small><MapPin size={14} /> {booking.location}</small></span></div><dl><div><dt><CalendarDays /> Rental dates</dt><dd>{booking.dates}</dd></div><div><dt>Rental fee</dt><dd>{booking.rental}</dd></div><div><dt>Rentle service fee</dt><dd>{booking.fee}</dd></div><div><dt>Refundable deposit</dt><dd>{booking.deposit}</dd></div><div className="booking-facts__total"><dt>Total rental cost</dt><dd>{booking.total}</dd></div></dl></section>
-    </div><aside className="booking-detail__aside"><section className="card counterpart-card"><span className="avatar avatar--large">{booking.counterpart.split(" ").map((part) => part[0]).join("")}</span><div><p className="eyebrow">{booking.role}</p><h2>{booking.counterpart}</h2><p><ShieldCheck size={15} /> Citizenship verified</p></div>{booking.state !== "requested" && booking.state !== "awaiting" ? <Link className="button button--secondary button--wide" href={`/messages/${id}`}>Open booking messages</Link> : <div className="form-note"><Info size={16} /><span>Messages open after approval so every thread belongs to a real booking.</span></div>}</section><section className="deposit-guide"><ShieldCheck size={20} /><div><strong>Deposit record</strong><p>Rentle does not hold money in Phase 1. Proof, confirmation, and the agreed amount remain on this booking.</p></div></section>{booking.status === "Completed" && <div className="inline-success"><CheckCircle2 size={18} /><span>This booking is complete. The deposit was returned and confirmed.</span></div>}</aside></div>
-  </div></main>;
-}
+export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) { const { id } = await params; return <BookingDetailView bookingId={id} />; }
