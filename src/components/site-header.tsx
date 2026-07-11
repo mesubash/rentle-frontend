@@ -4,7 +4,7 @@ import Form from "next/form";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, Compass, LayoutList, ListPlus, MessageCircle, Search, UserRound } from "lucide-react";
+import { Bell, CalendarDays, Compass, LayoutList, ListPlus, LogIn, MessageCircle, Search, UserRound } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { BrandLogo } from "./brand-logo";
 import { assetUrl } from "@/lib/api/assets";
@@ -16,12 +16,18 @@ const nav = [
   { href: "/listings/manage", label: "Listings", icon: LayoutList, mobileOnly: true },
   { href: "/profile", label: "Profile", icon: UserRound, mobileOnly: true },
 ];
+const guestNav = [
+  { href: "/explore", label: "Explore", icon: Compass },
+  { href: "/auth/login", label: "Log in", icon: LogIn },
+];
 
 export function SiteHeader() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const isAdmin = pathname.startsWith("/admin");
   const profilePhoto = assetUrl(user?.profilePhotoUrl);
+  const desktopNav = user ? nav.filter((item) => !item.mobileOnly) : nav.filter((item) => item.href === "/explore");
+  const mobileNav = user ? nav : guestNav;
 
   return (
     <>
@@ -38,15 +44,15 @@ export function SiteHeader() {
           <nav className="desktop-nav" aria-label="Main navigation">
             {isAdmin ? (
               <span className="admin-label">Admin workspace</span>
-            ) : nav.filter((item) => !item.mobileOnly).map((item) => (
+            ) : desktopNav.map((item) => (
               <Link key={item.href} href={item.href} className={pathname.startsWith(item.href) ? "is-active" : ""}>
                 {item.label}
               </Link>
             ))}
           </nav>
           <div className="header-actions">
-            {!isAdmin && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
-            <Link className="icon-button header-bell" href="/notifications" aria-label="Notifications"><Bell size={19} /></Link>
+            {!isAdmin && user && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
+            {user && <Link className="icon-button header-bell" href="/notifications" aria-label="Notifications"><Bell size={19} /></Link>}
             {!loading && !user && !isAdmin && (
               <Link className="button button--small button--paper" href="/auth/login">Log in</Link>
             )}
@@ -60,8 +66,8 @@ export function SiteHeader() {
       </header>
 
       {!isAdmin && (
-        <nav className="mobile-nav" aria-label="Mobile navigation">
-          {nav.map(({ href, label, icon: Icon }) => (
+        <nav className={user ? "mobile-nav" : "mobile-nav mobile-nav--guest"} aria-label="Mobile navigation">
+          {mobileNav.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} className={pathname.startsWith(href) ? "is-active" : ""}>
               <span className="mobile-nav__icon">{href === "/profile" && profilePhoto ? <Image className="mobile-nav__avatar" src={profilePhoto} alt="" width={24} height={24} sizes="24px" /> : <Icon size={21} />}</span>
               <span>{label}</span>
