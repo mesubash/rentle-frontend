@@ -4,6 +4,7 @@ import Form from "next/form";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, CalendarDays, Compass, ListPlus, MessageCircle, Search, UserRound } from "lucide-react";
+import { useAuth } from "./auth-provider";
 
 const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
@@ -14,6 +15,7 @@ const nav = [
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
   const isAdmin = pathname.startsWith("/admin");
 
   return (
@@ -40,7 +42,14 @@ export function SiteHeader() {
           <div className="header-actions">
             {!isAdmin && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
             <Link className="icon-button header-bell" href="/notifications" aria-label="Notifications"><Bell size={19} /></Link>
-            <Link className="avatar avatar--small" href={isAdmin ? "/profile" : "/profile"} aria-label="My profile">AS</Link>
+            {!loading && !user && !isAdmin && (
+              <Link className="button button--small button--paper" href="/auth/login">Log in</Link>
+            )}
+            {user && (
+              <Link className="avatar avatar--small" href="/profile" aria-label="My profile">
+                {initials(user.fullName)}
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -57,4 +66,8 @@ export function SiteHeader() {
       )}
     </>
   );
+}
+
+function initials(name: string) {
+  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 }
