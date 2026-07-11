@@ -24,7 +24,7 @@ export function SiteHeader() {
     <>
       <header className="site-header">
         <div className="site-header__inner">
-          <BrandLogo href={isAdmin ? "/admin/verifications" : "/"} priority />
+          <BrandLogo href={isAdmin ? "/admin/verifications" : "/"} priority inverted />
           {!isAdmin && (
             <Form className="header-search" action="/search">
               <Search size={18} aria-hidden="true" />
