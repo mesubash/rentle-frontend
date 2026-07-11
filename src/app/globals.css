@@ -541,13 +541,15 @@ h3 { font-size: 1.18rem; }
   .composer { padding: 12px 18px; }
 }
 
-.auth-page { min-height: calc(100vh - var(--header-height)); display: grid; align-items: center; gap: 28px; width: min(100% - 32px, 980px); margin: auto; padding: 28px 0 96px; }
-.auth-card { padding: 22px; }
-.auth-card__intro .brand { display: none; color: var(--pine); }
-.auth-card__intro h1 { margin: 5px 0 8px; }
-.auth-card__intro > p:last-child { color: var(--stone); }
-.auth-trust { display: flex; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border-soft); color: var(--stone); font-size: .78rem; }
-.auth-trust svg { flex: none; color: var(--pine); }
+.auth-page { min-height: calc(100vh - var(--header-height)); display: grid; align-content: center; justify-items: center; width: min(100% - 32px, 1000px); margin: auto; padding: 28px 0 96px; }
+.auth-card { width: min(100%, 460px); padding: 24px; }
+.auth-card__intro { display: grid; justify-items: start; gap: 6px; margin-bottom: 20px; }
+.auth-card__intro h1 { margin: 10px 0 0; font-size: 1.85rem; }
+.auth-card__intro > p { margin: 0; color: var(--stone); }
+.password-input { position: relative; }
+.password-input input { width: 100%; padding-right: 48px; }
+.password-input .icon-button { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; color: var(--stone); }
+.auth-trust { margin: 18px 0 0; padding-top: 16px; border-top: 1px solid var(--border-soft); color: var(--stone); font-size: .78rem; }
 .auth-switch { margin: 18px 0 0; text-align: center; color: var(--stone); }
 .auth-switch a, .text-button { color: var(--pine); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .text-button { justify-self: start; border: 0; background: transparent; cursor: pointer; }
@@ -609,14 +611,34 @@ h3 { font-size: 1.18rem; }
 .inline-notice { padding: 14px 16px; border-left: 3px solid var(--brick); background: var(--brick-wash); color: #6f3523; }
 
 @media (min-width: 760px) {
-  .auth-page { grid-template-columns: minmax(0, 520px) 1fr; padding-bottom: 36px; }
-  .auth-card { padding: 32px; }
-  .auth-proof { display: block; color: var(--pine-dark); }
-  .auth-proof > svg { color: var(--pine); }
-  .auth-proof h2 { margin: 12px 0 18px; }
-  .auth-proof ul { display: grid; gap: 10px; padding: 0; list-style: none; color: var(--stone); font-size: .84rem; }
-  .auth-proof li { display: flex; align-items: center; gap: 7px; }
-  .auth-proof li svg { width: 17px; color: var(--pine); }
+  .auth-page { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); align-items: stretch; gap: 26px; padding-bottom: 36px; }
+  .auth-card { width: 100%; align-self: center; padding: 36px; }
+  .auth-proof {
+    order: -1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 540px;
+    padding: 42px 38px 200px;
+    border-radius: var(--radius);
+    background: var(--pine-dark);
+    color: var(--paper);
+  }
+  .auth-proof::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 190px;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 200' preserveAspectRatio='none'%3E%3Cpath fill='%231e5748' opacity='.55' d='M0 120 120 58 230 108 340 38 470 98 590 52 700 92 800 68 800 200 0 200Z'/%3E%3Cpath fill='%230d2f27' d='M0 160 90 108 200 148 330 88 450 138 580 98 690 138 800 112 800 200 0 200Z'/%3E%3C/svg%3E")
+      bottom / 100% 100% no-repeat;
+    pointer-events: none;
+  }
+  .auth-proof h2::before { content: ""; display: block; width: 34px; height: 3px; margin-bottom: 16px; border-radius: 2px; background: var(--marigold); }
+  .auth-proof h2 { max-width: 17ch; margin: 0; font-size: clamp(1.55rem, 2.4vw, 2rem); color: var(--paper); }
+  .auth-proof ul { margin: 30px 0 0; padding: 0; list-style: none; }
+  .auth-proof li { padding: 12px 0; border-top: 1px solid rgba(250, 247, 242, .16); color: rgba(250, 247, 242, .74); font-size: .86rem; }
   .verification-form { padding: 28px; }
   .profile-hero { grid-template-columns: auto 1fr auto; align-items: center; padding: 26px; }
   .profile-hero > .button-row { width: auto; }

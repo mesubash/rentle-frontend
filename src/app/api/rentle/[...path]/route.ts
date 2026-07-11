@@ -124,11 +124,10 @@ async function forward(
     if (refreshed) backendResponse = await perform(refreshed.accessToken);
   }
 
-  // Endpoints that return a token pair to be stored as httpOnly cookies. Note:
-  // auth/register (step 1) only sends an OTP and issues no session.
+  // Endpoints that return a token pair to be stored as httpOnly cookies.
   const isAuthResponse = [
     "auth/login",
-    "auth/register/verify",
+    "auth/register",
     "auth/google/exchange",
     "auth/refresh",
   ].includes(route);

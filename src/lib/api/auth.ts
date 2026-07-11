@@ -7,17 +7,9 @@ export type AuthSession = {
 };
 
 export type RegisterInput = {
-  phoneNumber: string;
   email: string;
   password: string;
   fullName: string;
-};
-
-export type RegistrationPending = {
-  phoneNumber: string;
-  otpRequired: boolean;
-  expiresInSeconds: number;
-  message: string;
 };
 
 export type LoginInput = {
@@ -31,17 +23,10 @@ export type GoogleStatus = {
 };
 
 export const authApi = {
-  // Step 1 — does not create the account; sends a phone OTP.
+  // Email-first: creates the account and starts a session immediately. Phone and
+  // email are verified afterwards, before booking or listing.
   register: (input: RegisterInput) =>
-    apiRequest<RegistrationPending>("/auth/register", { method: "POST", body: input }),
-  // Step 2 — verify the OTP to create the account and start a session.
-  completeRegistration: (phoneNumber: string, code: string) =>
-    apiRequest<AuthSession>("/auth/register/verify", {
-      method: "POST",
-      body: { phoneNumber, code },
-    }),
-  resendRegistration: (phoneNumber: string) =>
-    apiRequest<string>("/auth/register/resend", { method: "POST", body: { phoneNumber } }),
+    apiRequest<AuthSession>("/auth/register", { method: "POST", body: input }),
   login: (input: LoginInput) =>
     apiRequest<AuthSession>("/auth/login", { method: "POST", body: input }),
   refresh: () => apiRequest<AuthSession>("/auth/refresh", { method: "POST" }),
