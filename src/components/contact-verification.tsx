@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Mail, Phone } from "lucide-react";
+import { CheckCircle2, Mail, Phone, ShieldAlert } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { useToast } from "./toast-provider";
 import { usersApi, type UserProfile } from "@/lib/api/users";
@@ -22,7 +22,13 @@ export function ContactVerification() {
 
   return (
     <div className="contact-verification">
-      <EmailStep verified={user.emailVerified} onVerified={setUser} />
+      {!user.phoneVerified && (
+        <div className="form-note form-note--warn">
+          <ShieldAlert size={18} />
+          <span>Add and verify your phone number to book or list on Rentle.</span>
+        </div>
+      )}
+      <EmailStep verified={user.emailVerified} email={user.email} />
       <PhoneStep
         verified={user.phoneVerified}
         phone={user.phoneNumber}
@@ -32,50 +38,32 @@ export function ContactVerification() {
   );
 }
 
-function EmailStep({
-  verified,
-  onVerified,
-}: {
-  verified: boolean;
-  onVerified: (u: UserProfile) => void;
-}) {
-  const [sent, setSent] = useState(false);
-  const [code, setCode] = useState("");
+function EmailStep({ verified, email }: { verified: boolean; email: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const { showToast } = useToast();
 
   if (verified) return <VerifiedRow icon={<Mail size={18} />} label="Email verified" />;
 
-  async function send() {
+  // Verification happens by opening the emailed link; this just (re)sends it.
+  async function resend() {
     setBusy(true); setError("");
-    try { await usersApi.sendEmailOtp(); setSent(true); showToast("A verification code was sent to your email.", { tone: "success" }); }
-    catch (caught) { const detail = message(caught, "Could not send the code."); setError(detail); showToast(detail, { tone: "error" }); }
-    finally { setBusy(false); }
-  }
-  async function verify() {
-    setBusy(true); setError("");
-    try { onVerified(await usersApi.verifyEmail(code)); showToast("Email address verified.", { tone: "success" }); }
-    catch (caught) { const detail = message(caught, "That code did not match."); setError(detail); showToast(detail, { tone: "error" }); }
-    finally { setBusy(false); }
+    try {
+      await usersApi.sendEmailVerification();
+      showToast("Verification link sent — check your email.", { tone: "success" });
+    } catch (caught) {
+      const detail = message(caught, "Could not send the link.");
+      setError(detail); showToast(detail, { tone: "error" });
+    } finally { setBusy(false); }
   }
 
   return (
     <section className="verify-step card">
       <div className="verify-step__head"><Mail size={18} /><strong>Verify your email</strong></div>
-      {!sent ? (
-        <button className="button button--secondary" disabled={busy} onClick={send}>
-          {busy ? "Sending…" : "Send code to my email"}
-        </button>
-      ) : (
-        <div className="verify-step__row">
-          <label className="sr-only" htmlFor="email-code">Email code</label>
-          <input id="email-code" inputMode="numeric" maxLength={6} placeholder="6-digit code"
-            value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
-          <button className="button" disabled={busy || code.length !== 6} onClick={verify}>Verify</button>
-          <button className="text-button" type="button" disabled={busy} onClick={send}>Resend</button>
-        </div>
-      )}
+      <p className="verify-step__hint">We sent a verification link to <strong>{email}</strong>. Open it to confirm your address — you can keep using Rentle in the meantime.</p>
+      <button className="button button--secondary" disabled={busy} onClick={resend}>
+        {busy ? "Sending…" : "Resend verification link"}
+      </button>
       {error && <p className="form-error" role="alert">{error}</p>}
     </section>
   );

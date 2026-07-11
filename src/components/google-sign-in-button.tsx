@@ -1,93 +1,51 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "./auth-provider";
-import { useToast } from "./toast-provider";
+import { useEffect, useState } from "react";
 import { authApi } from "@/lib/api/auth";
-import { ApiError } from "@/lib/api/client";
-
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
-type GoogleId = {
-  accounts: {
-    id: {
-      initialize: (config: { client_id: string; callback: (r: { credential: string }) => void }) => void;
-      renderButton: (el: HTMLElement, options: Record<string, unknown>) => void;
-    };
-  };
-};
-
-declare global {
-  interface Window {
-    google?: { accounts?: GoogleId["accounts"] };
-  }
-}
 
 /**
- * Google Sign-In via Google Identity Services. The browser gets an ID token
- * directly from Google and posts it to the backend (through the BFF), which
- * verifies it and returns a session — no OAuth redirect, so it fits the
- * same-origin proxy cleanly. Renders nothing until a client id is configured.
+ * Backend-driven Google sign-in. This button holds no Google configuration — it
+ * asks the backend whether Google is enabled and, if so, links to the backend's
+ * /auth/google/login (a full-page navigation into the OAuth redirect flow). The
+ * secret and client id live only on the backend.
  */
-export function GoogleSignInButton({ nextPath }: { nextPath?: string }) {
-  const holder = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const { setUser } = useAuth();
-  const { showToast } = useToast();
-  const [error, setError] = useState("");
+export function GoogleSignInButton() {
+  const [loginUrl, setLoginUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!CLIENT_ID || !holder.current) return;
-
-    const onCredential = async (response: { credential: string }) => {
-      setError("");
-      try {
-        const session = await authApi.google(response.credential);
-        setUser(session.user);
-        showToast(`Welcome, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
-        // New Google users have no phone yet — send them to finish verification.
-        const destination = nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/explore";
-        router.push(session.user.phoneVerified ? destination : "/verification");
-      } catch (caught) {
-        const message = caught instanceof ApiError ? caught.message : "Google sign-in failed.";
-        setError(message);
-        showToast(message, { tone: "error" });
-      }
-    };
-
-    const render = () => {
-      const accounts = window.google?.accounts;
-      if (!accounts || !holder.current) return;
-      accounts.id.initialize({ client_id: CLIENT_ID, callback: onCredential });
-      accounts.id.renderButton(holder.current, {
-        theme: "outline",
-        size: "large",
-        text: "continue_with",
-        shape: "rectangular",
-        width: 320,
+    let active = true;
+    authApi
+      .googleStatus()
+      .then((status) => {
+        if (active && status.enabled) setLoginUrl(status.loginUrl);
+      })
+      .catch(() => {
+        /* Google simply stays hidden if the status check fails */
       });
+    return () => {
+      active = false;
     };
+  }, []);
 
-    if (window.google?.accounts) {
-      render();
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.onload = render;
-    document.head.appendChild(script);
-  }, [nextPath, router, setUser, showToast]);
-
-  if (!CLIENT_ID) return null;
+  if (!loginUrl) return null;
 
   return (
     <div className="google-signin">
       <div className="google-signin__divider"><span>or</span></div>
-      <div ref={holder} className="google-signin__button" />
-      {error && <p className="form-error" role="alert">{error}</p>}
+      <a className="button button--secondary button--wide google-signin__button" href={loginUrl}>
+        <GoogleGlyph /> Continue with Google
+      </a>
     </div>
+  );
+}
+
+function GoogleGlyph() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18Z" />
+      <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33Z" />
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.47.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58Z" />
+    </svg>
   );
 }

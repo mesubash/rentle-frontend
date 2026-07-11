@@ -36,7 +36,11 @@ export function AuthForm({
   const [resent, setResent] = useState(false);
   const [error, setError] = useState("");
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+  // Registration is two-step: the phone OTP is entered on this same screen and
+  // the account is only created once it verifies.
+  const [awaitingCode, setAwaitingCode] = useState(mode === "otp");
   const otpInputs = useRef<Array<HTMLInputElement | null>>([]);
+  const showOtp = awaitingCode || mode === "otp";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,16 +49,15 @@ export function AuthForm({
     const form = new FormData(event.currentTarget);
 
     try {
-      if (mode === "register") {
-        const session = await authApi.register({
+      if (mode === "register" && !awaitingCode) {
+        await authApi.register({
           phoneNumber: phone,
           email: String(form.get("email")).trim(),
           password: String(form.get("password")),
           fullName: String(form.get("fullName")).trim(),
         });
-        setUser(session.user);
-        showToast("Account created. Verify your phone to continue.", { tone: "success" });
-        router.push(`/verify?phone=${encodeURIComponent(phone)}`);
+        setAwaitingCode(true);
+        showToast("We sent a code to your phone. Enter it to finish.", { tone: "success" });
       } else if (mode === "login") {
         const session = await authApi.login({
           identifier: loginMethod === "phone" ? phone : String(form.get("identifier")).trim(),
@@ -64,10 +67,12 @@ export function AuthForm({
         showToast(`Welcome back, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
         router.push(safeNext(nextPath));
       } else {
-        await authApi.verifyOtp(phone, digits.join(""));
+        // Registration step 2 — verify OTP, create the account, start the session.
+        const session = await authApi.completeRegistration(phone, digits.join(""));
+        setUser(session.user);
         await reload();
-        showToast("Phone number verified.", { tone: "success" });
-        router.push("/explore");
+        showToast("Phone verified. Finish verifying to book or list.", { tone: "success" });
+        router.push("/verification");
       }
     } catch (caught) {
       const message = apiMessage(caught);
@@ -81,7 +86,7 @@ export function AuthForm({
   async function resendOtp() {
     setError("");
     try {
-      await authApi.sendOtp(phone);
+      await authApi.resendRegistration(phone);
       setResent(true);
       showToast("A new verification code was sent.", { tone: "success" });
       window.setTimeout(() => setResent(false), 5000);
@@ -104,11 +109,11 @@ export function AuthForm({
     }
   }
 
-  const title = mode === "login"
-    ? "Welcome back"
-    : mode === "register"
-      ? "Join your neighborhood"
-      : "Verify your phone";
+  const title = showOtp
+    ? "Verify your phone"
+    : mode === "login"
+      ? "Welcome back"
+      : "Join your neighborhood";
 
   return (
     <main className="auth-page">
@@ -118,14 +123,14 @@ export function AuthForm({
           <p className="eyebrow">Trust starts with a real person</p>
           <h1>{title}</h1>
           <p>
-            {mode === "otp"
+            {showOtp
               ? `We sent a six-digit code to +977 ${phone}.`
               : "Borrow and lend with verified people nearby."}
           </p>
         </div>
 
         <form className="form-grid" onSubmit={submit}>
-          {mode === "register" && (
+          {mode === "register" && !showOtp && (
             <div className="field">
               <label htmlFor="fullName">Full name</label>
               <input id="fullName" name="fullName" autoComplete="name" required />
@@ -134,18 +139,18 @@ export function AuthForm({
 
           {mode === "login" ? (
             <><div className="auth-method-switch" aria-label="Login method"><button type="button" className={loginMethod === "phone" ? "is-active" : ""} aria-pressed={loginMethod === "phone"} onClick={() => { setLoginMethod("phone"); setError(""); }}>Phone</button><button type="button" className={loginMethod === "email" ? "is-active" : ""} aria-pressed={loginMethod === "email"} onClick={() => { setLoginMethod("email"); setError(""); }}>Email</button></div>{loginMethod === "phone" ? <PhoneField value={phone} onChange={setPhone} id="login-phone" /> : <div className="field"><label htmlFor="identifier">Email address</label><input id="identifier" name="identifier" type="email" autoComplete="username" required /></div>}</>
-          ) : mode !== "otp" ? (
+          ) : !showOtp ? (
             <PhoneField value={phone} onChange={setPhone} id="register-phone" />
           ) : null}
 
-          {mode === "register" && (
+          {mode === "register" && !showOtp && (
             <div className="field">
               <label htmlFor="email">Email address</label>
               <input id="email" name="email" type="email" autoComplete="email" required />
             </div>
           )}
 
-          {mode !== "otp" && (
+          {!showOtp && (
             <div className="field">
               <label htmlFor="password">Password</label>
               <input
@@ -161,7 +166,7 @@ export function AuthForm({
             </div>
           )}
 
-          {mode === "otp" && (
+          {showOtp && (
             <>
               <div className="otp" aria-label="Six digit verification code">
                 {digits.map((digit, index) => (
@@ -194,21 +199,21 @@ export function AuthForm({
           <button className="button button--wide" disabled={loading}>
             {loading
               ? "Please wait…"
-              : mode === "login"
-                ? "Log in"
-                : mode === "register"
-                  ? "Create account"
-                  : "Verify and continue"}
+              : showOtp
+                ? "Verify and continue"
+                : mode === "login"
+                  ? "Log in"
+                  : "Create account"}
           </button>
         </form>
 
-        {mode !== "otp" && <GoogleSignInButton nextPath={nextPath} />}
+        {!showOtp && <GoogleSignInButton />}
 
         <div className="auth-trust">
           <ShieldCheck size={18} />
           <span>Your phone number is private and used for verification and booking updates.</span>
         </div>
-        {mode !== "otp" && (
+        {!showOtp && (
           <p className="auth-switch">
             {mode === "login"
               ? <>New to Rentle? <Link href="/register">Create an account</Link></>

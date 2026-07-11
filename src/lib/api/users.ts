@@ -48,13 +48,12 @@ export const usersApi = {
       body: toFormData({ file }),
     }),
   publicProfile: (id: UUID) => apiRequest<PublicProfile>(`/users/${id}`),
-  // Set (or change) the phone number and dispatch a verification code.
+  // Set (or change) the phone number and dispatch an SMS OTP.
   setPhone: (phoneNumber: string) =>
     apiRequest<string>("/users/me/phone", { method: "POST", body: { phoneNumber } }),
   verifyPhone: (code: string) =>
     apiRequest<UserProfile>("/users/me/phone/verify", { method: "POST", body: { code } }),
-  sendEmailOtp: () =>
-    apiRequest<string>("/users/me/email/otp/send", { method: "POST" }),
-  verifyEmail: (code: string) =>
-    apiRequest<UserProfile>("/users/me/email/otp/verify", { method: "POST", body: { code } }),
+  // Email is verified by opening a link; this (re)sends that link.
+  sendEmailVerification: () =>
+    apiRequest<string>("/users/me/email/verify/send", { method: "POST" }),
 };
