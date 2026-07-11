@@ -10,6 +10,7 @@ import {
 } from "react";
 import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
 import { useAuth } from "./auth-provider";
+import { GoogleSignInButton } from "./google-sign-in-button";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 
@@ -201,6 +202,8 @@ export function AuthForm({
                   : "Verify and continue"}
           </button>
         </form>
+
+        {mode !== "otp" && <GoogleSignInButton />}
 
         <div className="auth-trust">
           <ShieldCheck size={18} />

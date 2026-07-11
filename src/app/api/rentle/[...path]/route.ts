@@ -124,7 +124,7 @@ async function forward(
     if (refreshed) backendResponse = await perform(refreshed.accessToken);
   }
 
-  const isAuthResponse = ["auth/login", "auth/register", "auth/refresh"].includes(route);
+  const isAuthResponse = ["auth/login", "auth/register", "auth/google", "auth/refresh"].includes(route);
   if (isAuthResponse && backendResponse.ok) {
     const envelope = (await backendResponse.json()) as Envelope<AuthPayload>;
     if (envelope.data) {

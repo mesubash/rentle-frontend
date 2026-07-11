@@ -702,3 +702,19 @@ h3 { font-size: 1.18rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Social sign-in + contact verification */
+.google-signin { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+.google-signin__divider { display: flex; align-items: center; gap: 0.75rem; color: var(--stone); font-size: 0.8rem; }
+.google-signin__divider::before,
+.google-signin__divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.google-signin__button { display: flex; justify-content: center; min-height: 40px; }
+
+.contact-verification { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
+.verify-step { display: flex; flex-direction: column; gap: 0.75rem; }
+.verify-step__head { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); }
+.verify-step__head strong { font-weight: 600; }
+.verify-step__check { margin-left: auto; color: var(--pine); }
+.verify-step.is-done { background: var(--pine-wash); border-color: var(--pine); }
+.verify-step__row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.verify-step__row input { flex: 1 1 8rem; min-width: 0; }

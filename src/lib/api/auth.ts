@@ -23,6 +23,8 @@ export const authApi = {
     apiRequest<AuthSession>("/auth/register", { method: "POST", body: input }),
   login: (input: LoginInput) =>
     apiRequest<AuthSession>("/auth/login", { method: "POST", body: input }),
+  google: (idToken: string) =>
+    apiRequest<AuthSession>("/auth/google", { method: "POST", body: { idToken } }),
   refresh: () => apiRequest<AuthSession>("/auth/refresh", { method: "POST" }),
   logout: () => apiRequest<string>("/auth/logout", { method: "POST" }),
   sendOtp: (phoneNumber: string) =>

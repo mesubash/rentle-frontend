@@ -3,13 +3,16 @@ import type { UUID } from "./shared";
 
 export type UserProfile = {
   id: UUID;
-  phoneNumber: string;
+  phoneNumber: string | null;
   email: string;
   fullName: string;
   profilePhotoUrl: string | null;
   role: "USER" | "ADMIN";
   status: "PENDING_VERIFICATION" | "VERIFIED" | "SUSPENDED";
+  authProvider: "LOCAL" | "GOOGLE";
+  hasPassword: boolean;
   phoneVerified: boolean;
+  emailVerified: boolean;
   citizenshipVerified: boolean;
   citizenshipUploaded: boolean;
   trustScore: number;
@@ -45,4 +48,13 @@ export const usersApi = {
       body: toFormData({ file }),
     }),
   publicProfile: (id: UUID) => apiRequest<PublicProfile>(`/users/${id}`),
+  // Set (or change) the phone number and dispatch a verification code.
+  setPhone: (phoneNumber: string) =>
+    apiRequest<string>("/users/me/phone", { method: "POST", body: { phoneNumber } }),
+  verifyPhone: (code: string) =>
+    apiRequest<UserProfile>("/users/me/phone/verify", { method: "POST", body: { code } }),
+  sendEmailOtp: () =>
+    apiRequest<string>("/users/me/email/otp/send", { method: "POST" }),
+  verifyEmail: (code: string) =>
+    apiRequest<UserProfile>("/users/me/email/otp/verify", { method: "POST", body: { code } }),
 };
