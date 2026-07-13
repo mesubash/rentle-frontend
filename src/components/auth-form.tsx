@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { BrandLogo } from "./brand-logo";
@@ -10,6 +10,8 @@ import { GoogleSignInButton } from "./google-sign-in-button";
 import { useToast } from "./toast-provider";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { ADMIN_ENTRY_KEYS } from "@/lib/iam/admin-entry-keys";
+import { usePermissions } from "./permissions-provider";
 
 type AuthMode = "login" | "register";
 
@@ -17,9 +19,16 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
   const router = useRouter();
   const { showToast } = useToast();
   const { setUser } = useAuth();
+  const { canAny, ready } = usePermissions();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loginDestination, setLoginDestination] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loginDestination || !ready) return;
+    router.push(canAny(...ADMIN_ENTRY_KEYS) ? "/admin" : loginDestination);
+  }, [canAny, loginDestination, ready, router]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,6 +37,7 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email")).trim();
     const password = String(form.get("password"));
+    let waitForPermissionRedirect = false;
 
     try {
       if (mode === "register") {
@@ -43,14 +53,15 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
         const session = await authApi.login({ identifier: email, password });
         setUser(session.user);
         showToast(`Welcome back, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
-        router.push(session.user.role === "ADMIN" ? "/admin/verifications" : safeNext(nextPath));
+        waitForPermissionRedirect = true;
+        setLoginDestination(safeNext(nextPath));
       }
     } catch (caught) {
       const message = caught instanceof ApiError ? caught.message : "Something went wrong. Please try again.";
       setError(message);
       showToast(message, { tone: "error" });
     } finally {
-      setLoading(false);
+      if (!waitForPermissionRedirect) setLoading(false);
     }
   }
 

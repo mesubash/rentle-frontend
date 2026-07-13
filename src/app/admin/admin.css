@@ -1,0 +1,103 @@
+/* Tailwind is intentionally preflight-free. Marketplace styles must not be reset. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@import "tw-animate-css";
+
+@source ".";
+@source "../../components/ui";
+@source "../../components/admin-records-view.tsx";
+@source "../../components/admin-roles-view.tsx";
+@source "../../components/admin-staff-view.tsx";
+@source "../../components/admin-users-view.tsx";
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 3px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+.admin-scope {
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--white);
+  --card-foreground: var(--ink);
+  --popover: var(--white);
+  --popover-foreground: var(--ink);
+  --primary: var(--pine);
+  --primary-foreground: var(--white);
+  --secondary: var(--pine-wash);
+  --secondary-foreground: var(--pine-dark);
+  --muted: var(--paper-deep);
+  --muted-foreground: var(--stone);
+  --accent: var(--marigold-wash);
+  --accent-foreground: var(--ink);
+  --destructive: var(--brick);
+  --destructive-foreground: var(--white);
+  --input: var(--border);
+  --ring: var(--marigold);
+  font-family: var(--font-body), sans-serif;
+}
+
+.admin-scope *,
+.admin-scope *::before,
+.admin-scope *::after {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+.admin-scope button:not(:disabled) {
+  cursor: pointer;
+}
+
+.admin-access-skeleton {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 720px);
+  padding: 24px 0;
+}
+
+.admin-access-skeleton span {
+  height: 18px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--paper-deep), var(--white), var(--paper-deep));
+  background-size: 220% 100%;
+  animation: admin-skeleton 1.25s ease-in-out infinite;
+}
+
+.admin-access-skeleton span:first-child { width: 42%; height: 34px; }
+.admin-access-skeleton span:last-child { width: 70%; }
+
+.admin-no-access {
+  width: min(100%, 640px);
+  margin: 40px auto;
+  padding: 32px;
+}
+
+.admin-no-access h1 { margin: 8px 0 12px; font-size: clamp(1.7rem, 4vw, 2.4rem); }
+.admin-no-access p:not(.eyebrow) { color: var(--stone); }
+.admin-no-access .button { margin-top: 10px; }
+
+@keyframes admin-skeleton {
+  to { background-position: -220% 0; }
+}

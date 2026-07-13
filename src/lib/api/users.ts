@@ -8,7 +8,6 @@ export type UserProfile = {
   email: string;
   fullName: string;
   profilePhotoUrl: string | null;
-  role: "USER" | "ADMIN";
   status: "PENDING_VERIFICATION" | "VERIFIED" | "SUSPENDED";
   authProvider: "LOCAL" | "GOOGLE";
   hasPassword: boolean;

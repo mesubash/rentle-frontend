@@ -12,6 +12,8 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { useSignOut } from "@/lib/use-sign-out";
 import { assetUrl } from "@/lib/api/assets";
 import type { UserProfile } from "@/lib/api/users";
+import { ADMIN_ENTRY_KEYS } from "@/lib/iam/admin-entry-keys";
+import { usePermissions } from "./permissions-provider";
 
 const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
@@ -28,8 +30,8 @@ const guestNav = [
 export function SiteHeader() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
-  // Drive chrome by ROLE, not path — an admin sees the admin workspace everywhere.
-  const admin = user?.role === "ADMIN";
+  const { canAny, ready } = usePermissions();
+  const admin = Boolean(user && ready && canAny(...ADMIN_ENTRY_KEYS));
   const profilePhoto = assetUrl(user?.profilePhotoUrl);
   // Admin navigation lives in the admin sidebar — the header stays clean.
   const desktopNav = admin
@@ -60,8 +62,8 @@ export function SiteHeader() {
           </nav>
           <div className="header-actions">
             {admin && <span className="admin-label">Admin</span>}
-            {!admin && user && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
-            {!admin && user && <Link className="icon-button header-bell" href="/notifications" aria-label="Notifications"><Bell size={19} /></Link>}
+            {ready && !admin && user && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
+            {ready && !admin && user && <Link className="icon-button header-bell" href="/notifications" aria-label="Notifications"><Bell size={19} /></Link>}
             {!loading && !user && (
               <Link className="button button--small button--paper" href="/login">Log in</Link>
             )}
@@ -70,7 +72,7 @@ export function SiteHeader() {
         </div>
       </header>
 
-      {!admin && <nav className={user ? "mobile-nav" : "mobile-nav mobile-nav--guest"} aria-label="Mobile navigation">
+      {ready && !admin && <nav className={user ? "mobile-nav" : "mobile-nav mobile-nav--guest"} aria-label="Mobile navigation">
         {mobileNav.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} className={pathname.startsWith(href) ? "is-active" : ""}>
             <span className="mobile-nav__icon">{href === "/profile" && profilePhoto ? <Image className="mobile-nav__avatar" src={profilePhoto} alt="" width={24} height={24} sizes="24px" /> : <Icon size={21} />}</span>

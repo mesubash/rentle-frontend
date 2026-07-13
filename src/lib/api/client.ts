@@ -10,6 +10,13 @@ export class ApiError extends Error {
   }
 }
 
+type ForbiddenHandler = (error: ApiError) => void;
+let forbiddenHandler: ForbiddenHandler | null = null;
+
+export function setForbiddenHandler(handler: ForbiddenHandler | null) {
+  forbiddenHandler = handler;
+}
+
 type ApiRequestOptions = Omit<RequestInit, "body"> & {
   body?: BodyInit | object | null;
   query?: RequestQuery;
@@ -54,10 +61,12 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     : null;
 
   if (!response.ok || envelope?.error) {
-    throw new ApiError(
+    const error = new ApiError(
       envelope?.error ?? `Request failed with status ${response.status}`,
       response.status,
     );
+    if (response.status === 403) forbiddenHandler?.(error);
+    throw error;
   }
 
   // A 2xx response is a success even when the payload is null/empty (e.g. a

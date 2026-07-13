@@ -22,4 +22,14 @@ export const adminApi = {
     apiRequest<Kyc>(`/admin/users/${userId}/reject-kyc`, { method: "PUT", body: { reason } }),
   bookings: (page = 0, size = 100) => apiRequest<PageResponse<Booking>>("/admin/bookings", { query: { page, size } }),
   listings: (page = 0, size = 100) => apiRequest<PageResponse<ListingSummary>>("/admin/listings", { query: { page, size } }),
+  deactivateListing: (id: UUID, reason: string) =>
+    apiRequest<ListingSummary>(`/admin/listings/${id}/deactivate`, {
+      method: "PUT",
+      body: { reason },
+    }),
+  removeListing: (id: UUID, reason: string) =>
+    apiRequest<ListingSummary>(`/admin/listings/${id}/remove`, {
+      method: "PUT",
+      body: { reason },
+    }),
 };

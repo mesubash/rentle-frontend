@@ -3,6 +3,7 @@ import { Fraunces, Instrument_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { AuthProvider } from "@/components/auth-provider";
 import { ToastProvider } from "@/components/toast-provider";
+import { PermissionsProvider } from "@/components/permissions-provider";
 import "./globals.css";
 
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-display", display: "swap" });
@@ -42,7 +43,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${fraunces.variable} ${instrumentSans.variable}`}>
-      <body suppressHydrationWarning><ToastProvider><AuthProvider><SiteHeader />{children}</AuthProvider></ToastProvider></body>
+      <body suppressHydrationWarning><ToastProvider><AuthProvider><PermissionsProvider><SiteHeader />{children}</PermissionsProvider></AuthProvider></ToastProvider></body>
     </html>
   );
 }

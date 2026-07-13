@@ -6,6 +6,8 @@ import { Check, ChevronRight, X } from "lucide-react";
 import { adminApi, citizenshipImageUrl } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import type { Kyc, KycAdminRow } from "@/lib/api/kyc";
+import { P } from "@/lib/iam/permission-keys";
+import { Can } from "./can";
 
 export function VerificationQueue() {
   const [rows, setRows] = useState<KycAdminRow[]>([]);
@@ -160,7 +162,8 @@ export function VerificationQueue() {
                 </dl>
 
                 {rejecting ? (
-                  <div className="form-grid">
+                  <Can perm={P.KYC_SUBMISSION_REJECT}>
+                    <div className="form-grid">
                     <div className="field">
                       <label htmlFor="reject-reason">Reason for rejection</label>
                       <textarea id="reject-reason" maxLength={400} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Photos unclear; name does not match the card." />
@@ -171,13 +174,18 @@ export function VerificationQueue() {
                         <X size={16} /> {acting ? "Rejecting…" : "Confirm rejection"}
                       </button>
                     </div>
-                  </div>
+                    </div>
+                  </Can>
                 ) : (
                   <div className="review-panel__actions split-actions">
-                    <button className="button button--danger" disabled={acting} onClick={() => setRejecting(true)}>Reject</button>
-                    <button className="button" disabled={acting} onClick={approve}>
-                      <Check size={17} /> {acting ? "Approving…" : "Approve & verify"}
-                    </button>
+                    <Can perm={P.KYC_SUBMISSION_REJECT}>
+                      <button className="button button--danger" disabled={acting} onClick={() => setRejecting(true)}>Reject</button>
+                    </Can>
+                    <Can perm={P.KYC_SUBMISSION_APPROVE}>
+                      <button className="button" disabled={acting} onClick={approve}>
+                        <Check size={17} /> {acting ? "Approving…" : "Approve & verify"}
+                      </button>
+                    </Can>
                   </div>
                 )}
               </>
