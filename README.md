@@ -6,6 +6,7 @@ Rentle is a mobile-first marketplace for renting physical items and booking loca
 
 - Next.js 16 App Router, React 19, and strict TypeScript
 - Responsive CSS with local design tokens
+- Scoped Tailwind CSS v4 and shadcn/ui components inside the admin console only
 - Optimized Google fonts through `next/font`
 - Responsive AVIF/WebP images through `next/image`
 - A same-origin backend-for-frontend proxy with HTTP-only auth cookies
@@ -48,13 +49,22 @@ The renter requests dates, the owner makes a decision, and an approved booking o
 - `/profile`, `/profile/{userUuid}`, `/profile/edit` — account and public activity
 - `/verification` — citizenship document submission
 - `/notifications` — action reminders derived from booking state
-- `/admin/verifications`, `/admin/users`, `/admin/listings`, `/admin/bookings` — role-protected operations workspace
+- `/admin/verifications`, `/admin/users`, `/admin/listings`, `/admin/bookings` — permission-gated operations workspace
+- `/admin/roles`, `/admin/staff` — IAM role and live staff-assignment management
 
 ## API architecture
 
 Browser requests use `/api/rentle/*`. Route handlers forward them to the backend, store access and refresh tokens in HTTP-only cookies, and rotate an expired session without exposing tokens to browser JavaScript. Backend-hosted files are served through `/api/rentle-files/*`.
 
 Typed endpoint clients live in `src/lib/api/`, grouped by domain.
+
+## Staff access bootstrap
+
+The first super-admin assignment is bootstrapped by the backend. Set
+`RENTLE_IAM_SUPER_ADMIN_EMAIL` to an existing account email before starting the
+backend. The backend retries on the next boot if that account does not exist yet.
+After bootstrap, manage role bundles and assignments from `/admin/roles` and
+`/admin/staff`.
 
 ## Quality checks
 
