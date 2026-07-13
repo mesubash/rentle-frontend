@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Instrument_Sans } from "next/font/google";
+import { cookies } from "next/headers";
 import { SiteHeader } from "@/components/site-header";
 import { AuthProvider } from "@/components/auth-provider";
 import { ToastProvider } from "@/components/toast-provider";
@@ -40,10 +41,16 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1e5748" };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const hasSessionCookie = Boolean(
+    cookieStore.get("rentle_access_token")?.value ||
+    cookieStore.get("rentle_refresh_token")?.value,
+  );
+
   return (
-    <html lang="en" className={`${fraunces.variable} ${instrumentSans.variable}`}>
-      <body suppressHydrationWarning><ToastProvider><AuthProvider><PermissionsProvider><SiteHeader />{children}</PermissionsProvider></AuthProvider></ToastProvider></body>
+    <html lang="en" className={`${fraunces.variable} ${instrumentSans.variable}`} data-scroll-behavior="smooth">
+      <body suppressHydrationWarning><ToastProvider><AuthProvider hasSessionCookie={hasSessionCookie}><PermissionsProvider><SiteHeader />{children}</PermissionsProvider></AuthProvider></ToastProvider></body>
     </html>
   );
 }

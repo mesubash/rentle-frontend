@@ -33,6 +33,7 @@ export function SiteHeader() {
   const { canAny, ready } = usePermissions();
   const admin = Boolean(user && ready && canAny(...ADMIN_ENTRY_KEYS));
   const profilePhoto = assetUrl(user?.profilePhotoUrl);
+  if (pathname.startsWith("/admin")) return null;
   // Admin navigation lives in the admin sidebar — the header stays clean.
   const desktopNav = admin
     ? []

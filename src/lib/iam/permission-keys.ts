@@ -9,6 +9,7 @@ export const P = {
   PLATFORM_SCOPE_MANAGE: "platform.scope.manage",
   IDENTITY_USER_READ: "identity.user.read",
   IDENTITY_USER_SUSPEND: "identity.user.suspend",
+  IDENTITY_USER_RESET_PASSWORD: "identity.user.reset_password",
   KYC_SUBMISSION_READ: "kyc.submission.read",
   KYC_SUBMISSION_APPROVE: "kyc.submission.approve",
   KYC_SUBMISSION_REJECT: "kyc.submission.reject",

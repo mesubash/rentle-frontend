@@ -34,7 +34,9 @@ export type UpdateProfileInput = {
 };
 
 export const usersApi = {
-  me: () => apiRequest<UserProfile>("/users/me"),
+  // Profile bootstrap is an authentication probe, not an authorization action.
+  // A stale session must resolve to a guest without showing an access-denied toast.
+  me: () => apiRequest<UserProfile>("/users/me", { suppressForbiddenHandler: true }),
   updateMe: (input: UpdateProfileInput) =>
     apiRequest<UserProfile>("/users/me", { method: "PUT", body: input }),
   uploadPhoto: (file: File) =>

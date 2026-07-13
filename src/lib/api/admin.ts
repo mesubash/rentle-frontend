@@ -14,6 +14,8 @@ export const adminApi = {
   users: (status?: UserProfile["status"], page = 0, size = 100) => apiRequest<PageResponse<UserProfile>>("/admin/users", { query: { status, page, size } }),
   suspend: (id: UUID) => apiRequest<UserProfile>(`/admin/users/${id}/suspend`, { method: "PUT" }),
   unsuspend: (id: UUID) => apiRequest<UserProfile>(`/admin/users/${id}/unsuspend`, { method: "PUT" }),
+  resetPassword: (id: UUID, password: string) =>
+    apiRequest<string>(`/admin/users/${id}/password`, { method: "PUT", body: { password } }),
   // KYC review
   kycQueue: (page = 0, size = 50) => apiRequest<PageResponse<KycAdminRow>>("/admin/kyc", { query: { page, size } }),
   kycDetail: (userId: UUID) => apiRequest<Kyc>(`/admin/kyc/${userId}`),

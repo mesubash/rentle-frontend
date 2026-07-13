@@ -21,9 +21,15 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+  children,
+  hasSessionCookie,
+}: {
+  children: React.ReactNode;
+  hasSessionCookie: boolean;
+}) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(hasSessionCookie);
 
   const reload = useCallback(async () => {
     try {
@@ -39,6 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!hasSessionCookie) return;
+
     let active = true;
 
     usersApi.me()
@@ -55,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [hasSessionCookie]);
 
   const logout = useCallback(async () => {
     try {

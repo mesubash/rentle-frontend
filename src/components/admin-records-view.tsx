@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Ban, Trash2 } from "lucide-react";
+import { Ban, CalendarDays, PackageSearch, Trash2 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import type { Booking } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
@@ -10,6 +9,9 @@ import { priceUnitLabel, type ListingSummary } from "@/lib/api/listings";
 import { formatNpr } from "@/lib/format";
 import { P } from "@/lib/iam/permission-keys";
 import { Can } from "./can";
+import { AdminRowActions } from "./admin-row-actions";
+import { AdminTableRowLink } from "./admin-table-row-link";
+import { AdminCount, AdminEmptyState, AdminPageHeader, AdminStatus, AdminTableShell } from "./admin-ui";
 import { useToast } from "./toast-provider";
 import {
   AlertDialog,
@@ -21,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
-import { Button } from "./ui/button";
+import { FilterBar } from "./ui/filter-bar";
 import { Label } from "./ui/label";
 import { Skeleton } from "./ui/skeleton";
 import {
@@ -45,6 +47,9 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
   const [moderating, setModerating] = useState<ModerationAction | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("");
+  const [type, setType] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -85,24 +90,60 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
   };
 
   const records = kind === "bookings" ? bookings : listings;
+  const visibleRecords = records.filter((record) => {
+    const matchesQuery = JSON.stringify(record).toLowerCase().includes(query.trim().toLowerCase());
+    const recordStatus = (record as { status: string }).status;
+    const recordType = kind === "bookings" ? (record as Booking).listingType : (record as ListingSummary).type;
+    const matchesStatus = !status || recordStatus === status;
+    const matchesType = !type || recordType === type;
+    return matchesQuery && matchesStatus && matchesType;
+  });
+
+  const statusOptions = kind === "bookings"
+    ? ["REQUESTED", "APPROVED", "DEPOSIT_PENDING", "ACTIVE", "COMPLETED", "CANCELLED", "REJECTED"]
+    : ["DRAFT", "ACTIVE", "INACTIVE", "REMOVED"];
 
   return (
-    <div className="space-y-4">
-      <header className="admin-page-header">
-        <div>
-          <p className="eyebrow">{kind === "bookings" ? "Agreement records" : "Marketplace inventory"}</p>
-          <h1>{kind === "bookings" ? "Bookings" : "Listings"}</h1>
-          <p>{kind === "bookings" ? "Read-only operational records for support review." : "Review every listing state and take moderation action when needed."}</p>
-        </div>
-        <span className="queue-count">{records.length} shown</span>
-      </header>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title={kind === "bookings" ? "Bookings" : "Listings"}
+        description={kind === "bookings" ? "Review marketplace agreements and payment totals for support operations." : "Review marketplace inventory and take moderation action when needed."}
+        actions={<AdminCount>{records.length} records</AdminCount>}
+      />
+
+      <FilterBar
+        search={query}
+        onSearch={setQuery}
+        searchPlaceholder={`Search ${kind}...`}
+        filters={[
+          {
+            id: "status",
+            label: "Status",
+            value: status,
+            onChange: setStatus,
+            allLabel: "All statuses",
+            options: statusOptions.map((value) => ({ label: humanize(value), value })),
+          },
+          {
+            id: "type",
+            label: "Type",
+            value: type,
+            onChange: setType,
+            allLabel: "All types",
+            options: [
+              { label: "Product", value: "PRODUCT" },
+              { label: "Service", value: "SERVICE" },
+            ],
+          },
+        ]}
+      />
 
       {error && <p className="form-error" role="alert">{error}</p>}
 
       {loading ? (
         <Skeleton className="h-64 w-full" />
-      ) : records.length ? (
-        <div className="overflow-hidden rounded-lg border bg-card">
+      ) : visibleRecords.length ? (
+        <AdminTableShell>
           <Table>
             <TableHeader>
               <TableRow>
@@ -115,42 +156,46 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
             </TableHeader>
             <TableBody>
               {kind === "bookings"
-                ? bookings.map((booking) => (
-                    <TableRow key={booking.id}>
+                ? (visibleRecords as Booking[]).map((booking) => (
+                    <AdminTableRowLink key={booking.id} href={`/bookings/${booking.id}`} label={`Open booking ${booking.listingTitle}`}>
                       <TableCell><strong className="block">{booking.listingTitle}</strong><span className="block text-xs text-muted-foreground">{booking.renterName} → {booking.ownerName} · #{booking.id.slice(0, 8)}</span></TableCell>
                       <TableCell>{humanize(booking.listingType)}</TableCell>
-                      <TableCell><b className="status-chip status-chip--requested">{humanize(booking.status)}</b></TableCell>
+                      <TableCell><AdminStatus value={booking.status} /></TableCell>
                       <TableCell>{formatNpr(booking.totalPrice)}<span className="block text-xs text-muted-foreground">Deposit {formatNpr(booking.depositAmount)}</span></TableCell>
-                    </TableRow>
+                    </AdminTableRowLink>
                   ))
-                : listings.map((listing) => (
-                    <TableRow key={listing.id}>
-                      <TableCell><strong className="block"><Link className="hover:underline" href={`/listing/${listing.id}`}>{listing.title}</Link></strong><span className="block text-xs text-muted-foreground">{listing.district} · #{listing.id.slice(0, 8)}</span></TableCell>
+                : (visibleRecords as ListingSummary[]).map((listing) => (
+                    <AdminTableRowLink key={listing.id} href={`/listing/${listing.id}`} label={`Open listing ${listing.title}`}>
+                      <TableCell><strong className="block">{listing.title}</strong><span className="block text-xs text-muted-foreground">{listing.district} · #{listing.id.slice(0, 8)}</span></TableCell>
                       <TableCell>{humanize(listing.type)}</TableCell>
-                      <TableCell><b className={listing.status === "ACTIVE" ? "status-chip status-chip--verified" : "status-chip status-chip--requested"}>{humanize(listing.status)}</b></TableCell>
+                      <TableCell><AdminStatus value={listing.status} /></TableCell>
                       <TableCell>{formatNpr(listing.pricePerUnit)} / {priceUnitLabel(listing.priceUnit)}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-right" data-row-action-ignore>
                         <Can perm={P.LISTING_LISTING_MODERATE}>
-                          <span className="flex justify-end gap-2">
-                            {listing.status !== "INACTIVE" && listing.status !== "REMOVED" && (
-                              <Button variant="outline" size="sm" onClick={() => setModerating({ listing, action: "deactivate" })}><Ban /> Deactivate</Button>
-                            )}
-                            {listing.status !== "REMOVED" && (
-                              <Button variant="destructive" size="sm" onClick={() => setModerating({ listing, action: "remove" })}><Trash2 /> Remove</Button>
-                            )}
-                          </span>
+                          <AdminRowActions
+                            label={`Open moderation actions for ${listing.title}`}
+                            actions={[
+                              ...(listing.status !== "INACTIVE" && listing.status !== "REMOVED"
+                                ? [{ label: "Deactivate listing", icon: Ban, onSelect: () => setModerating({ listing, action: "deactivate" }) }]
+                                : []),
+                              ...(listing.status !== "REMOVED"
+                                ? [{ label: "Remove listing", icon: Trash2, destructive: true, onSelect: () => setModerating({ listing, action: "remove" }) }]
+                                : []),
+                            ]}
+                          />
                         </Can>
                       </TableCell>
-                    </TableRow>
+                    </AdminTableRowLink>
                   ))}
             </TableBody>
           </Table>
-        </div>
+        </AdminTableShell>
       ) : (
-        <section className="rounded-lg border bg-card px-5 py-10 text-center">
-          <h2 className="text-lg font-semibold">No {kind} to show</h2>
-          <p className="mt-1 text-sm text-muted-foreground">New marketplace activity will appear here.</p>
-        </section>
+        <AdminEmptyState
+          icon={kind === "bookings" ? CalendarDays : PackageSearch}
+          title={`No ${kind} to show`}
+          description={query ? "Try a different search term." : "New marketplace activity will appear here."}
+        />
       )}
 
       <AlertDialog open={Boolean(moderating)} onOpenChange={(open) => { if (!open && !busy) { setModerating(null); setReason(""); } }}>

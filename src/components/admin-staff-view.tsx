@@ -11,7 +11,9 @@ import {
 } from "@/lib/api/platform";
 import type { UserProfile } from "@/lib/api/users";
 import { P } from "@/lib/iam/permission-keys";
+import { AdminRowActions } from "./admin-row-actions";
 import { Can } from "./can";
+import { AdminCount, AdminEmptyState, AdminPageHeader, AdminTableShell } from "./admin-ui";
 import { usePermissions } from "./permissions-provider";
 import { useToast } from "./toast-provider";
 import {
@@ -157,14 +159,11 @@ function AssignmentsManager({ user, compact = false }: { user?: KnownUser; compa
   return (
     <div className="space-y-5">
       {!compact && (
-        <header className="admin-page-header">
-          <div>
-            <p className="eyebrow">Access control</p>
-            <h1>Staff</h1>
-            <p>Grant role bundles to existing Rentle accounts and review every live assignment.</p>
-          </div>
-          <GrantButton onClick={() => setGranting(true)} />
-        </header>
+        <AdminPageHeader
+          title="Staff assignments"
+          description="Grant role bundles to existing Rentle accounts and audit every live assignment."
+          actions={<><AdminCount>{assignments.length} assignments</AdminCount><GrantButton onClick={() => setGranting(true)} /></>}
+        />
       )}
 
       {compact && (
@@ -182,7 +181,7 @@ function AssignmentsManager({ user, compact = false }: { user?: KnownUser; compa
       {loading ? (
         <Skeleton className="h-64 w-full" />
       ) : assignments.length ? (
-        <div className="overflow-hidden rounded-lg border bg-card">
+        <AdminTableShell>
           <Table>
             <TableHeader>
               <TableRow>
@@ -212,22 +211,24 @@ function AssignmentsManager({ user, compact = false }: { user?: KnownUser; compa
                   <TableCell>{formatDate(assignment.createdAt)}</TableCell>
                   <TableCell className="text-right">
                     <Can perm={P.PLATFORM_ASSIGNMENT_MANAGE}>
-                      <Button variant="ghost" size="icon" aria-label={`Revoke ${assignment.roleName} from ${assignment.fullName}`} onClick={() => setRevoking(assignment)}>
-                        <Trash2 className="text-destructive" />
-                      </Button>
+                      <AdminRowActions
+                        label={`Open actions for ${assignment.fullName}`}
+                        actions={[{
+                          label: "Revoke role",
+                          icon: Trash2,
+                          destructive: true,
+                          onSelect: () => setRevoking(assignment),
+                        }]}
+                      />
                     </Can>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
+        </AdminTableShell>
       ) : (
-        <section className="rounded-lg border bg-card px-5 py-10 text-center">
-          <KeyRound className="mx-auto mb-3 text-muted-foreground" />
-          <h2 className="text-lg font-semibold">No live assignments</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Grant a role when this person needs staff access.</p>
-        </section>
+        <AdminEmptyState icon={KeyRound} title="No live assignments" description="Grant a role when this person needs staff access." />
       )}
 
       <GrantRoleDialog

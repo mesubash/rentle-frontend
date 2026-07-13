@@ -20,6 +20,7 @@ export function setForbiddenHandler(handler: ForbiddenHandler | null) {
 type ApiRequestOptions = Omit<RequestInit, "body"> & {
   body?: BodyInit | object | null;
   query?: RequestQuery;
+  suppressForbiddenHandler?: boolean;
 };
 
 function buildUrl(path: string, query?: RequestQuery) {
@@ -38,7 +39,7 @@ function buildUrl(path: string, query?: RequestQuery) {
 }
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}) {
-  const { body, headers, query, ...requestOptions } = options;
+  const { body, headers, query, suppressForbiddenHandler = false, ...requestOptions } = options;
   const isFormData = body instanceof FormData;
   const serializedBody =
     body && !isFormData && typeof body === "object" ? JSON.stringify(body) : body;
@@ -65,7 +66,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       envelope?.error ?? `Request failed with status ${response.status}`,
       response.status,
     );
-    if (response.status === 403) forbiddenHandler?.(error);
+    if (response.status === 403 && !suppressForbiddenHandler) forbiddenHandler?.(error);
     throw error;
   }
 
