@@ -71,6 +71,10 @@ h3 { font-size: 1.18rem; }
 .avatar-menu__label { margin: 6px 0 2px; padding: 6px 10px 0; border-top: 1px solid var(--border-soft); color: var(--stone); font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .avatar-menu__grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .link-button { display: inline; padding: 0; border: 0; background: none; color: var(--pine); font: inherit; text-decoration: underline; cursor: pointer; }
+.org-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.org-stat { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius); background: var(--white); }
+.org-stat strong { font-size: 1.5rem; line-height: 1; color: var(--ink); }
+.org-stat small { color: var(--stone); font-size: .8rem; font-weight: 600; }
 .avatar--large { width: 80px; height: 80px; font: 700 1.4rem/1 var(--font-display), serif; }
 .admin-label { font-weight: 600; color: rgba(255,255,255,.8); }
 .nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 5px; padding: 0 5px; border-radius: 9px; background: var(--brick); color: white; font-size: .66rem; font-weight: 700; }

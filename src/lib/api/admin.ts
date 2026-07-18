@@ -58,4 +58,12 @@ export const adminApi = {
     apiRequest<PageResponse<Booking>>("/admin/fees", { query: { invoiced, page, size } }),
   markFeeInvoiced: (id: UUID) =>
     apiRequest<Booking>(`/admin/bookings/${id}/fee-invoiced`, { method: "PUT" }),
+  // Organizations (companies lookup)
+  orgs: (q?: string, page = 0, size = 20) =>
+    apiRequest<PageResponse<AdminOrgRow>>("/platform/organizations", { query: { q, page, size } }),
+  org: (id: UUID) => apiRequest<AdminOrgDetail>(`/platform/organizations/${id}`),
 };
+
+export type AdminOrgRow = { id: UUID; name: string; slug: string; logoUrl: string | null; memberCount: number; listingCount: number; createdAt: string };
+export type AdminOrgMember = { assignmentId: UUID; userId: UUID; fullName: string; email: string; roleId: UUID; roleName: string; roleDisplayName: string };
+export type AdminOrgDetail = { id: UUID; name: string; slug: string; bio: string | null; logoUrl: string | null; createdBy: UUID; createdAt: string; listingCount: number; members: AdminOrgMember[] };

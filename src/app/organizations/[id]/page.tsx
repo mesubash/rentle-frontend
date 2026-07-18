@@ -138,11 +138,18 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
     <>
       <main className="page">
         <div className="container">
-          <header className="trust-hero" style={{ textAlign: "left", marginBottom: 24 }}>
+          <header className="trust-hero" style={{ textAlign: "left", marginBottom: 20 }}>
             <p className="eyebrow"><Building2 size={15} /> Organization</p>
             <h1>{org.name}</h1>
             {org.bio && <p>{org.bio}</p>}
           </header>
+
+          <div className="org-stats">
+            {can(ORG_PERM.LISTING_MANAGE) && <span className="org-stat"><strong>{listings.length}</strong><small>Listings</small></span>}
+            {can(ORG_PERM.BOOKING_MANAGE) && <span className="org-stat"><strong>{bookings.length}</strong><small>Bookings</small></span>}
+            {can(ORG_PERM.WORKER_MANAGE) && <span className="org-stat"><strong>{workers.length}</strong><small>Workers</small></span>}
+            {can(ORG_PERM.MEMBER_MANAGE) && <span className="org-stat"><strong>{members.length}</strong><small>Members</small></span>}
+          </div>
 
           {can(ORG_PERM.LISTING_MANAGE) && (
             <section style={{ marginBottom: 28 }}>

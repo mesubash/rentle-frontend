@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CalendarCheck,
   Bell,
+  Building2,
   ChevronsUpDown,
   ClipboardCheck,
   Edit3,
@@ -64,6 +65,7 @@ const navGroups: Array<{ label: string; links: AdminLink[] }> = [
     links: [
       { href: "/admin/verifications", label: "Verification queue", icon: ClipboardCheck, permission: P.KYC_SUBMISSION_READ, badge: "kyc" },
       { href: "/admin/users", label: "Users", icon: Users, permission: P.IDENTITY_USER_READ },
+      { href: "/admin/organizations", label: "Organizations", icon: Building2, permission: P.PLATFORM_ORGANIZATION_READ },
       { href: "/admin/listings", label: "Listings", icon: LayoutList, permission: P.LISTING_LISTING_READ },
       { href: "/admin/categories", label: "Categories", icon: Layers, permission: P.LISTING_CATEGORY_MANAGE },
       { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck, permission: P.BOOKING_BOOKING_READ },

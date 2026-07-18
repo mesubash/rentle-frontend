@@ -21,6 +21,7 @@ export const P = {
   TRUST_REPORT_RESOLVE: "trust.report.resolve",
   PLATFORM_SETTINGS_MANAGE: "platform.settings.manage",
   BOOKING_FEE_MANAGE: "booking.fee.manage",
+  PLATFORM_ORGANIZATION_READ: "platform.organization.read",
 } as const;
 
 export type PermissionKey = (typeof P)[keyof typeof P];
