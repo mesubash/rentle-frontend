@@ -40,17 +40,20 @@ The renter requests dates, the owner makes a decision, and an approved booking o
 
 ## Routes
 
-- `/`, `/explore`, `/search` — live listing search and filters
-- `/listing/{uuid}` — listing details, availability, reviews, and booking request
-- `/list` — listing creation and image upload
-- `/listings/manage` and `/listings/manage/{uuid}` — owner listing, image, status, and availability tools
-- `/bookings` and `/bookings/{uuid}` — renter and owner booking lifecycle
-- `/messages` and `/messages/{bookingUuid}` — approved-booking conversations
-- `/profile`, `/profile/{userUuid}`, `/profile/edit` — account and public activity
-- `/verification` — citizenship document submission
-- `/notifications` — action reminders derived from booking state
-- `/admin/verifications`, `/admin/users`, `/admin/listings`, `/admin/bookings` — permission-gated operations workspace
-- `/admin/roles`, `/admin/staff` — IAM role and live staff-assignment management
+- `/`, `/explore`, `/search` — listing search with category, type, district, and price filters
+- `/listing/{uuid}` — details, availability-aware booking, reviews, rental terms, report
+- `/list`, `/listings/manage`, `/listings/manage/{uuid}` — verification-gated listing wizard + owner tools
+- `/bookings`, `/bookings/{uuid}` — lifecycle, deposit proof, condition evidence, worker assignment, reviews
+- `/messages`, `/messages/{bookingUuid}` — booking-scoped conversations with unread state
+- `/favorites` — saved listings
+- `/workers` — business worker registry
+- `/profile`, `/profile/{userUuid}`, `/profile/edit` — account, public activity, business/wallet settings
+- `/verification` — email/phone/citizenship verification
+- `/notifications` — real notification feed
+- `/login`, `/register`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/google/callback`
+- `/terms`, `/privacy`, `/support` — legal + grievance channel
+- Admin (`/admin/*`, permission-gated) — dashboard, verifications, users, listings, bookings, categories
+  (+ field-template & pricing editors), reports, fees, settings, roles, staff assignments
 
 ## API architecture
 
