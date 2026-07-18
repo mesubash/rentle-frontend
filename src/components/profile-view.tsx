@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarDays, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "./auth-provider";
+import { ReportButton } from "./report-button";
 import { TrustBadge } from "./trust-badge";
 import { ProfileActivity } from "./profile-activity";
 import { AccountActions } from "./account-actions";
@@ -53,8 +54,9 @@ export function ProfileView({ own = false, userId, embedded = false }: { own?: b
       </div>
       <div className="profile-identity">
         <h1>{profile.fullName}</h1>
-        <div className="profile-meta"><TrustBadge verified={profile.verified} />{profile.trustScore != null && <span>Trust score {Math.round(profile.trustScore)}/100</span>}<span><CalendarDays size={15} /> Member since {joined}</span></div>
+        <div className="profile-meta"><TrustBadge verified={profile.verified} /><span>Trust score {formatTrustScore(profile.trustScore)}</span><span><CalendarDays size={15} /> Member since {joined}</span></div>
         {own && profile.email && <p>{profile.email}</p>}
+        {!own && <div className="profile-report"><ReportButton targetType="USER" targetId={profile.id} label="Report this member" /></div>}
       </div>
       {own && <AccountActions />}
     </section>
@@ -72,4 +74,8 @@ function toDisplayProfile(profile: UserProfile | null): DisplayProfile | null {
 
 function initials(name: string) {
   return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+}
+
+function formatTrustScore(value: number | null | undefined) {
+  return value && value > 0 ? `${value.toFixed(1)} / 5` : "No reviews yet";
 }

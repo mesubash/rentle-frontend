@@ -17,6 +17,10 @@ export const P = {
   LISTING_LISTING_MODERATE: "listing.listing.moderate",
   LISTING_CATEGORY_MANAGE: "listing.category.manage",
   BOOKING_BOOKING_READ: "booking.booking.read",
+  TRUST_REPORT_READ: "trust.report.read",
+  TRUST_REPORT_RESOLVE: "trust.report.resolve",
+  PLATFORM_SETTINGS_MANAGE: "platform.settings.manage",
+  BOOKING_FEE_MANAGE: "booking.fee.manage",
 } as const;
 
 export type PermissionKey = (typeof P)[keyof typeof P];

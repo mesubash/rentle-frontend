@@ -23,6 +23,7 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loginDestination, setLoginDestination] = useState<string | null>(null);
 
   useEffect(() => {
@@ -119,8 +120,28 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
             {mode === "register" && <small>At least 8 characters.</small>}
           </div>
 
+          {mode === "login" && (
+            <p className="auth-switch"><Link href="/auth/forgot-password">Forgot password?</Link></p>
+          )}
+
+          {mode === "register" && (
+            <label className="consent-field">
+              <input
+                type="checkbox"
+                name="acceptedTerms"
+                checked={acceptedTerms}
+                onChange={(event) => setAcceptedTerms(event.target.checked)}
+                required
+              />
+              <span>
+                I agree to the <Link href="/terms">Terms of Service</Link> and{" "}
+                <Link href="/privacy">Privacy Policy</Link>
+              </span>
+            </label>
+          )}
+
           {error && <p className="form-error" role="alert">{error}</p>}
-          <button className="button button--wide" disabled={loading}>
+          <button className="button button--wide" disabled={loading || (mode === "register" && !acceptedTerms)}>
             {loading ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
           </button>
         </form>

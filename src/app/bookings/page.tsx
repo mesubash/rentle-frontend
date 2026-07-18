@@ -45,7 +45,9 @@ export default function BookingsPage() {
     ) : (
       <>
         <div className="tabs" role="tablist"><button role="tab" aria-selected={tab === "renting"} className={tab === "renting" ? "is-active" : ""} onClick={() => setTab("renting")}>Renting <span>{renting.length}</span></button><button role="tab" aria-selected={tab === "hosting"} className={tab === "hosting" ? "is-active" : ""} onClick={() => setTab("hosting")}>Owner requests <span>{hosting.length}</span></button></div>
-        {error ? <section className="empty-state card"><h2>Bookings are temporarily unavailable</h2><p>{error}</p><button className="button" onClick={() => window.location.reload()}>Try again</button></section> : bookings.length ? <div className="booking-list">{bookings.map((booking) => <BookingCard booking={booking} tab={tab} key={booking.id} />)}</div> : <p className="empty-note">No {tab === "renting" ? "rental" : "owner"} bookings yet.</p>}
+        {error ? <section className="empty-state card"><h2>Bookings are temporarily unavailable</h2><p>{error}</p><button className="button" onClick={() => window.location.reload()}>Try again</button></section> : bookings.length ? <div className="booking-list">{bookings.map((booking) => <BookingCard booking={booking} tab={tab} key={booking.id} />)}</div> : (tab === "renting"
+          ? <section className="empty-state card"><CalendarDays size={26} /><h2>Nothing booked yet</h2><p>Find a camera, an outfit, or a local pro nearby — your requests show up here.</p><Link className="button" href="/explore">Browse listings</Link></section>
+          : <section className="empty-state card"><CalendarDays size={26} /><h2>No requests yet</h2><p>When someone requests one of your listings, it lands here for you to approve.</p><Link className="button" href="/listings/manage">Manage your listings</Link></section>)}
       </>
     )}
   </div></main>;

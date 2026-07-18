@@ -30,6 +30,7 @@ export const config = {
     "/verification/:path*",
     "/profile",
     "/profile/edit/:path*",
+    "/workers/:path*",
     "/admin/:path*",
   ],
 };

@@ -5,12 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Bell, CalendarDays, Compass, LayoutList, ListPlus, LogIn, LogOut, MessageCircle, Search, ShieldCheck, UserRound } from "lucide-react";
+import { Bell, CalendarDays, Compass, Heart, LayoutList, ListPlus, LogIn, LogOut, MessageCircle, Search, ShieldCheck, UserCog, UserRound } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { BrandLogo } from "./brand-logo";
 import { ConfirmDialog } from "./confirm-dialog";
 import { useSignOut } from "@/lib/use-sign-out";
 import { assetUrl } from "@/lib/api/assets";
+import { messagesApi } from "@/lib/api/messages";
+import { notificationsApi } from "@/lib/api/notifications";
 import type { UserProfile } from "@/lib/api/users";
 import { ADMIN_ENTRY_KEYS } from "@/lib/iam/admin-entry-keys";
 import { usePermissions } from "./permissions-provider";
@@ -19,7 +21,9 @@ const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/favorites", label: "Saved", icon: Heart, mobileOnly: true },
   { href: "/listings/manage", label: "Listings", icon: LayoutList, mobileOnly: true },
+  { href: "/workers", label: "Workers", icon: UserCog, mobileOnly: true },
   { href: "/profile", label: "Profile", icon: UserRound, mobileOnly: true },
 ];
 const guestNav = [
@@ -32,7 +36,43 @@ export function SiteHeader() {
   const { user, loading } = useAuth();
   const { canAny, ready } = usePermissions();
   const admin = Boolean(user && ready && canAny(...ADMIN_ENTRY_KEYS));
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+  const [messageUnreadCount, setMessageUnreadCount] = useState(0);
+  const userId = user?.id;
   const profilePhoto = assetUrl(user?.profilePhotoUrl);
+
+  useEffect(() => {
+    if (!userId || !ready || admin) return;
+
+    let active = true;
+    const refreshUnreadCounts = () => {
+      notificationsApi
+        .unreadCount()
+        .then((count) => {
+          if (active) setNotificationUnreadCount(Math.max(0, count));
+        })
+        .catch(() => {
+          // The header remains usable when the background count request fails.
+        });
+      messagesApi
+        .unreadCount()
+        .then(({ count }) => {
+          if (active) setMessageUnreadCount(Math.max(0, count));
+        })
+        .catch(() => {
+          // Message navigation remains usable when the background count request fails.
+        });
+    };
+
+    refreshUnreadCounts();
+    const intervalId = window.setInterval(refreshUnreadCounts, 60_000);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, [admin, ready, userId]);
+
   if (pathname.startsWith("/admin")) return null;
   // Admin navigation lives in the admin sidebar — the header stays clean.
   const desktopNav = admin
@@ -56,15 +96,15 @@ export function SiteHeader() {
           )}
           <nav className="desktop-nav" aria-label="Main navigation">
             {desktopNav.map((item) => (
-              <Link key={item.href} href={item.href} className={pathname.startsWith(item.href) ? "is-active" : ""}>
-                {item.label}
+              <Link key={item.href} href={item.href} className={pathname.startsWith(item.href) ? "is-active" : ""} aria-label={item.href === "/messages" && messageUnreadCount > 0 ? `Messages, ${messageUnreadCount} unread` : undefined}>
+                {item.label}{item.href === "/messages" && messageUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
               </Link>
             ))}
           </nav>
           <div className="header-actions">
             {admin && <span className="admin-label">Admin</span>}
             {ready && !admin && user && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
-            {ready && !admin && user && <Link className="icon-button header-bell" href="/notifications" aria-label="Notifications"><Bell size={19} /></Link>}
+            {ready && !admin && user && <Link className="icon-button header-bell" href="/notifications" aria-label={notificationUnreadCount > 0 ? `Notifications, ${notificationUnreadCount} unread` : "Notifications"}><Bell size={19} />{notificationUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{notificationUnreadCount > 99 ? "99+" : notificationUnreadCount}</span>}</Link>}
             {!loading && !user && (
               <Link className="button button--small button--paper" href="/login">Log in</Link>
             )}
@@ -75,8 +115,8 @@ export function SiteHeader() {
 
       {ready && !admin && <nav className={user ? "mobile-nav" : "mobile-nav mobile-nav--guest"} aria-label="Mobile navigation">
         {mobileNav.map(({ href, label, icon: Icon }) => (
-          <Link key={href} href={href} className={pathname.startsWith(href) ? "is-active" : ""}>
-            <span className="mobile-nav__icon">{href === "/profile" && profilePhoto ? <Image className="mobile-nav__avatar" src={profilePhoto} alt="" width={24} height={24} sizes="24px" /> : <Icon size={21} />}</span>
+          <Link key={href} href={href} className={pathname.startsWith(href) ? "is-active" : ""} aria-label={href === "/messages" && messageUnreadCount > 0 ? `Messages, ${messageUnreadCount} unread` : undefined}>
+            <span className="mobile-nav__icon">{href === "/profile" && profilePhoto ? <Image className="mobile-nav__avatar" src={profilePhoto} alt="" width={24} height={24} sizes="24px" /> : <Icon size={21} />}{href === "/messages" && messageUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}</span>
             <span>{label}</span>
           </Link>
         ))}

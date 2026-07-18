@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { AuthProvider } from "@/components/auth-provider";
 import { ToastProvider } from "@/components/toast-provider";
 import { PermissionsProvider } from "@/components/permissions-provider";
+import { FavoritesProvider } from "@/components/favorites-provider";
 import "./globals.css";
 
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-display", display: "swap" });
@@ -50,7 +51,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang="en" className={`${fraunces.variable} ${instrumentSans.variable}`} data-scroll-behavior="smooth">
-      <body suppressHydrationWarning><ToastProvider><AuthProvider hasSessionCookie={hasSessionCookie}><PermissionsProvider><SiteHeader />{children}</PermissionsProvider></AuthProvider></ToastProvider></body>
+      <body suppressHydrationWarning><ToastProvider><AuthProvider hasSessionCookie={hasSessionCookie}><PermissionsProvider><FavoritesProvider><SiteHeader />{children}</FavoritesProvider></PermissionsProvider></AuthProvider></ToastProvider></body>
     </html>
   );
 }

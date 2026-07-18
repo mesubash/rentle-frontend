@@ -29,6 +29,10 @@ export const authApi = {
     apiRequest<AuthSession>("/auth/register", { method: "POST", body: input }),
   login: (input: LoginInput) =>
     apiRequest<AuthSession>("/auth/login", { method: "POST", body: input }),
+  forgotPassword: (email: string) =>
+    apiRequest<string>("/auth/forgot-password", { method: "POST", body: { email } }),
+  resetPassword: (token: string, password: string) =>
+    apiRequest<string>("/auth/reset-password", { method: "POST", body: { token, password } }),
   refresh: () => apiRequest<AuthSession>("/auth/refresh", { method: "POST" }),
   logout: () => apiRequest<string>("/auth/logout", { method: "POST" }),
   // Backend-driven Google OAuth: the frontend only reads whether it's enabled

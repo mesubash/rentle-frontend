@@ -73,8 +73,10 @@ export function AdminProfileView() {
               <CardDescription>Your current marketplace trust indicator.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-end gap-2"><strong className="text-3xl">{Math.round(user.trustScore)}</strong><span className="pb-1 text-sm text-muted-foreground">/ 100</span></div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, user.trustScore))}%` }} /></div>
+              {user.trustScore > 0
+                ? <div className="flex items-end gap-2"><strong className="text-3xl">{user.trustScore.toFixed(1)}</strong><span className="pb-1 text-sm text-muted-foreground">/ 5</span></div>
+                : <p className="text-sm font-medium text-muted-foreground">No reviews yet</p>}
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, ((user.trustScore ?? 0) / 5) * 100))}%` }} /></div>
             </CardContent>
           </Card>
         </div>

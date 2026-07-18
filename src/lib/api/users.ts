@@ -7,6 +7,7 @@ export type UserProfile = {
   phoneNumber: string | null;
   email: string;
   fullName: string;
+  paymentWallet: string | null;
   profilePhotoUrl: string | null;
   status: "PENDING_VERIFICATION" | "VERIFIED" | "SUSPENDED";
   authProvider: "LOCAL" | "GOOGLE";
@@ -16,6 +17,8 @@ export type UserProfile = {
   citizenshipVerified: boolean;
   kycStatus: KycStatus | null;
   trustScore: number;
+  accountType: "INDIVIDUAL" | "BUSINESS";
+  businessName: string | null;
   createdAt: string;
 };
 
@@ -25,12 +28,17 @@ export type PublicProfile = {
   profilePhotoUrl: string | null;
   verified: boolean;
   trustScore: number;
+  accountType: "INDIVIDUAL" | "BUSINESS";
+  businessName: string | null;
   memberSince: string;
 };
 
 export type UpdateProfileInput = {
   fullName?: string;
   email?: string;
+  paymentWallet?: string | null;
+  accountType?: "INDIVIDUAL" | "BUSINESS";
+  businessName?: string | null;
 };
 
 export const usersApi = {

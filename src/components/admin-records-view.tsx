@@ -157,7 +157,7 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
             <TableBody>
               {kind === "bookings"
                 ? (visibleRecords as Booking[]).map((booking) => (
-                    <AdminTableRowLink key={booking.id} href={`/bookings/${booking.id}`} label={`Open booking ${booking.listingTitle}`}>
+                    <AdminTableRowLink key={booking.id} href={`/admin/bookings/${booking.id}`} label={`Open booking ${booking.listingTitle}`}>
                       <TableCell><strong className="block">{booking.listingTitle}</strong><span className="block text-xs text-muted-foreground">{booking.renterName} → {booking.ownerName} · #{booking.id.slice(0, 8)}</span></TableCell>
                       <TableCell>{humanize(booking.listingType)}</TableCell>
                       <TableCell><AdminStatus value={booking.status} /></TableCell>

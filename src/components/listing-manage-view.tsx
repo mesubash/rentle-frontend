@@ -12,6 +12,7 @@ export function ListingManageView({ listingId }: { listingId: string }) {
   const [availability, setAvailability] = useState<Availability | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  // ListingDetail exposes image URLs only, so there is no stable image ID to pass to listingsApi.deleteImage.
   const [photos, setPhotos] = useState<File[]>([]);
   const loadAvailability = useCallback(() => listingsApi.availability(listingId).then(setAvailability).catch(() => undefined), [listingId]);
   useEffect(() => { listingsApi.detail(listingId).then(setListing).catch(() => setError("This listing could not be loaded.")); void loadAvailability(); }, [listingId, loadAvailability]);

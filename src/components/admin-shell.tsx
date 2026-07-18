@@ -11,7 +11,11 @@ import {
   Edit3,
   ExternalLink,
   LayoutDashboard,
+  Flag,
+  Layers,
   LayoutList,
+  Receipt,
+  Settings,
   LogOut,
   Menu,
   PanelLeftIcon,
@@ -61,7 +65,16 @@ const navGroups: Array<{ label: string; links: AdminLink[] }> = [
       { href: "/admin/verifications", label: "Verification queue", icon: ClipboardCheck, permission: P.KYC_SUBMISSION_READ, badge: "kyc" },
       { href: "/admin/users", label: "Users", icon: Users, permission: P.IDENTITY_USER_READ },
       { href: "/admin/listings", label: "Listings", icon: LayoutList, permission: P.LISTING_LISTING_READ },
+      { href: "/admin/categories", label: "Categories", icon: Layers, permission: P.LISTING_CATEGORY_MANAGE },
       { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck, permission: P.BOOKING_BOOKING_READ },
+      { href: "/admin/reports", label: "Reports", icon: Flag, permission: P.TRUST_REPORT_READ },
+    ],
+  },
+  {
+    label: "Platform",
+    links: [
+      { href: "/admin/fees", label: "Fees", icon: Receipt, permission: P.BOOKING_FEE_MANAGE },
+      { href: "/admin/settings", label: "Settings", icon: Settings, permission: P.PLATFORM_SETTINGS_MANAGE },
     ],
   },
   {

@@ -155,7 +155,7 @@ export function AdminUsersView() {
                     <AdminStatus value={user.status} />
                     <span className="mt-1 block text-xs text-muted-foreground">{user.kycStatus ? `KYC ${user.kycStatus.toLowerCase()}` : "No KYC"}</span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{Math.round(user.trustScore)} / 100</TableCell>
+                  <TableCell className="hidden md:table-cell">{formatTrustScore(user.trustScore)}</TableCell>
                   <TableCell className="text-right" data-row-action-ignore>
                     <AdminRowActions
                       label={`Open actions for ${user.fullName}`}
@@ -310,6 +310,10 @@ function userActions({
 function maskPhone(value: string | null) {
   if (!value) return "No phone";
   return value.length > 6 ? `${value.slice(0, 4)}••••${value.slice(-3)}` : value;
+}
+
+function formatTrustScore(value: number | null | undefined) {
+  return value && value > 0 ? `${value.toFixed(1)} / 5` : "No reviews yet";
 }
 
 function messageOf(caught: unknown, fallback: string) {

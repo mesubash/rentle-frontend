@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -7,15 +8,21 @@ import {
   CheckCircle2,
   Info,
   ShieldCheck,
+  WalletCards,
 } from "lucide-react";
-import { type ChangeEvent, useEffect, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useAuth } from "./auth-provider";
+import { ReportButton } from "./report-button";
 import { ReviewForm } from "./review-form";
 import { StatusTimeline } from "./status-timeline";
 import { useToast } from "./toast-provider";
-import { assetUrl } from "@/lib/api/assets";
-import { bookingsApi, type Booking } from "@/lib/api/bookings";
+import {
+  bookingsApi,
+  type Booking,
+  type BookingConditionPhase,
+} from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
+import { reviewsApi } from "@/lib/api/reviews";
 import { formatNpr } from "@/lib/format";
 
 export function BookingDetailView({ bookingId }: { bookingId: string }) {
@@ -26,6 +33,9 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
   const [acting, setActing] = useState(false);
   const [reason, setReason] = useState("");
   const [proof, setProof] = useState<File | null>(null);
+  const [reviewed, setReviewed] = useState<boolean | null>(null);
+  const [reviewStatusError, setReviewStatusError] = useState("");
+  const [workers, setWorkers] = useState<import("@/lib/api/workers").Worker[]>([]);
   useEffect(() => {
     bookingsApi
       .detail(bookingId)
@@ -38,6 +48,31 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
         ),
       );
   }, [bookingId]);
+  useEffect(() => {
+    if (user?.accountType !== "BUSINESS" || user?.id !== booking?.ownerId) return;
+    let active = true;
+    import("@/lib/api/workers").then(({ workersApi }) => workersApi.list())
+      .then((list) => { if (active) setWorkers(list.filter((w) => w.active)); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [user?.accountType, user?.id, booking?.ownerId]);
+  useEffect(() => {
+    if (booking?.status !== "COMPLETED") return;
+    let active = true;
+    reviewsApi
+      .myReviewStatus(booking.id)
+      .then((status) => {
+        if (!active) return;
+        setReviewed(status);
+        setReviewStatusError("");
+      })
+      .catch(() => {
+        if (active) setReviewStatusError("Your review status could not be loaded.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [booking?.id, booking?.status]);
   if (!booking)
     return (
       <main className="page">
@@ -48,6 +83,13 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
     );
   const isOwner = user?.id === booking.ownerId;
   const counterpart = isOwner ? booking.renterName : booking.ownerName;
+  const canAssignWorker = isOwner && user?.accountType === "BUSINESS"
+    && ["APPROVED", "DEPOSIT_PENDING", "ACTIVE"].includes(booking.status);
+  const reviewSubjectName = user?.id === booking.ownerId
+    ? booking.renterName
+    : user?.id === booking.renterId
+      ? booking.ownerName
+      : "the other participant";
   async function act(action: () => Promise<Booking>) {
     setActing(true);
     setError("");
@@ -66,6 +108,27 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
   }
   function chooseProof(event: ChangeEvent<HTMLInputElement>) {
     setProof(event.target.files?.[0] ?? null);
+  }
+  async function recordCondition(
+    phase: BookingConditionPhase,
+    file: File,
+    note?: string,
+  ) {
+    const updated = await bookingsApi.recordCondition(
+      bookingId,
+      phase,
+      file,
+      note,
+    );
+    setBooking(updated);
+    const refreshed = await bookingsApi.detail(bookingId);
+    setBooking(refreshed);
+    showToast(
+      phase === "CHECKOUT"
+        ? "Hand-over condition saved."
+        : "Return condition saved.",
+      { tone: "success" },
+    );
   }
   const terminal =
     booking.status === "COMPLETED" ||
@@ -116,6 +179,26 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                   <span>Renter note: {booking.renterNote}</span>
                 </div>
               )}
+              {canAssignWorker && (
+                <div className="field">
+                  <label htmlFor="assign-worker">Assign a worker to attend</label>
+                  <select
+                    id="assign-worker"
+                    value={booking.assignedWorkerId ?? ""}
+                    onChange={(event) => act(() => bookingsApi.assignWorker(booking.id, event.target.value || undefined))}
+                  >
+                    <option value="">No one assigned yet</option>
+                    {workers.map((w) => <option key={w.id} value={w.id}>{w.name}{w.role ? ` — ${w.role}` : ""}</option>)}
+                  </select>
+                  {workers.length === 0 && <small>Add workers on the <Link href="/workers">Workers</Link> page first.</small>}
+                </div>
+              )}
+              {!isOwner && booking.assignedWorkerName && (
+                <div className="form-note">
+                  <Info size={17} />
+                  <span>{booking.assignedWorkerName} will attend this booking.</span>
+                </div>
+              )}
               {booking.status === "REQUESTED" && isOwner && (
                 <div className="form-grid">
                   <div className="field">
@@ -156,6 +239,14 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                 !isOwner &&
                 booking.depositAmount > 0 && (
                   <div className="form-grid">
+                    <div className="form-note">
+                      <WalletCards size={19} />
+                      {booking.ownerPaymentWallet ? (
+                        <span><strong>Send the deposit to:</strong> {booking.ownerPaymentWallet}</span>
+                      ) : (
+                        <span>The owner has not added a payment wallet. Ask for payment details in <Link href={`/messages/${booking.id}`}>booking messages</Link> before sending money.</span>
+                      )}
+                    </div>
                     <div className="field">
                       <label htmlFor="deposit-proof">
                         Deposit payment proof
@@ -209,7 +300,7 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                   {booking.depositProofUrl && (
                     <a
                       className="button button--secondary"
-                      href={assetUrl(booking.depositProofUrl) || "#"}
+                      href={`/api/rentle/bookings/${booking.id}/deposit-proof`}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -276,7 +367,68 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                 </p>
               )}
             </section>
-            {booking.status === "COMPLETED" && <ReviewForm bookingId={booking.id} />}
+            {(booking.status === "ACTIVE" ||
+              booking.status === "COMPLETED") && (
+              <section className="card booking-action-card">
+                <p className="eyebrow">Condition &amp; handover</p>
+                <h2>Photo evidence for both participants</h2>
+                <p>
+                  Either participant can record the item condition. This helps
+                  protect both sides if there is a deposit dispute.
+                </p>
+                {booking.agreedTerms && (
+                  <div className="field">
+                    <label>Agreed terms</label>
+                    <div className="form-note">
+                      <span
+                        style={{
+                          minWidth: 0,
+                          overflowWrap: "anywhere",
+                          whiteSpace: "pre-wrap",
+                        }}
+                      >
+                        {booking.agreedTerms}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <ConditionCapture
+                  bookingId={booking.id}
+                  phase="CHECKOUT"
+                  title="Item condition at hand-over"
+                  hasCondition={booking.hasCheckoutCondition}
+                  savedNote={booking.checkoutNote}
+                  onSave={recordCondition}
+                />
+                <ConditionCapture
+                  bookingId={booking.id}
+                  phase="RETURN"
+                  title="Item condition at return"
+                  hasCondition={booking.hasReturnCondition}
+                  savedNote={booking.returnNote}
+                  onSave={recordCondition}
+                  separated
+                />
+              </section>
+            )}
+            {booking.status === "COMPLETED" && (
+              reviewStatusError ? (
+                <section className="card booking-action-card">
+                  <p className="form-error" role="alert">{reviewStatusError}</p>
+                </section>
+              ) : reviewed === null ? (
+                <section className="card booking-action-card"><p>Checking your review status…</p></section>
+              ) : reviewed ? (
+                <section className="card booking-action-card">
+                  <CheckCircle2 className="state-icon state-icon--success" size={30} />
+                  <p className="eyebrow">Review complete</p>
+                  <h2>You reviewed this booking</h2>
+                  <p>Your verified review of {reviewSubjectName} is already published.</p>
+                </section>
+              ) : (
+                <ReviewForm bookingId={booking.id} subjectName={reviewSubjectName} />
+              )
+            )}
             <section className="card booking-facts">
               <h2>Booking details</h2>
               <dl>
@@ -343,8 +495,199 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
             )}
           </aside>
         </div>
+        <div className="booking-report"><ReportButton targetType="BOOKING" targetId={booking.id} label="Report a problem with this booking" /></div>
       </div>
     </main>
+  );
+}
+
+function ConditionCapture({
+  bookingId,
+  phase,
+  title,
+  hasCondition,
+  savedNote,
+  onSave,
+  separated = false,
+}: {
+  bookingId: string;
+  phase: BookingConditionPhase;
+  title: string;
+  hasCondition: boolean;
+  savedNote: string | null;
+  onSave: (
+    phase: BookingConditionPhase,
+    file: File,
+    note?: string,
+  ) => Promise<void>;
+  separated?: boolean;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const previewUrl = useMemo(
+    () => (file ? URL.createObjectURL(file) : null),
+    [file],
+  );
+
+  useEffect(
+    () => () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    },
+    [previewUrl],
+  );
+
+  const inputId = `condition-${bookingId}-${phase.toLowerCase()}`;
+  const noteId = `${inputId}-note`;
+  const imageUrl = `/api/rentle/bookings/${bookingId}/condition/${phase}`;
+
+  async function saveCondition() {
+    if (!file) return;
+    setSaving(true);
+    setError("");
+    try {
+      await onSave(phase, file, note.trim() || undefined);
+      setFile(null);
+      setNote("");
+    } catch (caught) {
+      setError(
+        caught instanceof ApiError
+          ? caught.message
+          : "The condition evidence could not be saved.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="form-grid"
+      style={
+        separated
+          ? {
+              borderTop: "1px solid var(--border-soft)",
+              marginTop: 20,
+              minWidth: 0,
+              paddingTop: 20,
+            }
+          : { marginTop: 20, minWidth: 0 }
+      }
+    >
+      <h3 style={{ margin: 0 }}>{title}</h3>
+      {hasCondition ? (
+        <>
+          <div className="field">
+            <label>Recorded photo</label>
+            <a
+              href={imageUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`Open the full-size ${title.toLowerCase()} photo`}
+              style={{
+                display: "block",
+                minWidth: 0,
+                overflow: "hidden",
+                borderRadius: "var(--radius)",
+              }}
+            >
+              <Image
+                src={imageUrl}
+                alt={title}
+                width={960}
+                height={720}
+                sizes="(max-width: 959px) calc(100vw - 68px), 600px"
+                unoptimized
+                style={{
+                  display: "block",
+                  height: "auto",
+                  maxHeight: 420,
+                  objectFit: "cover",
+                  width: "100%",
+                }}
+              />
+            </a>
+            <small>Tap the photo to open it full size.</small>
+          </div>
+          {savedNote && (
+            <div className="field">
+              <label>Condition note</label>
+              <div className="form-note">
+                <span
+                  style={{
+                    minWidth: 0,
+                    overflowWrap: "anywhere",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  {savedNote}
+                </span>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="field">
+            <label htmlFor={inputId}>Condition photo</label>
+            <input
+              id={inputId}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            />
+            <small>
+              {file?.name || "Choose a clear photo of the item condition."}
+            </small>
+          </div>
+          {previewUrl && (
+            <Image
+              src={previewUrl}
+              alt="Selected condition photo preview"
+              width={960}
+              height={720}
+              unoptimized
+              style={{
+                display: "block",
+                height: "auto",
+                maxHeight: 420,
+                objectFit: "cover",
+                width: "100%",
+                borderRadius: "var(--radius)",
+              }}
+            />
+          )}
+          <div className="field">
+            <label htmlFor={noteId}>Condition note (optional)</label>
+            <textarea
+              id={noteId}
+              maxLength={500}
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="Add visible marks, wear, missing parts, or other details."
+            />
+          </div>
+          <button
+            className="button button--wide"
+            type="button"
+            disabled={!file || saving}
+            onClick={saveCondition}
+          >
+            {saving
+              ? "Saving…"
+              : phase === "CHECKOUT"
+                ? "Save hand-over condition"
+                : "Save return condition"}
+          </button>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 

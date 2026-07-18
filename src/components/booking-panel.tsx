@@ -6,9 +6,13 @@ import { Info, ShieldCheck, X } from "lucide-react";
 import { formatNpr } from "@/lib/format";
 import { bookingsApi } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
-import { priceUnitLabel, type ListingDetail } from "@/lib/api/listings";
+import { listingsApi, priceUnitLabel, type BlockedRange, type ListingDetail } from "@/lib/api/listings";
+import { templatesApi, type FieldDefinition } from "@/lib/api/templates";
+import { DynamicFields } from "./dynamic-fields";
 import { useAuth } from "./auth-provider";
 import { useToast } from "./toast-provider";
+
+const EMPTY_BLOCKED_RANGES: BlockedRange[] = [];
 
 // Local calendar date (not UTC): in Nepal (UTC+5:45) a UTC date would roll the
 // "tomorrow" default/min back to today for evening visitors.
@@ -30,13 +34,72 @@ export function BookingPanel({ listing }: { listing: ListingDetail }) {
   const [start, setStart] = useState(isoDate(1));
   const [end, setEnd] = useState(isoDate(3));
   const [startTime, setStartTime] = useState("10:00");
+  const [endTime, setEndTime] = useState("12:00");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [availability, setAvailability] = useState<{ listingId: string; blocked: BlockedRange[]; error: string } | null>(null);
+  const [bookingFields, setBookingFields] = useState<FieldDefinition[]>([]);
+  const [attrValues, setAttrValues] = useState<Record<string, unknown>>({});
   const isService = listing.type === "SERVICE";
+  const isHourly = listing.priceUnit === "PER_HOUR";
   const unit = priceUnitLabel(listing.priceUnit);
-  const duration = useMemo(() => isService || listing.priceUnit === "FLAT" ? 1 : Math.max(1, Math.ceil((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1), [end, isService, listing.priceUnit, start]);
+  const availabilityLoading = availability?.listingId !== listing.id;
+  const blockedRanges = availability?.listingId === listing.id ? availability.blocked : EMPTY_BLOCKED_RANGES;
+  const availabilityError = availability?.listingId === listing.id ? availability.error : "";
+  const rentalDays = useMemo(() => {
+    if (isService || !start || !end || end < start) return 0;
+    return Math.ceil((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1;
+  }, [end, isService, start]);
+  // Mirrors backend PricingService: hourly = whole hours between times (min 1),
+  // daily = inclusive day count, flat = 1 unit.
+  const duration = useMemo(() => {
+    if (listing.priceUnit === "FLAT") return 1;
+    if (isHourly) {
+      const [sh, sm] = startTime.split(":").map(Number);
+      const [eh, em] = endTime.split(":").map(Number);
+      return Math.max(1, Math.floor((eh * 60 + em - (sh * 60 + sm)) / 60));
+    }
+    return Math.max(1, Math.ceil((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1);
+  }, [end, endTime, isHourly, listing.priceUnit, start, startTime]);
   const rental = listing.pricePerUnit * duration;
+  const timesInvalid = isHourly && endTime <= startTime;
+  const datesOverlap = useMemo(() => {
+    const selectedEnd = isService ? start : end;
+    if (!start || !selectedEnd || selectedEnd < start) return false;
+    return blockedRanges.some((range) => start <= range.endDate && selectedEnd >= range.startDate);
+  }, [blockedRanges, end, isService, start]);
+  const dateValidationError = useMemo(() => {
+    if (datesOverlap) return "Some of those dates are already booked — pick different dates";
+    if (!isService && rentalDays) {
+      const minDays = listing.product?.minRentalDays;
+      const maxDays = listing.product?.maxRentalDays;
+      if (minDays && rentalDays < minDays) return `This item has a minimum rental of ${minDays} ${minDays === 1 ? "day" : "days"}`;
+      if (maxDays && rentalDays > maxDays) return `This item has a maximum rental of ${maxDays} ${maxDays === 1 ? "day" : "days"}`;
+    }
+    return "";
+  }, [datesOverlap, isService, listing.product, rentalDays]);
+
+  useEffect(() => {
+    let active = true;
+    listingsApi.availability(listing.id)
+      .then((availability) => {
+        if (active) setAvailability({ listingId: listing.id, blocked: availability.blocked, error: "" });
+      })
+      .catch(() => {
+        if (active) setAvailability({ listingId: listing.id, blocked: [], error: "Availability could not be checked right now." });
+      });
+    return () => { active = false; };
+  }, [listing.id]);
+
+  // Load this category's BOOKING field template (docs/12) to collect extra request details.
+  useEffect(() => {
+    let active = true;
+    templatesApi.current(listing.categoryId, "BOOKING")
+      .then((tpl) => { if (active) setBookingFields(tpl?.fields ?? []); })
+      .catch(() => { if (active) setBookingFields([]); });
+    return () => { active = false; };
+  }, [listing.categoryId]);
 
   // Move focus into the sheet on open and close it on Escape.
   useEffect(() => {
@@ -54,16 +117,28 @@ export function BookingPanel({ listing }: { listing: ListingDetail }) {
   }
 
   function openSheet() {
-    // While the session is still loading, open optimistically; submit re-checks.
-    if (!loading && !user) return loginRedirect();
+    if (!user) {
+      if (loading) return;
+      return loginRedirect();
+    }
+    if (user.status !== "VERIFIED") return router.push("/verification");
     setOpen(true);
   }
 
   async function submit() {
     if (!user) return loginRedirect();
+    if (user.status !== "VERIFIED") {
+      setOpen(false);
+      router.push("/verification");
+      return;
+    }
+    if (dateValidationError || availabilityLoading || !start || (!isService && (!end || end < start)) || timesInvalid) {
+      if (dateValidationError) setError(dateValidationError);
+      return;
+    }
     setSubmitting(true); setError("");
     try {
-      const booking = await bookingsApi.create({ listingId: listing.id, startDate: start, endDate: isService ? start : end, startTime: isService ? startTime : undefined, note: note.trim() || undefined });
+      const booking = await bookingsApi.create({ listingId: listing.id, startDate: start, endDate: isService ? start : end, startTime: isHourly || isService ? startTime : undefined, endTime: isHourly ? endTime : undefined, note: note.trim() || undefined, attributes: bookingFields.length ? attrValues : undefined });
       showToast("Booking request sent to the owner.", { tone: "success" });
       router.push(`/bookings/${booking.id}?requested=1`);
     } catch (caught) {
@@ -77,6 +152,6 @@ export function BookingPanel({ listing }: { listing: ListingDetail }) {
   return <>
     <aside className="booking-panel card"><p className="booking-panel__price"><strong>{formatNpr(listing.pricePerUnit)}</strong> / {unit}</p><div className="booking-panel__deposit"><ShieldCheck size={17} /><span><small>Refundable security deposit</small><strong>{formatNpr(listing.depositAmount)}</strong></span></div><button className="button button--wide" onClick={openSheet}>{isService ? "Check availability" : "Request booking"}</button><p className="booking-panel__fine">The owner reviews your dates before any deposit is due.</p></aside>
     <div className="mobile-booking-bar"><p><strong>{formatNpr(listing.pricePerUnit)}</strong><small> / {unit}</small></p><button className="button" onClick={openSheet}>Request booking</button></div>
-    {open && <div className="sheet-backdrop" role="presentation" onMouseDown={(event) => event.currentTarget === event.target && setOpen(false)}><section className="booking-sheet" role="dialog" aria-modal="true" aria-labelledby="booking-sheet-title"><header><div><p className="eyebrow">Booking request</p><h2 id="booking-sheet-title">Choose your {isService ? "date" : "dates"}</h2></div><button ref={closeRef} className="icon-button" aria-label="Close" onClick={() => setOpen(false)}><X /></button></header><div className="booking-sheet__body"><div className="form-grid form-grid--two"><div className="field"><label htmlFor="start-date">{isService ? "Service date" : "Start date"}</label><input id="start-date" type="date" min={isoDate(1)} value={start} onChange={(event) => setStart(event.target.value)} /></div>{!isService && <div className="field"><label htmlFor="end-date">Return date</label><input id="end-date" type="date" min={start} value={end} onChange={(event) => setEnd(event.target.value)} /></div>}</div>{isService && <div className="field"><label htmlFor="event-time">Preferred start time</label><input id="event-time" type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></div>}<div className="field"><label htmlFor="booking-note">Note for {listing.owner.fullName.split(" ")[0]} <span className="muted">(optional)</span></label><textarea id="booking-note" maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Share handover or service details." /></div><div className="price-breakdown card"><div><span>{formatNpr(listing.pricePerUnit)} × {duration}</span><strong>{formatNpr(rental)}</strong></div><div className="price-breakdown__total"><span>Estimated rental total</span><strong>{formatNpr(rental)}</strong></div><div className="price-breakdown__deposit"><span>Refundable deposit after approval</span><strong>{formatNpr(listing.depositAmount)}</strong></div></div><div className="form-note"><Info size={18} /><span>The owner approves first. If a deposit is required, attach proof to the booking after paying the owner directly.</span></div>{error && <p className="form-error" role="alert">{error}</p>}</div><footer><button className="button button--secondary" onClick={() => setOpen(false)}>Not yet</button><button className="button" disabled={submitting || !start || (!isService && (!end || end < start))} onClick={submit}>{submitting ? "Sending request…" : "Send booking request"}</button></footer></section></div>}
+    {open && <div className="sheet-backdrop" role="presentation" onMouseDown={(event) => event.currentTarget === event.target && setOpen(false)}><section className="booking-sheet" role="dialog" aria-modal="true" aria-labelledby="booking-sheet-title"><header><div><p className="eyebrow">Booking request</p><h2 id="booking-sheet-title">Choose your {isService ? "date" : "dates"}</h2></div><button ref={closeRef} className="icon-button" aria-label="Close" onClick={() => setOpen(false)}><X /></button></header><div className="booking-sheet__body"><div className="form-grid form-grid--two"><div className="field"><label htmlFor="start-date">{isService ? "Service date" : "Start date"}</label><input id="start-date" type="date" min={isoDate(1)} value={start} onChange={(event) => { setStart(event.target.value); setError(""); }} /></div>{!isService && <div className="field"><label htmlFor="end-date">Return date</label><input id="end-date" type="date" min={start} value={end} onChange={(event) => { setEnd(event.target.value); setError(""); }} /></div>}</div>{dateValidationError && <p className="form-error" role="alert">{dateValidationError}</p>}{blockedRanges.length > 0 && <small className="form-note"><Info size={16} /><span>Some dates are unavailable because they are booked or blocked by the owner.</span></small>}{availabilityError && <p className="form-error" role="alert">{availabilityError}</p>}{isService && <div className="form-grid form-grid--two"><div className="field"><label htmlFor="event-time">Start time</label><input id="event-time" type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></div>{isHourly && <div className="field"><label htmlFor="event-end-time">End time</label><input id="event-end-time" type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} />{timesInvalid && <small className="form-error">End time must be after start time</small>}</div>}</div>}<div className="field"><label htmlFor="booking-note">Note for {listing.owner.fullName.split(" ")[0]} <span className="muted">(optional)</span></label><textarea id="booking-note" maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Share handover or service details." /></div><DynamicFields fields={bookingFields} values={attrValues} onChange={(key, value) => setAttrValues((current) => ({ ...current, [key]: value }))} idPrefix="booking-attr" /><div className="price-breakdown card"><div><span>{formatNpr(listing.pricePerUnit)} × {duration}</span><strong>{formatNpr(rental)}</strong></div><div className="price-breakdown__total"><span>Estimated rental total</span><strong>{formatNpr(rental)}</strong></div><div className="price-breakdown__deposit"><span>Refundable deposit after approval</span><strong>{formatNpr(listing.depositAmount)}</strong></div></div><div className="form-note"><Info size={18} /><span>The owner approves first. If a deposit is required, attach proof to the booking after paying the owner directly.</span></div>{error && error !== dateValidationError && <p className="form-error" role="alert">{error}</p>}</div><footer><button className="button button--secondary" onClick={() => setOpen(false)}>Not yet</button><button className="button" disabled={submitting || availabilityLoading || !!dateValidationError || !start || timesInvalid || (!isService && (!end || end < start))} onClick={submit}>{submitting ? "Sending request…" : "Send booking request"}</button></footer></section></div>}
   </>;
 }

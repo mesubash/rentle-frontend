@@ -1,5 +1,5 @@
 import { apiRequest, toFormData } from "./client";
-import type { PageResponse, RequestQuery, UUID } from "./shared";
+import type { PageResponse, UUID } from "./shared";
 import type { PublicProfile } from "./users";
 
 export type ListingType = "PRODUCT" | "SERVICE";
@@ -11,9 +11,10 @@ export type ServiceDuration = "HOURLY" | "HALF_DAY" | "FULL_DAY" | "CUSTOM";
 export type Category = { id: UUID; parentId: UUID | null; name: string; slug: string; listingType: ListingType | "BOTH"; iconName: string | null; sortOrder: number; children: Category[] };
 export type ProductDetail = { condition: ItemCondition; brand?: string; model?: string; minRentalDays?: number; maxRentalDays?: number };
 export type ServiceDetail = { serviceAreaKm?: number; typicalDuration?: ServiceDuration; minNoticeHours?: number; portfolioUrl?: string };
+export type ListingSearchQuery = { q?: string; type?: ListingType; categoryId?: UUID; district?: string; sort?: string; minPrice?: number; maxPrice?: number; page?: number; size?: number };
 export type ListingSummary = { id: UUID; type: ListingType; status: ListingStatus; title: string; pricePerUnit: number; priceUnit: PriceUnit; depositAmount: number; district: string; averageRating: number; reviewCount: number; coverImage: string | null; createdAt: string };
-export type ListingDetail = ListingSummary & { owner: PublicProfile; categoryId: UUID; categoryName: string; description: string; locationText: string | null; totalBookings: number; images: string[]; product: ProductDetail | null; service: ServiceDetail | null };
-export type CreateListingInput = { title: string; description: string; categoryId: UUID; type: ListingType; pricePerUnit: number; priceUnit: PriceUnit; district: string; locationText?: string; depositAmount?: number; product?: ProductDetail; service?: ServiceDetail };
+export type ListingDetail = ListingSummary & { owner: PublicProfile; categoryId: UUID; categoryName: string; description: string; locationText: string | null; rentalTerms: string | null; totalBookings: number; images: string[]; product: ProductDetail | null; service: ServiceDetail | null };
+export type CreateListingInput = { title: string; description: string; categoryId: UUID; type: ListingType; pricePerUnit: number; priceUnit: PriceUnit; district: string; locationText?: string; depositAmount?: number; rentalTerms?: string; attributes?: Record<string, unknown>; product?: ProductDetail; service?: ServiceDetail };
 export type UpdateListingInput = Partial<Omit<CreateListingInput, "categoryId" | "type"> & { status: ListingStatus }>;
 export type BlockedRange = { rangeId: UUID | null; startDate: string; endDate: string; source: "OWNER_BLOCKED" | "BOOKED" };
 export type Availability = { listingId: UUID; blocked: BlockedRange[] };
@@ -24,7 +25,7 @@ export const categoriesApi = {
 };
 
 export const listingsApi = {
-  search: (query: RequestQuery = {}) => apiRequest<PageResponse<ListingSummary>>("/listings", { query }),
+  search: (query: ListingSearchQuery = {}) => apiRequest<PageResponse<ListingSummary>>("/listings", { query }),
   mine: (page = 0, size = 20) => apiRequest<PageResponse<ListingSummary>>("/listings/me", { query: { page, size } }),
   byUser: (id: UUID, page = 0, size = 20) => apiRequest<PageResponse<ListingSummary>>(`/users/${id}/listings`, { query: { page, size } }),
   detail: (id: UUID) => apiRequest<ListingDetail>(`/listings/${id}`),

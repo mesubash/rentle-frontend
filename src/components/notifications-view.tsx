@@ -1,24 +1,260 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarCheck, CheckCircle2, MessageCircle, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useAuth } from "./auth-provider";
-import { bookingsApi, type Booking } from "@/lib/api/bookings";
-import { ADMIN_ENTRY_KEYS } from "@/lib/iam/admin-entry-keys";
-import { usePermissions } from "./permissions-provider";
+import { useRouter } from "next/navigation";
+import { Bell, CheckCheck, CheckCircle2 } from "lucide-react";
+import { type MouseEvent, useEffect, useState } from "react";
+import {
+  notificationsApi,
+  type Notification,
+} from "@/lib/api/notifications";
 
 export function NotificationsView() {
-  const { user } = useAuth(); const [renting, setRenting] = useState<Booking[]>([]); const [hosting, setHosting] = useState<Booking[]>([]); const [error, setError] = useState(""); const [loading, setLoading] = useState(true);
-  const { canAny, ready } = usePermissions();
-  useEffect(() => { Promise.all([bookingsApi.asRenter(0,50), bookingsApi.asOwner(0,50)]).then(([renter, owner]) => { setRenting(renter.content); setHosting(owner.content); }).catch(() => setError("Activity could not be loaded.")).finally(() => setLoading(false)); }, []);
-  const actions = [
-    ...hosting.filter((booking) => booking.status === "REQUESTED").map((booking) => ({ icon: CalendarCheck, title: `Review ${booking.renterName}’s request`, copy: `${booking.listingTitle} · ${booking.startDate} to ${booking.endDate}`, href: `/bookings/${booking.id}`, date: booking.createdAt })),
-    ...hosting.filter((booking) => booking.status === "DEPOSIT_PENDING").map((booking) => ({ icon: ShieldCheck, title: "Check a deposit transfer", copy: `${booking.renterName} attached proof for ${booking.listingTitle}.`, href: `/bookings/${booking.id}`, date: booking.createdAt })),
-    ...renting.filter((booking) => booking.status === "APPROVED").map((booking) => ({ icon: CalendarCheck, title: "Your booking was approved", copy: `${booking.listingTitle} is ready for the next step.`, href: `/bookings/${booking.id}`, date: booking.createdAt })),
-    ...[...renting, ...hosting].filter((booking) => ["APPROVED", "DEPOSIT_PENDING", "ACTIVE"].includes(booking.status)).map((booking) => ({ icon: MessageCircle, title: `Conversation open for ${booking.listingTitle}`, copy: "Keep timing and handover changes in the booking thread.", href: `/messages/${booking.id}`, date: booking.createdAt })),
-  ].sort((a,b) => b.date.localeCompare(a.date));
-  const staff = ready && canAny(...ADMIN_ENTRY_KEYS);
-  const showKycNudge = user && ready && !staff;
-  return <main className="page"><div className="container notifications-page"><header className="page-header"><p className="eyebrow">Account activity</p><h1>Notifications</h1><p>These reminders are derived from the current state of your bookings.</p></header>{error && <p className="form-error">{error}</p>}<div className="notification-list">{actions.map(({ icon: Icon, title, copy, href }, index) => <Link className="notification-card card" href={href} key={`${href}-${index}`}><span><Icon size={19} /></span><div><strong>{title}</strong><p>{copy}</p></div></Link>)}{showKycNudge && user.kycStatus == null && <Link className="notification-card card" href="/verification"><span><ShieldCheck size={19} /></span><div><strong>Complete identity verification</strong><p>Submit your identity details for admin review.</p></div></Link>}{showKycNudge && user.kycStatus === "REJECTED" && <Link className="notification-card card" href="/verification"><span><ShieldCheck size={19} /></span><div><strong>Identity verification needs attention</strong><p>Your submission was rejected. Review and resubmit.</p></div></Link>}</div>{loading && !actions.length && <p className="message-date">Loading your activity…</p>}{!loading && !actions.length && (!showKycNudge || user.kycStatus != null) && <div className="inline-success"><CheckCircle2 size={18} /><span>You have no booking actions waiting.</span></div>}</div></main>;
+  const router = useRouter();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [markingAll, setMarkingAll] = useState(false);
+  const [openingId, setOpeningId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    notificationsApi
+      .list()
+      .then((page) => {
+        if (active) setNotifications(page.content);
+      })
+      .catch(() => {
+        if (active) setError("Notifications could not be loaded.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const refetch = async () => {
+    const page = await notificationsApi.list();
+    setNotifications(page.content);
+  };
+
+  const markAllRead = async () => {
+    setMarkingAll(true);
+    setError("");
+    try {
+      await notificationsApi.markAllRead();
+      await refetch();
+    } catch {
+      setError("Notifications could not be marked as read. Please try again.");
+    } finally {
+      setMarkingAll(false);
+    }
+  };
+
+  const openNotification = async (
+    event: MouseEvent<HTMLAnchorElement>,
+    notification: Notification,
+  ) => {
+    event.preventDefault();
+    if (!notification.link || openingId) return;
+
+    setOpeningId(notification.id);
+    setError("");
+    try {
+      await notificationsApi.markRead(notification.id);
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === notification.id ? { ...item, read: true } : item,
+        ),
+      );
+    } catch {
+      // Opening the destination is still useful if updating the read state fails.
+    } finally {
+      setOpeningId(null);
+      router.push(notification.link);
+    }
+  };
+
+  const markNotificationWithoutLink = async (notification: Notification) => {
+    if (openingId) return;
+
+    setOpeningId(notification.id);
+    setError("");
+    try {
+      await notificationsApi.markRead(notification.id);
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === notification.id ? { ...item, read: true } : item,
+        ),
+      );
+    } catch {
+      setError("Notification could not be marked as read. Please try again.");
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
+  const unread = notifications.some((notification) => !notification.read);
+
+  return (
+    <main className="page">
+      <div className="container notifications-page">
+        <header className="page-header">
+          <p className="eyebrow">Account activity</p>
+          <h1>Notifications</h1>
+          <p>Updates about your bookings, listings, messages, and account.</p>
+          <div className="button-row">
+            <button
+              type="button"
+              className="button button--secondary button--small"
+              disabled={loading || markingAll || !unread}
+              onClick={markAllRead}
+            >
+              <CheckCheck size={17} aria-hidden="true" />
+              {markingAll ? "Marking as read…" : "Mark all read"}
+            </button>
+          </div>
+        </header>
+
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        {loading ? (
+          <p className="message-date" role="status">
+            Loading notifications…
+          </p>
+        ) : notifications.length ? (
+          <div className="notification-list">
+            {notifications.map((notification) => {
+              const time = formatNotificationTime(notification.createdAt);
+              const cardContents = (
+                <>
+                  <span aria-hidden="true">
+                    <Bell size={19} />
+                  </span>
+                  <div>
+                    {notification.read ? (
+                      <span>{notification.message}</span>
+                    ) : (
+                      <strong>{notification.message}</strong>
+                    )}
+                    <br />
+                    <small>
+                      <time dateTime={notification.createdAt} title={time.absolute}>
+                        {time.display}
+                      </time>
+                    </small>
+                  </div>
+                  {!notification.read && <i aria-hidden="true" />}
+                </>
+              );
+
+              return notification.link ? (
+                <Link
+                  key={notification.id}
+                  className={
+                    notification.read
+                      ? "notification-card card"
+                      : "notification-card card is-unread"
+                  }
+                  href={notification.link}
+                  aria-busy={openingId === notification.id}
+                  onClick={(event) =>
+                    void openNotification(event, notification)
+                  }
+                >
+                  {cardContents}
+                </Link>
+              ) : (
+                <div
+                  key={notification.id}
+                  className={
+                    notification.read
+                      ? "notification-card card"
+                      : "notification-card card is-unread"
+                  }
+                  role="button"
+                  tabIndex={0}
+                  aria-busy={openingId === notification.id}
+                  onClick={() => void markNotificationWithoutLink(notification)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      void markNotificationWithoutLink(notification);
+                    }
+                  }}
+                >
+                  {cardContents}
+                </div>
+              );
+            })}
+          </div>
+        ) : error ? (
+          <div className="button-row">
+            <button
+              type="button"
+              className="button button--secondary button--small"
+              onClick={() => {
+                setLoading(true);
+                setError("");
+                void refetch()
+                  .catch(() =>
+                    setError("Notifications could not be loaded."),
+                  )
+                  .finally(() => setLoading(false));
+              }}
+            >
+              Try again
+            </button>
+          </div>
+        ) : (
+          <div className="inline-success">
+            <CheckCircle2 size={18} aria-hidden="true" />
+            <span>You have no notifications yet.</span>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function formatNotificationTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return { display: value, absolute: value };
+  }
+
+  const absolute = new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+  const elapsedSeconds = Math.round((date.getTime() - Date.now()) / 1_000);
+  const ranges: Array<[number, Intl.RelativeTimeFormatUnit]> = [
+    [60, "second"],
+    [60, "minute"],
+    [24, "hour"],
+    [7, "day"],
+  ];
+  let relativeValue = elapsedSeconds;
+
+  for (const [limit, unit] of ranges) {
+    if (Math.abs(relativeValue) < limit) {
+      return {
+        display: new Intl.RelativeTimeFormat(undefined, {
+          numeric: "auto",
+        }).format(relativeValue, unit),
+        absolute,
+      };
+    }
+    relativeValue = Math.round(relativeValue / limit);
+  }
+
+  return { display: absolute, absolute };
 }
