@@ -68,6 +68,7 @@ const navGroups: Array<{ label: string; links: AdminLink[] }> = [
       { href: "/admin/categories", label: "Categories", icon: Layers, permission: P.LISTING_CATEGORY_MANAGE },
       { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck, permission: P.BOOKING_BOOKING_READ },
       { href: "/admin/reports", label: "Reports", icon: Flag, permission: P.TRUST_REPORT_READ },
+      { href: "/admin/provider-verifications", label: "Provider checks", icon: ShieldCheck, permission: P.KYC_SUBMISSION_READ },
     ],
   },
   {

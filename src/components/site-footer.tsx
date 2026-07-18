@@ -4,7 +4,7 @@ import { BrandLogo } from "./brand-logo";
 
 const groups = [
   { title: "Rentle", links: [{ href: "/about", label: "About" }, { href: "/explore", label: "Explore" }, { href: "/list", label: "List something" }, { href: "/bookings", label: "Bookings" }, { href: "/terms", label: "Terms" }, { href: "/privacy", label: "Privacy" }] },
-  { title: "Trust", links: [{ href: "/trust", label: "How trust works" }, { href: "/verification", label: "Get verified" }, { href: "/messages", label: "Messages" }, { href: "/support", label: "Support & help" }] },
+  { title: "Trust", links: [{ href: "/trust", label: "How trust works" }, { href: "/verification", label: "Get verified" }, { href: "/provider-verification", label: "Provider verification" }, { href: "/messages", label: "Messages" }, { href: "/support", label: "Support & help" }] },
   { title: "Account", links: [{ href: "/profile", label: "Profile" }, { href: "/login", label: "Log in" }, { href: "/register", label: "Join Rentle" }] },
 ];
 

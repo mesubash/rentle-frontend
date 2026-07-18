@@ -31,6 +31,7 @@ export const config = {
     "/profile",
     "/profile/edit/:path*",
     "/workers/:path*",
+    "/provider-verification/:path*",
     "/admin/:path*",
   ],
 };
