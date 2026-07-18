@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/api/client";
 import Link from "next/link";
 import { useToast } from "./toast-provider";
 import { useAuth } from "./auth-provider";
+import { useOrg } from "./org-provider";
 import { categoriesApi, listingsApi, priceUnitLabel, type Category, type ItemCondition, type ListingType, type PriceUnit, type ServiceDuration } from "@/lib/api/listings";
 import { templatesApi, type FieldDefinition } from "@/lib/api/templates";
 import { DynamicFields } from "./dynamic-fields";
@@ -20,6 +21,7 @@ export function ListingWizard() {
   const router = useRouter();
   const { showToast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const { activeOrg, setActiveOrgId } = useOrg();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Draft>(() => {
     if (typeof window === "undefined") return initial;
@@ -75,6 +77,7 @@ export function ListingWizard() {
         depositAmount: Number(draft.deposit || 0),
         rentalTerms: draft.rentalTerms.trim() || undefined,
         attributes: categoryFields.length ? attrValues : undefined,
+        orgId: activeOrg?.id,   // list as the active organization when one is selected
         ...(draft.type === "PRODUCT" ? { product: { condition: draft.condition, brand: optionalText(draft.brand), model: optionalText(draft.model), minRentalDays: Number(draft.minRentalDays), maxRentalDays: optionalNumber(draft.maxRentalDays) } } : { service: { serviceAreaKm: optionalNumber(draft.serviceAreaKm), typicalDuration: draft.typicalDuration, minNoticeHours: Number(draft.minNoticeHours), portfolioUrl: optionalText(draft.portfolioUrl) } }),
       });
       if (photos.length) await listingsApi.uploadImages(listing.id, photos);
@@ -107,6 +110,7 @@ export function ListingWizard() {
 
   return <main className="page"><div className="container listing-wizard">
     <header className="wizard-header"><div><p className="eyebrow">Create a listing</p><h1>{steps[step]}</h1><p>Your text draft saves on this device. Photos stay only in this tab until publishing.</p></div><strong>Step {step + 1} of {steps.length}</strong></header>
+    {activeOrg && <p className="form-note">Listing as <strong>{activeOrg.name}</strong>. <button type="button" className="link-button" onClick={() => setActiveOrgId(null)}>List personally instead</button></p>}
     <ol className="wizard-progress">{steps.map((label, index) => <li className={index < step ? "is-done" : index === step ? "is-current" : ""} key={label}><span>{index < step ? <Check size={14} /> : index + 1}</span><b>{label}</b></li>)}</ol>
     <section className="wizard-card card">
       {step === 0 && <div className="wizard-section"><div className="wizard-question"><p className="eyebrow">Choose a format</p><h2>What are you listing?</h2><p>This sets the relevant pricing and item details.</p></div><div className="type-choice"><button className={draft.type === "PRODUCT" ? "is-selected" : ""} onClick={() => selectType("PRODUCT")}><Box /><span><strong>A physical item</strong><small>Camera, clothing, camping gear, tools</small></span><i>{draft.type === "PRODUCT" && <Check />}</i></button><button className={draft.type === "SERVICE" ? "is-selected" : ""} onClick={() => selectType("SERVICE")}><Wrench /><span><strong>A local service</strong><small>Photography, moving, event support</small></span><i>{draft.type === "SERVICE" && <Check />}</i></button></div></div>}

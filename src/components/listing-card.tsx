@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Star } from "lucide-react";
+import { Building2, MapPin, Star } from "lucide-react";
 import { formatNpr } from "@/lib/format";
 import { assetUrl } from "@/lib/api/assets";
 import { priceUnitLabel, type ListingSummary } from "@/lib/api/listings";
@@ -23,6 +23,7 @@ export function ListingCard({ listing, priority = false }: { listing: ListingSum
           {listing.reviewCount ? <span className="rating"><Star size={14} fill="currentColor" /> {(listing.averageRating ?? 0).toFixed(1)} <small>({listing.reviewCount})</small></span> : <span className="rating rating--new">New</span>}
         </div>
         <h3><Link href={href}>{listing.title}</Link></h3>
+        {listing.provider?.type === "ORG" && <p className="listing-card__provider"><Building2 size={13} /> {listing.provider.name}</p>}
         <p className="price"><strong>{formatNpr(listing.pricePerUnit)}</strong> / {priceUnitLabel(listing.priceUnit)}</p>
       </div>
     </article>

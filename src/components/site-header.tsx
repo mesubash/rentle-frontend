@@ -5,8 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Bell, CalendarDays, Compass, Heart, LayoutList, ListPlus, LogIn, LogOut, MessageCircle, Search, ShieldCheck, UserCog, UserRound } from "lucide-react";
+import { Bell, Building2, CalendarDays, Check, Compass, Heart, LayoutList, ListPlus, LogIn, LogOut, MessageCircle, Plus, Search, ShieldCheck, UserCog, UserRound } from "lucide-react";
 import { useAuth } from "./auth-provider";
+import { useOrg } from "./org-provider";
 import { BrandLogo } from "./brand-logo";
 import { ConfirmDialog } from "./confirm-dialog";
 import { useSignOut } from "@/lib/use-sign-out";
@@ -127,6 +128,7 @@ export function SiteHeader() {
 
 function AvatarMenu({ user, profilePhoto, admin }: { user: UserProfile; profilePhoto?: string | null; admin?: boolean }) {
   const { signOut, leaving } = useSignOut();
+  const { orgs, activeOrgId, setActiveOrgId } = useOrg();
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -167,6 +169,17 @@ function AvatarMenu({ user, profilePhoto, admin }: { user: UserProfile; profileP
             <>
               <Link role="menuitem" href="/profile" onClick={() => setOpen(false)}><UserRound size={16} /> Profile</Link>
               <Link role="menuitem" href="/listings/manage" onClick={() => setOpen(false)}><LayoutList size={16} /> My listings</Link>
+              <p className="avatar-menu__label">Acting as</p>
+              <button role="menuitemradio" aria-checked={!activeOrgId} onClick={() => { setActiveOrgId(null); setOpen(false); }}>
+                <UserRound size={16} /> <span className="avatar-menu__grow">Personal</span> {!activeOrgId && <Check size={15} />}
+              </button>
+              {orgs.map((org) => (
+                <Link key={org.id} role="menuitemradio" aria-checked={activeOrgId === org.id} href={`/organizations/${org.id}`}
+                      onClick={() => { setActiveOrgId(org.id); setOpen(false); }}>
+                  <Building2 size={16} /> <span className="avatar-menu__grow">{org.name}</span> {activeOrgId === org.id && <Check size={15} />}
+                </Link>
+              ))}
+              <Link role="menuitem" href="/organizations/new" onClick={() => setOpen(false)}><Plus size={16} /> Create organization</Link>
             </>
           )}
           <button role="menuitem" className="avatar-menu__danger" disabled={leaving} onClick={() => setConfirming(true)}><LogOut size={16} /> {leaving ? "Logging out…" : "Log out"}</button>

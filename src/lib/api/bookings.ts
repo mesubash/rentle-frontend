@@ -9,7 +9,7 @@ export type CreateBookingInput = { listingId: UUID; startDate: string; endDate: 
 export const bookingsApi = {
   create: (input: CreateBookingInput) => apiRequest<Booking>("/bookings", { method: "POST", body: input }),
   asRenter: (page = 0, size = 20) => apiRequest<PageResponse<Booking>>("/bookings/me/as-renter", { query: { page, size } }),
-  asOwner: (page = 0, size = 20) => apiRequest<PageResponse<Booking>>("/bookings/me/as-owner", { query: { page, size } }),
+  asOwner: (page = 0, size = 20, orgId?: string) => apiRequest<PageResponse<Booking>>("/bookings/me/as-owner", { query: { page, size, orgId } }),
   detail: (id: UUID) => apiRequest<Booking>(`/bookings/${id}`),
   approve: (id: UUID) => apiRequest<Booking>(`/bookings/${id}/approve`, { method: "POST" }),
   assignWorker: (id: UUID, workerId?: UUID) => apiRequest<Booking>(`/bookings/${id}/assign-worker`, { method: "POST", query: workerId ? { workerId } : {} }),

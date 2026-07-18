@@ -12,9 +12,11 @@ export type Category = { id: UUID; parentId: UUID | null; name: string; slug: st
 export type ProductDetail = { condition: ItemCondition; brand?: string; model?: string; minRentalDays?: number; maxRentalDays?: number };
 export type ServiceDetail = { serviceAreaKm?: number; typicalDuration?: ServiceDuration; minNoticeHours?: number; portfolioUrl?: string };
 export type ListingSearchQuery = { q?: string; type?: ListingType; categoryId?: UUID; district?: string; sort?: string; minPrice?: number; maxPrice?: number; page?: number; size?: number };
-export type ListingSummary = { id: UUID; type: ListingType; status: ListingStatus; title: string; pricePerUnit: number; priceUnit: PriceUnit; depositAmount: number; district: string; averageRating: number; reviewCount: number; coverImage: string | null; createdAt: string };
+/** Who provides a listing — an individual user (null on cards) or an organization. */
+export type ListingProvider = { type: "USER" | "ORG"; id: UUID; name: string; logoUrl: string | null; slug: string | null };
+export type ListingSummary = { id: UUID; type: ListingType; status: ListingStatus; title: string; pricePerUnit: number; priceUnit: PriceUnit; depositAmount: number; district: string; averageRating: number; reviewCount: number; coverImage: string | null; provider: ListingProvider | null; createdAt: string };
 export type ListingDetail = ListingSummary & { owner: PublicProfile; categoryId: UUID; categoryName: string; description: string; locationText: string | null; rentalTerms: string | null; totalBookings: number; images: string[]; product: ProductDetail | null; service: ServiceDetail | null };
-export type CreateListingInput = { title: string; description: string; categoryId: UUID; type: ListingType; pricePerUnit: number; priceUnit: PriceUnit; district: string; locationText?: string; depositAmount?: number; rentalTerms?: string; attributes?: Record<string, unknown>; product?: ProductDetail; service?: ServiceDetail };
+export type CreateListingInput = { title: string; description: string; categoryId: UUID; type: ListingType; pricePerUnit: number; priceUnit: PriceUnit; district: string; locationText?: string; depositAmount?: number; rentalTerms?: string; attributes?: Record<string, unknown>; orgId?: UUID; product?: ProductDetail; service?: ServiceDetail };
 export type UpdateListingInput = Partial<Omit<CreateListingInput, "categoryId" | "type"> & { status: ListingStatus }>;
 export type BlockedRange = { rangeId: UUID | null; startDate: string; endDate: string; source: "OWNER_BLOCKED" | "BOOKED" };
 export type Availability = { listingId: UUID; blocked: BlockedRange[] };
@@ -26,7 +28,7 @@ export const categoriesApi = {
 
 export const listingsApi = {
   search: (query: ListingSearchQuery = {}) => apiRequest<PageResponse<ListingSummary>>("/listings", { query }),
-  mine: (page = 0, size = 20) => apiRequest<PageResponse<ListingSummary>>("/listings/me", { query: { page, size } }),
+  mine: (page = 0, size = 20, orgId?: UUID) => apiRequest<PageResponse<ListingSummary>>("/listings/me", { query: { page, size, orgId } }),
   byUser: (id: UUID, page = 0, size = 20) => apiRequest<PageResponse<ListingSummary>>(`/users/${id}/listings`, { query: { page, size } }),
   detail: (id: UUID) => apiRequest<ListingDetail>(`/listings/${id}`),
   create: (input: CreateListingInput) => apiRequest<ListingDetail>("/listings", { method: "POST", body: input }),

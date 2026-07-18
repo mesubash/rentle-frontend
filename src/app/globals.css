@@ -68,6 +68,9 @@ h3 { font-size: 1.18rem; }
 .avatar-menu__list svg { flex: none; color: var(--pine); }
 .avatar-menu__list .avatar-menu__danger, .avatar-menu__list .avatar-menu__danger svg { color: var(--brick); }
 .avatar-menu__list .avatar-menu__danger:hover { background: var(--brick-wash); }
+.avatar-menu__label { margin: 6px 0 2px; padding: 6px 10px 0; border-top: 1px solid var(--border-soft); color: var(--stone); font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.avatar-menu__grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-button { display: inline; padding: 0; border: 0; background: none; color: var(--pine); font: inherit; text-decoration: underline; cursor: pointer; }
 .avatar--large { width: 80px; height: 80px; font: 700 1.4rem/1 var(--font-display), serif; }
 .admin-label { font-weight: 600; color: rgba(255,255,255,.8); }
 .nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 5px; padding: 0 5px; border-radius: 9px; background: var(--brick); color: white; font-size: .66rem; font-weight: 700; }
@@ -120,6 +123,8 @@ h3 { font-size: 1.18rem; }
 .listing-card__fav.is-active { color: var(--brick); }
 .listing-card__fav.is-active svg { fill: currentColor; }
 .listing-card__body { padding: 14px; }
+.listing-card__provider { display: inline-flex; align-items: center; gap: 4px; margin: 2px 0 0; color: var(--stone); font-size: .78rem; font-weight: 600; }
+.listing-card__provider svg { color: var(--pine); }
 .listing-card__eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--stone); font-size: .76rem; }
 .listing-card__eyebrow > span { display: inline-flex; align-items: center; gap: 4px; }
 .rating { color: var(--marigold-dark); white-space: nowrap; font-weight: 700; }
