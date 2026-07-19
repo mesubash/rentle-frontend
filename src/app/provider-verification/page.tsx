@@ -8,11 +8,13 @@ import { providerVerificationApi, type ProviderVerification } from "@/lib/api/pr
 import { ApiError } from "@/lib/api/client";
 import { DynamicFields } from "@/components/dynamic-fields";
 import { useAuth } from "@/components/auth-provider";
+import { useOrg } from "@/components/org-provider";
 import { useToast } from "@/components/toast-provider";
 import { SiteFooter } from "@/components/site-footer";
 
 export default function ProviderVerificationPage() {
   const { user, loading } = useAuth();
+  const { activeOrg } = useOrg();
   const { showToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState("");
@@ -26,8 +28,8 @@ export default function ProviderVerificationPage() {
   }, []);
   useEffect(() => {
     if (loading || !user) return;
-    providerVerificationApi.mine().then(setMine).catch(() => undefined);
-  }, [user, loading]);
+    providerVerificationApi.mine(activeOrg?.id).then(setMine).catch(() => undefined);
+  }, [user, loading, activeOrg]);
   useEffect(() => {
     let active = true;
     const load = categoryId ? templatesApi.current(categoryId, "VERIFICATION") : Promise.resolve(null);
@@ -41,7 +43,7 @@ export default function ProviderVerificationPage() {
     if (!categoryId) return;
     setSubmitting(true);
     try {
-      const v = await providerVerificationApi.submit(categoryId, values);
+      const v = await providerVerificationApi.submit(categoryId, values, activeOrg?.id);
       setMine((cur) => [...cur.filter((m) => m.categoryId !== categoryId), v]);
       setValues({});
       showToast("Verification submitted for review.", { tone: "success" });
@@ -59,6 +61,8 @@ export default function ProviderVerificationPage() {
             <h1>Provider verification</h1>
             <p>Some service categories require credentials before you can list. Submit them here for review.</p>
           </header>
+
+          {activeOrg && <p className="form-note">Verifying as <strong>{activeOrg.name}</strong>. Switch to Personal in the account menu to verify yourself.</p>}
 
           <section className="card card-pad form-grid">
             <div className="field">

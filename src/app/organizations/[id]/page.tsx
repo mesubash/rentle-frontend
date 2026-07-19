@@ -19,10 +19,11 @@ import { SiteFooter } from "@/components/site-footer";
 export default function OrganizationDashboard({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user, loading } = useAuth();
-  const { setActiveOrgId } = useOrg();
+  const { setActiveOrgId, reload: reloadOrgs } = useOrg();
   const { showToast } = useToast();
 
   const [org, setOrg] = useState<Org | null>(null);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [invites, setInvites] = useState<OrgInvite[]>([]);
@@ -121,6 +122,23 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
     }
   }
 
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    try {
+      const updated = await organizationsApi.update(id, {
+        name: String(data.get("name")).trim(),
+        bio: String(data.get("bio")).trim() || undefined,
+      });
+      setOrg(updated);
+      setEditing(false);
+      reloadOrgs();
+      showToast("Organization updated.", { tone: "success" });
+    } catch (caught) {
+      showToast(caught instanceof ApiError ? caught.message : "Could not update organization.", { tone: "error" });
+    }
+  }
+
   const inviteLink = (token: string) => `${window.location.origin}/organizations/invites/${token}`;
 
   if (error) {
@@ -140,8 +158,22 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
         <div className="container">
           <header className="trust-hero" style={{ textAlign: "left", marginBottom: 20 }}>
             <p className="eyebrow"><Building2 size={15} /> Organization</p>
-            <h1>{org.name}</h1>
-            {org.bio && <p>{org.bio}</p>}
+            {editing ? (
+              <form className="card card-pad form-grid" onSubmit={saveProfile} style={{ marginTop: 8 }}>
+                <div className="field"><label htmlFor="org-name">Name</label><input id="org-name" name="name" required maxLength={120} defaultValue={org.name} /></div>
+                <div className="field"><label htmlFor="org-bio">About</label><textarea id="org-bio" name="bio" maxLength={500} rows={3} defaultValue={org.bio ?? ""} /></div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="button button--small">Save</button>
+                  <button type="button" className="button button--small button--paper" onClick={() => setEditing(false)}>Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <h1>{org.name}</h1>
+                {org.bio && <p>{org.bio}</p>}
+                {can(ORG_PERM.ORG_MANAGE) && <button className="link-button" onClick={() => setEditing(true)} style={{ marginTop: 4 }}>Edit organization</button>}
+              </>
+            )}
           </header>
 
           <div className="org-stats">
