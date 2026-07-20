@@ -1,7 +1,0 @@
-node_modules
-.next
-.git
-test-results
-docs
-npm-debug.log
-.env*
