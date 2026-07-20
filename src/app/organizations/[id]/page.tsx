@@ -166,7 +166,7 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
                 <div className="field"><label htmlFor="org-bio">About</label><textarea id="org-bio" name="bio" maxLength={500} rows={3} defaultValue={org.bio ?? ""} /></div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="button button--small">Save</button>
-                  <button type="button" className="button button--small button--paper" onClick={() => setEditing(false)}>Cancel</button>
+                  <button type="button" className="button button--small button--secondary" onClick={() => setEditing(false)}>Cancel</button>
                 </div>
               </form>
             ) : (
@@ -196,7 +196,7 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
 
           {can(ORG_PERM.LISTING_MANAGE) && (
             <section style={{ marginBottom: 28 }}>
-              <div className="section-head"><h2>Listings</h2><Link className="button button--small button--paper" href="/list">List as {org.name}</Link></div>
+              <div className="section-head"><h2>Listings</h2><Link className="button button--small button--secondary" href="/list">List as {org.name}</Link></div>
               {listings.length === 0 ? (
                 <p className="form-note">No listings yet. Use “List as {org.name}” to publish your first one.</p>
               ) : (
@@ -204,7 +204,7 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
                   {listings.map((l) => (
                     <li key={l.id} className="card card-pad worker-row">
                       <div><strong>{l.title}</strong><small>{l.status} · Rs {l.pricePerUnit}/{l.priceUnit.replace("PER_", "").toLowerCase()}</small></div>
-                      <Link className="button button--small button--paper" href={`/listing/${l.id}`}>View</Link>
+                      <Link className="button button--small button--secondary" href={`/listing/${l.id}`}>View</Link>
                     </li>
                   ))}
                 </ul>
@@ -222,7 +222,7 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
                   {bookings.map((b) => (
                     <li key={b.id} className="card card-pad worker-row">
                       <div><strong>{b.listingTitle}</strong><small>{b.status}{b.assignedWorkerName ? ` · ${b.assignedWorkerName}` : ""}</small></div>
-                      <Link className="button button--small button--paper" href={`/bookings/${b.id}`}>Open</Link>
+                      <Link className="button button--small button--secondary" href={`/bookings/${b.id}`}>Open</Link>
                     </li>
                   ))}
                 </ul>

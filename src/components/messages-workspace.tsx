@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useEffect, useState } from "react";
-import { ArrowLeft, CheckCheck, Info, Send } from "lucide-react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
+import { ArrowLeft, CalendarDays, CheckCheck, CircleHelp, Info, Send, ShieldCheck } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { useOrg } from "./org-provider";
 import { useToast } from "./toast-provider";
@@ -23,6 +23,7 @@ export function MessagesWorkspace({ activeId }: { activeId?: string }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -79,6 +80,14 @@ export function MessagesWorkspace({ activeId }: { activeId?: string }) {
       clearInterval(timer);
     };
   }, [activeBookingId]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ block: "end" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeBookingId, messages.length]);
+
   async function send(event: FormEvent) { event.preventDefault(); if (!active || !draft.trim()) return; setSending(true); setError(""); try { const message = await messagesApi.send(active.id, draft.trim()); setMessages((current) => [...current, message]); setDraft(""); } catch (caught) { const message = caught instanceof ApiError ? caught.message : "Message could not be sent."; setError(message); showToast(message, { tone: "error" }); } finally { setSending(false); } }
   const counterpart = active ? (user?.id === active.ownerId ? active.renterName : active.ownerName) : "";
 
@@ -100,6 +109,14 @@ export function MessagesWorkspace({ activeId }: { activeId?: string }) {
         {!loading && !threads.length && !error && <div className="messages-empty"><h2>No conversations yet</h2><p>Booking conversations will appear here after a request is created.</p><Link href="/explore">Browse listings <span aria-hidden="true">→</span></Link></div>}
         {error && <p className="form-error thread-list__status" role="alert">{error}</p>}
       </div>
+      <footer className="thread-list__footer">
+        <span>Elsewhere on Rentle</span>
+        <nav aria-label="Message workspace links">
+          <Link href="/bookings"><CalendarDays size={15} /> Bookings</Link>
+          <Link href="/support"><CircleHelp size={15} /> Help</Link>
+          <Link href="/trust"><ShieldCheck size={15} /> Safety</Link>
+        </nav>
+      </footer>
     </aside>
 
     <section className={activeId ? "message-thread" : "message-thread is-hidden-mobile"} aria-label={active ? `Conversation with ${counterpart}` : "Messages"}>
@@ -116,6 +133,7 @@ export function MessagesWorkspace({ activeId }: { activeId?: string }) {
             const mine = message.senderId === user?.id;
             return <div className={mine ? "message is-mine" : "message"} key={message.id}><p>{message.content}</p><small>{formatTime(message.createdAt)}{mine && <CheckCheck size={13} />}</small></div>;
           }) : <p className="message-date">No messages yet. Start with a useful booking detail.</p>}
+          <div ref={messagesEndRef} aria-hidden="true" />
         </div>
         <form className="composer" onSubmit={send}>
           <label className="sr-only" htmlFor="message-draft">Message {counterpart}</label>

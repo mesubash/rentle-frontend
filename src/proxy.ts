@@ -13,11 +13,11 @@ export function proxy(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register";
 
   if (isAuthPage) {
-    if (!hasSession) return NextResponse.next();
-
-    const requestedNext = request.nextUrl.searchParams.get("next");
-    const destination = safeNext(requestedNext);
-    return NextResponse.redirect(new URL(destination, request.url));
+    // A cookie can outlive the backend session. Always allow the auth page to
+    // render so AuthProvider can validate it; AuthForm redirects genuinely
+    // signed-in users after that check. Redirecting on cookie presence alone
+    // traps stale sessions in a /list -> /login -> /list loop.
+    return NextResponse.next();
   }
 
   if (hasSession) return NextResponse.next();
@@ -47,10 +47,3 @@ export const config = {
     "/register",
   ],
 };
-
-function safeNext(value: string | null) {
-  if (!value?.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/explore";
-  const pathname = value.split(/[?#]/, 1)[0];
-  const authRoutes = ["/login", "/register", "/auth/login", "/auth/register"];
-  return authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`)) ? "/explore" : value;
-}

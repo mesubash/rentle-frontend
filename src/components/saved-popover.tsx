@@ -79,13 +79,15 @@ export function SavedPopover({ open, onOpenChange }: SavedPopoverProps) {
     <div className="saved-popover-root" ref={rootRef}>
       <button
         type="button"
-        className="icon-button header-saved"
+        className="icon-button header-saved header-expandable"
         aria-label={savedCount > 0 ? `Saved listings, ${savedCount} items` : "Saved listings"}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => onOpenChange(!open)}
+        onPointerUp={(event) => event.currentTarget.blur()}
       >
         <Heart size={19} fill={savedCount > 0 ? "currentColor" : "none"} />
+        <span className="header-action-label">Saved</span>
         {ready && savedCount > 0 && (
           <span className="nav-badge" aria-hidden="true">{savedCount > 99 ? "99+" : savedCount}</span>
         )}

@@ -134,13 +134,15 @@ export function NotificationsPopover({
     <div className="notification-popover-root" ref={rootRef}>
       <button
         type="button"
-        className="icon-button header-bell"
+        className="icon-button header-bell header-expandable"
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => onOpenChange(!open)}
+        onPointerUp={(event) => event.currentTarget.blur()}
       >
         <Bell size={19} />
+        <span className="header-action-label">Notifications</span>
         {unreadCount > 0 && (
           <span className="nav-badge" aria-hidden="true">
             {unreadCount > 99 ? "99+" : unreadCount}

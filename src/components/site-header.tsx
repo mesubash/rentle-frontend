@@ -41,6 +41,12 @@ export function SiteHeader() {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const userId = user?.id;
   const profilePhoto = assetUrl(user?.profilePhotoUrl);
+  const showHeaderSearch = !admin && (
+    pathname === "/explore" ||
+    pathname === "/search" ||
+    pathname === "/favorites" ||
+    pathname.startsWith("/listing/")
+  );
 
   useEffect(() => {
     if (!userId || !ready || admin) return;
@@ -89,14 +95,14 @@ export function SiteHeader() {
     ? []
     : user
       ? nav.filter((item) => !item.mobileOnly && item.href !== "/messages")
-      : nav.filter((item) => item.href === "/explore");
+      : [];
 
   return (
     <>
       <header className="site-header">
-        <div className="site-header__inner">
+        <div className={showHeaderSearch ? "site-header__inner has-search" : "site-header__inner is-compact"}>
           <BrandLogo href={admin ? "/admin" : "/"} priority inverted />
-          {!admin && (
+          {showHeaderSearch && (
             <Form className="header-search" action="/search">
               <Search size={18} aria-hidden="true" />
               <label className="sr-only" htmlFor="global-search">Search Rentle</label>
@@ -116,29 +122,42 @@ export function SiteHeader() {
               );
             })}
           </nav>
-          <div className="header-actions">
+          <div className={ready && !admin && user ? "header-actions header-actions--member" : "header-actions"}>
             {admin && <span className="admin-label">Admin</span>}
-            {ready && !admin && user && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
+            {ready && !admin && user && <Link className="button button--small button--paper header-listing-action" href="/list" aria-label="List an item"><ListPlus size={17} /><span>List an item</span></Link>}
             {ready && !admin && user && (
               <Link
-                className="icon-button header-utility"
+                className="icon-button header-utility header-expandable"
                 href="/messages"
                 aria-label={messageUnreadCount > 0 ? `Messages, ${messageUnreadCount} unread` : "Messages"}
-                title="Messages"
+                onPointerUp={(event) => event.currentTarget.blur()}
               >
                 <MessageCircle size={19} />
+                <span className="header-action-label">Messages</span>
                 {messageUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
               </Link>
             )}
-            {ready && !admin && user && <SavedPopover open={savedOpen} onOpenChange={setSavedOpen} />}
+            {ready && !admin && user && (
+              <SavedPopover
+                open={savedOpen}
+                onOpenChange={(open) => {
+                  setSavedOpen(open);
+                  if (open) setNotificationsOpen(false);
+                }}
+              />
+            )}
             {ready && !admin && user && (
               <NotificationsPopover
                 open={notificationsOpen}
                 unreadCount={notificationUnreadCount}
-                onOpenChange={setNotificationsOpen}
+                onOpenChange={(open) => {
+                  setNotificationsOpen(open);
+                  if (open) setSavedOpen(false);
+                }}
                 onUnreadCountChange={setNotificationUnreadCount}
               />
             )}
+            {!loading && !user && !admin && <Link className="header-guest-explore" href="/explore">Explore</Link>}
             {!loading && !user && (
               <Link className="button button--small button--paper header-login" href="/login">Log in</Link>
             )}

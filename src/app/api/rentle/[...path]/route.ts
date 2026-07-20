@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 const ACCESS_COOKIE = "rentle_access_token";
 const REFRESH_COOKIE = "rentle_refresh_token";
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 7;
+const BACKEND_TIMEOUT_MS = 8_000;
 const API_BASE = (process.env.RENTLE_API_URL ?? "http://localhost:8080/api/v1").replace(/\/$/, "");
 
 type RouteContext = {
@@ -60,6 +61,7 @@ async function refreshSession(refreshToken: string) {
     const response = await fetch(`${API_BASE}/auth/refresh`, {
       method: "POST",
       cache: "no-store",
+      signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ refreshToken }),
     });
@@ -72,7 +74,7 @@ async function refreshSession(refreshToken: string) {
   return refresh;
 }
 
-async function forward(
+async function forwardToBackend(
   request: NextRequest,
   context: RouteContext,
 ) {
@@ -96,6 +98,7 @@ async function forward(
       body,
       headers,
       cache: "no-store",
+      signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
     });
   };
 
@@ -110,6 +113,11 @@ async function forward(
       undefined,
       JSON.stringify({ refreshToken: refreshToken ?? "" }),
     );
+  } else if (route.startsWith("auth/")) {
+    // Login, registration, password recovery, and OAuth exchange must not
+    // inherit an expired bearer token. Some security filters reject a stale
+    // Authorization header before a public auth endpoint can handle the body.
+    backendResponse = await perform(undefined);
   } else {
     backendResponse = await perform(accessToken);
   }
@@ -153,10 +161,29 @@ async function forward(
   });
 
   if (refreshed) applySession(response, refreshed);
-  if (route === "auth/logout" || (backendResponse.status === 401 && refreshToken && !refreshed)) {
+  const rejectedSession = backendResponse.status === 401
+    && !route.startsWith("auth/")
+    && Boolean(accessToken || refreshToken)
+    && !refreshed;
+  if (route === "auth/logout" || rejectedSession) {
     clearSession(response);
   }
   return response;
+}
+
+async function forward(request: NextRequest, context: RouteContext) {
+  try {
+    return await forwardToBackend(request, context);
+  } catch {
+    return NextResponse.json(
+      {
+        data: null,
+        error: "Rentle is temporarily unavailable. Please try again shortly.",
+        timestamp: new Date().toISOString(),
+      },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 }
 
 export const GET = forward;

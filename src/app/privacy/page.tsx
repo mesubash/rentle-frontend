@@ -23,7 +23,7 @@ export default function PrivacyPage() {
 
           <article className="legal-document card">
             <p className="legal-document__meta">
-              Proposed effective date: [insert date] · Version: Draft 1.0
+              Proposed effective date: 20-07-2026 · Version: Draft 1.0
             </p>
 
             <section>
