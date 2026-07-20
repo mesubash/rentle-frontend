@@ -1,2 +1,7 @@
+import { PermissionGuardedPage } from "@/components/can";
 import { VerificationQueue } from "@/components/verification-queue";
-export default function AdminVerificationsPage() { return <VerificationQueue />; }
+import { P } from "@/lib/iam/permission-keys";
+
+export default function AdminVerificationsPage() {
+  return <PermissionGuardedPage perm={P.KYC_SUBMISSION_READ}><VerificationQueue /></PermissionGuardedPage>;
+}

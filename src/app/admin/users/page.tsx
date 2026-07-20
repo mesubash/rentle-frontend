@@ -1,2 +1,7 @@
-const users = [["Aayush Shrestha", "+977 98•• ••112", "Verified", "8", "11 Jul 2026"], ["Sarah Maharjan", "+977 98•• ••814", "Verified", "34", "10 Jul 2026"], ["Rojen Tamang", "+977 98•• ••447", "Pending", "0", "11 Jul 2026"], ["Nabin Karki", "+977 98•• ••653", "Phone only", "12", "9 Jul 2026"]];
-export default function AdminUsersPage() { return <><header className="admin-page-header"><div><p className="eyebrow">Marketplace people</p><h1>Users</h1><p>Read-only account and trust status overview.</p></div><span className="queue-count">1,248 users</span></header><section className="admin-data-table card"><div className="admin-data-row admin-data-head"><span>User</span><span>Status</span><span>Bookings</span><span>Last active</span></div>{users.map((user) => <div className="admin-data-row" key={user[0]}><span><strong>{user[0]}</strong><small>{user[1]}</small></span><span><b className={user[2] === "Verified" ? "status-chip status-chip--verified" : "status-chip status-chip--requested"}>{user[2]}</b></span><span>{user[3]}</span><span>{user[4]}</span></div>)}</section></>; }
+import { AdminUsersView } from "@/components/admin-users-view";
+import { PermissionGuardedPage } from "@/components/can";
+import { P } from "@/lib/iam/permission-keys";
+
+export default function AdminUsersPage() {
+  return <PermissionGuardedPage perm={P.IDENTITY_USER_READ}><AdminUsersView /></PermissionGuardedPage>;
+}

@@ -1,35 +1,178 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, KeyboardEvent, useRef, useState } from "react";
-import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "./auth-provider";
+import { BrandLogo } from "./brand-logo";
+import { GoogleSignInButton } from "./google-sign-in-button";
+import { useToast } from "./toast-provider";
+import { authApi } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
+import { ADMIN_ENTRY_KEYS } from "@/lib/iam/admin-entry-keys";
+import { usePermissions } from "./permissions-provider";
 
-export function AuthForm({ mode }: { mode: "login" | "register" | "otp" }) {
-  const [phone, setPhone] = useState("+977 ");
+type AuthMode = "login" | "register";
+
+export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string }) {
+  const router = useRouter();
+  const { showToast } = useToast();
+  const { setUser } = useAuth();
+  const { canAny, ready } = usePermissions();
   const [loading, setLoading] = useState(false);
-  const [resent, setResent] = useState(false);
-  const inputs = useRef<Array<HTMLInputElement | null>>([]);
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [loginDestination, setLoginDestination] = useState<string | null>(null);
 
-  function submit(event: FormEvent) {
-    event.preventDefault(); setLoading(true); window.setTimeout(() => { window.location.href = mode === "register" ? "/auth/verify" : "/explore"; }, 650);
+  useEffect(() => {
+    if (!loginDestination || !ready) return;
+    router.push(canAny(...ADMIN_ENTRY_KEYS) ? "/admin" : loginDestination);
+  }, [canAny, loginDestination, ready, router]);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    const form = new FormData(event.currentTarget);
+    const email = String(form.get("email")).trim();
+    const password = String(form.get("password"));
+    let waitForPermissionRedirect = false;
+
+    try {
+      if (mode === "register") {
+        const session = await authApi.register({
+          email,
+          password,
+          fullName: String(form.get("fullName")).trim(),
+        });
+        setUser(session.user);
+        showToast("Account created. Verify your phone and email to book or list.", { tone: "success" });
+        router.push("/verification");
+      } else {
+        const session = await authApi.login({ identifier: email, password });
+        setUser(session.user);
+        showToast(`Welcome back, ${session.user.fullName.split(" ")[0]}.`, { tone: "success" });
+        waitForPermissionRedirect = true;
+        setLoginDestination(safeNext(nextPath));
+      }
+    } catch (caught) {
+      const message = caught instanceof ApiError ? caught.message : "Something went wrong. Please try again.";
+      setError(message);
+      showToast(message, { tone: "error" });
+    } finally {
+      if (!waitForPermissionRedirect) setLoading(false);
+    }
   }
-  function otpInput(index: number, value: string) { if (value && index < 5) inputs.current[index + 1]?.focus(); }
-  function otpKey(index: number, event: KeyboardEvent<HTMLInputElement>) { if (event.key === "Backspace" && !event.currentTarget.value && index > 0) inputs.current[index - 1]?.focus(); }
 
-  const title = mode === "login" ? "Welcome back" : mode === "register" ? "Join your neighborhood" : "Verify your phone";
+  const title = mode === "login" ? "Welcome back" : "Create your account";
+
   return (
-    <main className="auth-page"><section className="auth-card card">
-      <div className="auth-card__intro"><Link className="brand" href="/">Rentle</Link><p className="eyebrow">Trust starts with a real person</p><h1>{title}</h1><p>{mode === "otp" ? "We sent a six-digit code to +977 98•• ••••12." : "Borrow and lend with verified people nearby."}</p></div>
-      <form className="form-grid" onSubmit={submit}>
-        {mode === "register" && <div className="field"><label htmlFor="name">Full name</label><input id="name" autoComplete="name" required placeholder="Aayush Shrestha" /></div>}
-        {mode !== "otp" && <div className="field"><label htmlFor="phone">Phone number</label><input id="phone" autoComplete="tel" inputMode="tel" required value={phone} onChange={(event) => setPhone(event.target.value.replace(/[^+\d ]/g, ""))} /><small>We use this for OTP verification and booking updates.</small></div>}
-        {mode === "register" && <div className="field"><label htmlFor="email">Email address</label><input id="email" type="email" autoComplete="email" required placeholder="aayush@example.com" /></div>}
-        {mode !== "otp" && <div className="field"><label htmlFor="password">Password</label><input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} required /><small>At least 8 characters.</small></div>}
-        {mode === "otp" && <><div className="otp" aria-label="Six digit verification code">{Array.from({ length: 6 }).map((_, index) => <input key={index} ref={(node) => { inputs.current[index] = node; }} aria-label={`Digit ${index + 1}`} inputMode="numeric" autoComplete={index === 0 ? "one-time-code" : "off"} maxLength={1} onInput={(event) => otpInput(index, event.currentTarget.value)} onKeyDown={(event) => otpKey(index, event)} required />)}</div><button type="button" className="text-button" disabled={resent} onClick={() => { setResent(true); window.setTimeout(() => setResent(false), 5000); }}>{resent ? "A new code was sent" : "Send a new code"}</button></>}
-        <button className="button button--wide" disabled={loading}>{loading ? "Checking…" : mode === "login" ? "Log in" : mode === "register" ? "Create account" : "Verify and continue"}</button>
-      </form>
-      <div className="auth-trust"><ShieldCheck size={18} /><span>Your phone number is never shown publicly. It helps us keep duplicate and fake accounts out.</span></div>
-      {mode !== "otp" && <p className="auth-switch">{mode === "login" ? <>New to Rentle? <Link href="/auth/register">Create an account</Link></> : <>Already have an account? <Link href="/auth/login">Log in</Link></>}</p>}
-    </section><aside className="auth-proof"><LockKeyhole size={26} /><h2>Built for agreements between real neighbors.</h2><ul><li><CheckCircle2 /> Phone verified before booking</li><li><CheckCircle2 /> Citizenship status shown clearly</li><li><CheckCircle2 /> Reviews only after completed bookings</li></ul></aside></main>
+    <main className="auth-page">
+      <section className="auth-card card">
+        <div className="auth-card__intro">
+          <BrandLogo priority />
+          <h1>{title}</h1>
+          <p>Borrow and lend with verified people nearby.</p>
+        </div>
+
+        <form className="form-grid" onSubmit={submit}>
+          {mode === "register" && (
+            <div className="field">
+              <label htmlFor="fullName">Full name <span className="req" aria-hidden="true">*</span></label>
+              <input id="fullName" name="fullName" autoComplete="name" required />
+            </div>
+          )}
+
+          <div className="field">
+            <label htmlFor="email">Email address <span className="req" aria-hidden="true">*</span></label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete={mode === "login" ? "username" : "email"}
+              required
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="password">Password <span className="req" aria-hidden="true">*</span></label>
+            <div className="password-input">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                minLength={8}
+                maxLength={72}
+                required
+              />
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {mode === "register" && <small>At least 8 characters.</small>}
+          </div>
+
+          {mode === "login" && (
+            <p className="auth-switch"><Link href="/auth/forgot-password">Forgot password?</Link></p>
+          )}
+
+          {mode === "register" && (
+            <label className="consent-field">
+              <input
+                type="checkbox"
+                name="acceptedTerms"
+                checked={acceptedTerms}
+                onChange={(event) => setAcceptedTerms(event.target.checked)}
+                required
+              />
+              <span>
+                I agree to the <Link href="/terms">Terms of Service</Link> and{" "}
+                <Link href="/privacy">Privacy Policy</Link>
+              </span>
+            </label>
+          )}
+
+          {error && <p className="form-error" role="alert">{error}</p>}
+          <button className="button button--wide" disabled={loading || (mode === "register" && !acceptedTerms)}>
+            {loading ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
+          </button>
+        </form>
+
+        <GoogleSignInButton />
+{/* 
+        {mode === "register" && (
+          <div className="auth-trust">
+            <span>Verify your phone, email and ID from your account before booking or listing.</span>
+          </div>
+        )} */}
+
+        <p className="auth-switch">
+          {mode === "login"
+            ? <>New to Rentle? <Link href="/register">Create an account</Link></>
+            : <>Already have an account? <Link href="/login">Log in</Link></>}
+        </p>
+      </section>
+
+      <aside className="auth-proof">
+        <h2>Built for agreements between real neighbors.</h2>
+        <ul>
+          <li>Phone, email and ID verified before booking</li>
+          <li>Citizenship status shown clearly</li>
+          <li>Reviews only after completed bookings</li>
+        </ul>
+      </aside>
+    </main>
   );
+}
+
+function safeNext(value?: string) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/explore";
 }

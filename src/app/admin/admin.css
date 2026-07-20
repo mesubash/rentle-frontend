@@ -1,0 +1,272 @@
+/* Tailwind is intentionally preflight-free. Marketplace styles must not be reset. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@import "tw-animate-css";
+
+@source ".";
+@source "../../components/ui";
+@source "../../components/admin-records-view.tsx";
+@source "../../components/admin-dashboard.tsx";
+@source "../../components/admin-row-actions.tsx";
+@source "../../components/admin-shell.tsx";
+@source "../../components/admin-table-row-link.tsx";
+@source "../../components/admin-ui.tsx";
+@source "../../components/admin-roles-view.tsx";
+@source "../../components/admin-staff-view.tsx";
+@source "../../components/admin-users-view.tsx";
+@source "../../components/verification-queue.tsx";
+@source "../../components/admin-profile-view.tsx";
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 3px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:where(.admin-scope, .admin-portal, body:has(.admin-scope)) {
+  --background: var(--paper);
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: var(--pine);
+  --primary-foreground: #ffffff;
+  --secondary: #ececea;
+  --secondary-foreground: #262626;
+  --muted: #ececea;
+  --muted-foreground: #6f6f6a;
+  --accent: #eeeeeb;
+  --accent-foreground: #171717;
+  --destructive: var(--brick);
+  --destructive-foreground: var(--white);
+  --border: #e4e4e0;
+  --input: #e0e0db;
+  --ring: var(--pine);
+  font-family: var(--font-body), sans-serif;
+}
+
+/* App root fills the viewport. Portals (dialogs, menus) mount to <body> and
+   reuse .admin-portal for theme tokens only — they must NOT inherit these
+   layout rules, or a dialog stretches full-height and its overlay loses tint. */
+.admin-scope {
+  min-height: 100svh;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.admin-scope, .admin-scope *, .admin-scope *::before, .admin-scope *::after,
+.admin-portal, .admin-portal *, .admin-portal *::before, .admin-portal *::after {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+.admin-scope button:not(:disabled),
+.admin-portal button:not(:disabled) {
+  cursor: pointer;
+}
+
+.admin-scope :is(h1, h2, h3, h4),
+.admin-portal :is(h1, h2, h3, h4) {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-body), sans-serif;
+}
+
+.admin-scope :is(input, textarea, select, button),
+.admin-portal :is(input, textarea, select, button) {
+  font-family: inherit;
+}
+
+.admin-scope :is(input, textarea, select):focus,
+.admin-portal :is(input, textarea, select):focus {
+  border-color: var(--input);
+}
+
+.admin-scope :is(input, textarea, select, button, a):focus-visible,
+.admin-portal :is(input, textarea, select, button, a):focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 18%, transparent);
+}
+
+.admin-scope .bg-primary,
+.admin-portal .bg-primary {
+  color: #ffffff;
+}
+
+.admin-row-actions__trigger {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted-foreground);
+}
+
+.admin-row-actions__trigger:hover,
+.admin-row-actions__trigger[data-state="open"],
+.admin-row-actions__trigger:focus-visible {
+  background: var(--muted);
+  box-shadow: none;
+  color: var(--foreground);
+}
+
+.admin-app {
+  display: flex;
+  min-height: 100svh;
+  background: var(--background);
+}
+
+.admin-desktop-sidebar,
+.admin-mobile-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 16rem;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+}
+
+.admin-desktop-sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 100svh;
+  flex: 0 0 16rem;
+  transition: width 180ms ease, flex-basis 180ms ease;
+}
+
+.admin-mobile-sidebar { display: none; }
+
+.admin-sidebar-brand {
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.admin-sidebar-brand .brand { width: 70px; height: 30px; }
+.admin-sidebar-brand__copy { min-width: 0; display: grid; line-height: 1.15; }
+.admin-sidebar-brand__copy strong { font-size: .82rem; }
+.admin-sidebar-brand__copy span { color: var(--muted-foreground); font-size: .68rem; white-space: nowrap; }
+.admin-sidebar-mobile-close { display: none; margin-left: auto; padding: .35rem; border: 0; border-radius: .35rem; background: transparent; }
+.admin-sidebar-mobile-close svg { width: 1.1rem; height: 1.1rem; }
+
+.admin-sidebar-nav { flex: 1; overflow-y: auto; padding: .8rem .65rem; }
+.admin-nav-group + .admin-nav-group { margin-top: 1.1rem; }
+.admin-nav-group > p { margin: 0 0 .35rem; padding: 0 .55rem; color: var(--muted-foreground); font-size: .68rem; font-weight: 600; letter-spacing: .02em; }
+.admin-nav-group nav { display: grid; gap: .15rem; }
+.admin-nav-link { min-height: 2.25rem; display: flex; align-items: center; gap: .7rem; padding: .45rem .6rem; border-radius: .4rem; color: #404040; font-size: .83rem; font-weight: 500; transition: background 120ms ease, color 120ms ease; }
+.admin-nav-link:hover { background: var(--accent); color: var(--foreground); }
+.admin-nav-link.is-active { background: var(--secondary); color: var(--foreground); font-weight: 600; }
+.admin-nav-link svg { width: 1rem; height: 1rem; flex: none; color: #737373; }
+.admin-nav-link.is-active svg { color: var(--primary); }
+.admin-nav-link .inline-flex { margin-left: auto; min-width: 1.35rem; justify-content: center; padding: 0 .35rem; }
+
+.admin-sidebar-user { padding: .65rem; border-top: 1px solid var(--border); }
+.admin-user-card { width: 100%; min-width: 0; display: flex; align-items: center; gap: .65rem; padding: .5rem; border: 0; border-radius: .45rem; background: transparent; color: var(--foreground); text-align: left; }
+.admin-user-card:hover, .admin-user-card[data-state="open"] { background: var(--accent); }
+.admin-user-avatar { width: 2rem; height: 2rem; flex: none; display: grid; place-items: center; border-radius: .45rem; background: var(--primary); color: var(--primary-foreground); font-size: .7rem; font-weight: 700; }
+.admin-user-copy { min-width: 0; flex: 1; display: grid; line-height: 1.25; }
+.admin-user-copy strong, .admin-user-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-user-copy strong { font-size: .78rem; }
+.admin-user-copy small { color: var(--muted-foreground); font-size: .67rem; }
+.admin-user-card > svg { width: .95rem; height: .95rem; color: var(--muted-foreground); }
+
+.admin-workspace { min-width: 0; flex: 1; }
+.admin-topbar { position: sticky; top: 0; z-index: 20; height: 4rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0 1.5rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.9); backdrop-filter: blur(10px); }
+.admin-topbar__start { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+.admin-topbar-divider { width: 1px; height: 1.5rem; background: var(--border); }
+.admin-topbar__start > div:last-child { min-width: 0; display: flex; align-items: baseline; gap: .45rem; }
+.admin-topbar__start span:not(.admin-topbar-divider) { color: var(--muted-foreground); font-size: .75rem; }
+.admin-topbar__start strong { font-size: .83rem; white-space: nowrap; }
+.admin-main { width: 100%; max-width: 96rem; margin: 0 auto; padding: 1.5rem; }
+
+.admin-app.is-collapsed .admin-desktop-sidebar { width: 4rem; flex-basis: 4rem; }
+.admin-app.is-collapsed .admin-sidebar-brand { justify-content: center; padding-inline: .5rem; }
+.admin-app.is-collapsed .admin-sidebar-brand .brand { width: 2.5rem; }
+.admin-app.is-collapsed .admin-sidebar-brand__copy,
+.admin-app.is-collapsed .admin-nav-group > p,
+.admin-app.is-collapsed .admin-nav-link span,
+.admin-app.is-collapsed .admin-nav-link .inline-flex,
+.admin-app.is-collapsed .admin-user-copy,
+.admin-app.is-collapsed .admin-user-card > svg { display: none; }
+.admin-app.is-collapsed .admin-nav-group + .admin-nav-group { margin-top: .45rem; padding-top: .45rem; border-top: 1px solid var(--border); }
+.admin-app.is-collapsed .admin-nav-link,
+.admin-app.is-collapsed .admin-user-card { justify-content: center; padding-inline: .45rem; }
+
+.admin-app-loading { min-height: 100svh; display: grid; grid-template-columns: 16rem 1fr; background: var(--background); }
+.admin-app-loading aside { display: grid; align-content: start; gap: .75rem; padding: 1rem; border-right: 1px solid var(--border); background: var(--card); }
+.admin-app-loading main { padding: 1rem 1.5rem; }
+
+.admin-scope table th { background: #fafafa; font-size: .72rem; font-weight: 600; }
+.admin-scope table td { padding-top: .7rem; padding-bottom: .7rem; }
+.admin-scope table tbody tr:hover { background: #fafafa; }
+.admin-scope .form-error { border: 1px solid #fecaca; border-radius: .4rem; background: #fef2f2; color: #b91c1c; padding: .7rem .85rem; font-size: .82rem; }
+
+@media (max-width: 767px) {
+  .admin-desktop-sidebar { display: none; }
+  .admin-mobile-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 60; display: flex; width: min(18rem, 86vw); transform: translateX(-102%); transition: transform 180ms ease; box-shadow: 12px 0 32px rgba(0,0,0,.12); }
+  .admin-mobile-sidebar.is-open { transform: translateX(0); }
+  .admin-sidebar-mobile-close { display: inline-grid; place-items: center; }
+  .admin-sidebar-backdrop { position: fixed; inset: 0; z-index: 55; border: 0; background: rgba(0,0,0,.35); }
+  .admin-topbar { padding: 0 .9rem; }
+  .admin-topbar__start > div:last-child { display: grid; gap: 0; }
+  .admin-topbar__start > div:last-child span { display: none; }
+  .admin-main { padding: 1rem; }
+  .admin-app-loading { grid-template-columns: 1fr; }
+  .admin-app-loading aside { display: none; }
+}
+
+.admin-access-skeleton {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 720px);
+  padding: 24px 0;
+}
+
+.admin-access-skeleton span {
+  height: 18px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--paper-deep), var(--white), var(--paper-deep));
+  background-size: 220% 100%;
+  animation: admin-skeleton 1.25s ease-in-out infinite;
+}
+
+.admin-access-skeleton span:first-child { width: 42%; height: 34px; }
+.admin-access-skeleton span:last-child { width: 70%; }
+
+.admin-no-access {
+  width: min(100%, 640px);
+  margin: 40px auto;
+  padding: 32px;
+}
+
+.admin-no-access h1 { margin: 8px 0 12px; font-size: clamp(1.7rem, 4vw, 2.4rem); }
+.admin-no-access p:not(.eyebrow) { color: var(--stone); }
+.admin-no-access .button { margin-top: 10px; }
+
+@keyframes admin-skeleton {
+  to { background-position: -220% 0; }
+}

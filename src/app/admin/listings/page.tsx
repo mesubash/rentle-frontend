@@ -1,2 +1,7 @@
-const rows = [["Sony Alpha A7 IV Camera", "Sarah M.", "Product", "Live", "NPR 2,500/day"], ["Wedding & Event Photography", "Riya Shrestha", "Service", "Live", "NPR 4,500/event"], ["Traditional Daura Suruwal Set", "Aayush S.", "Product", "Review", "NPR 800/day"], ["DJI Mini 3 Pro Drone", "Rojan P.", "Product", "Paused", "NPR 2,500/day"]];
-export default function AdminListingsPage() { return <><header className="admin-page-header"><div><p className="eyebrow">Marketplace inventory</p><h1>Listings</h1><p>Monitor listing state and ownership across the marketplace.</p></div><span className="queue-count">318 live</span></header><section className="admin-data-table card"><div className="admin-data-row admin-data-head"><span>Listing</span><span>Type</span><span>Status</span><span>Price</span></div>{rows.map((row) => <div className="admin-data-row" key={row[0]}><span><strong>{row[0]}</strong><small>{row[1]}</small></span><span>{row[2]}</span><span><b className={row[3] === "Live" ? "status-chip status-chip--verified" : "status-chip status-chip--requested"}>{row[3]}</b></span><span>{row[4]}</span></div>)}</section></>; }
+import { AdminRecordsView } from "@/components/admin-records-view";
+import { PermissionGuardedPage } from "@/components/can";
+import { P } from "@/lib/iam/permission-keys";
+
+export default function AdminListingsPage() {
+  return <PermissionGuardedPage perm={P.LISTING_LISTING_READ}><AdminRecordsView kind="listings" /></PermissionGuardedPage>;
+}

@@ -1,25 +1,30 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MapPin, Star } from "lucide-react";
-import { formatNpr, type Listing } from "@/lib/data";
-import { TrustBadge } from "./trust-badge";
+import { Building2, MapPin, Star } from "lucide-react";
+import { formatNpr } from "@/lib/format";
+import { assetUrl } from "@/lib/api/assets";
+import { priceUnitLabel, type ListingSummary } from "@/lib/api/listings";
+import { FavoriteHeart } from "./favorite-heart";
 
-export function ListingCard({ listing, priority = false }: { listing: Listing; priority?: boolean }) {
+export function ListingCard({ listing, priority = false, hideFav = false }: { listing: ListingSummary; priority?: boolean; hideFav?: boolean }) {
+  const href = `/listing/${listing.id}`;
+  const image = assetUrl(listing.coverImage);
+  const type = listing.type === "PRODUCT" ? "Product" : "Service";
   return (
     <article className="listing-card">
-      <Link className="listing-card__image" href={`/listing/${listing.slug}`} aria-label={`View ${listing.title}`}>
-        <Image src={listing.image} alt={listing.alt} fill sizes="(max-width: 700px) 100vw, (max-width: 1024px) 50vw, 33vw" priority={priority} />
-        <span className={`type-chip type-chip--${listing.type.toLowerCase()}`}>{listing.type}</span>
-        <span className="icon-button icon-button--photo" aria-hidden="true"><Heart size={18} /></span>
+      <Link className="listing-card__image" href={href} aria-label={`View ${listing.title}`}>
+        {image ? <Image src={image} alt={listing.title} fill sizes="(max-width: 700px) 100vw, (max-width: 1024px) 50vw, 33vw" priority={priority} /> : <span className="listing-card__placeholder">No photo yet</span>}
+        <span className={`type-chip type-chip--${type.toLowerCase()}`}>{type}</span>
       </Link>
+      {!hideFav && <FavoriteHeart listingId={listing.id} title={listing.title} />}
       <div className="listing-card__body">
         <div className="listing-card__eyebrow">
-          <span><MapPin size={14} /> {listing.area}, {listing.district}</span>
-          <span className="rating"><Star size={14} fill="currentColor" /> {listing.rating} <small>({listing.reviewCount})</small></span>
+          <span><MapPin size={14} /> {listing.district}</span>
+          {listing.reviewCount ? <span className="rating"><Star size={14} fill="currentColor" /> {(listing.averageRating ?? 0).toFixed(1)} <small>({listing.reviewCount})</small></span> : <span className="rating rating--new">New</span>}
         </div>
-        <h3><Link href={`/listing/${listing.slug}`}>{listing.title}</Link></h3>
-        <div className="listing-card__owner"><span>{listing.owner}</span><TrustBadge compact /></div>
-        <p className="price"><strong>{formatNpr(listing.price)}</strong> / {listing.unit}</p>
+        <h3><Link href={href}>{listing.title}</Link></h3>
+        {listing.provider?.type === "ORG" && <p className="listing-card__provider"><Building2 size={13} /> {listing.provider.name}</p>}
+        <p className="price"><strong>{formatNpr(listing.pricePerUnit)}</strong> / {priceUnitLabel(listing.priceUnit)}</p>
       </div>
     </article>
   );

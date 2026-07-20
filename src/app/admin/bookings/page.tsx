@@ -1,1 +1,7 @@
-export default function AdminBookingsPage() { return <><header className="admin-page-header"><div><p className="eyebrow">Agreement records</p><h1>Bookings</h1><p>Read-only booking state overview for support and safety reviews.</p></div><span className="queue-count">42 active</span></header><section className="empty-state card"><p className="eyebrow">No alerts</p><h2>Active bookings look healthy.</h2><p>Bookings with overdue deposits, repeated cancellations, or safety reports will appear here first.</p></section></>; }
+import { AdminRecordsView } from "@/components/admin-records-view";
+import { PermissionGuardedPage } from "@/components/can";
+import { P } from "@/lib/iam/permission-keys";
+
+export default function AdminBookingsPage() {
+  return <PermissionGuardedPage perm={P.BOOKING_BOOKING_READ}><AdminRecordsView kind="bookings" /></PermissionGuardedPage>;
+}
