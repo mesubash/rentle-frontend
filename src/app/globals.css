@@ -661,7 +661,18 @@ h3 { font-size: 1.18rem; }
 .booking-list { display: grid; gap: 12px; }
 .empty-note { margin: 0; padding: 40px 0; text-align: center; color: var(--stone); opacity: .75; }
 .see-more { display: flex; justify-content: center; margin-top: 26px; }
-.load-more { display: grid; justify-items: center; gap: 10px; margin-top: 26px; text-align: center; }
+.explore-results-anchor { scroll-margin-top: calc(var(--header-height) + 18px); }
+.explore-pagination { display: grid; justify-items: center; gap: 14px; margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--border-soft); }
+.explore-pagination > p { margin: 0; color: var(--stone); font-size: .82rem; }
+.explore-pagination__controls, .explore-pagination__pages { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.explore-pagination__controls { flex-wrap: wrap; }
+.explore-pagination__pages { order: -1; width: 100%; }
+.pagination-button { min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--white); color: var(--pine); font-weight: 700; cursor: pointer; }
+.pagination-button:hover:not(:disabled) { border-color: var(--pine); background: var(--pine-wash); }
+.pagination-button.is-active { border-color: var(--pine); background: var(--pine); color: var(--white); }
+.pagination-button:disabled { cursor: not-allowed; opacity: .42; }
+.explore-pagination__pages span { min-width: 20px; text-align: center; color: var(--stone); }
+.pagination-button--wide { min-width: 104px; }
 .access-gate > svg { color: var(--pine); }
 .access-gate__secondary { margin-top: 16px !important; font-size: .88rem; }
 .access-gate__secondary a { color: var(--pine); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
@@ -756,6 +767,7 @@ h3 { font-size: 1.18rem; }
   .footer-prompt { flex-direction: row; align-items: center; justify-content: space-between; }
   .footer-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .footer-bottom { flex-direction: row; align-items: center; justify-content: space-between; }
+  .explore-pagination__pages { order: 0; width: auto; }
 }
 
 @media (min-width: 900px) {
