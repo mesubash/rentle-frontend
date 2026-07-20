@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
+    // Cloudinary-hosted images (production storage). Local files are proxied same-origin.
+    remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com" },
+    ],
   },
 };
 
