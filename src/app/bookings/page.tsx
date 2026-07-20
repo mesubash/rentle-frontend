@@ -22,6 +22,12 @@ export default function BookingsPage() {
         if (!active) return;
         setRenting(renter.content);
         setHosting(owner.content);
+        // Open on the side that needs attention: owner requests waiting, or when there's
+        // nothing being rented but requests are coming in.
+        const pendingOwner = owner.content.some((b) => b.status === "REQUESTED");
+        if ((pendingOwner && !renter.content.some((b) => b.status === "REQUESTED")) || (!renter.content.length && owner.content.length)) {
+          setTab("hosting");
+        }
       })
       .catch(() => {
         if (active) setError("We could not reach Rentle right now. Please try again shortly.");

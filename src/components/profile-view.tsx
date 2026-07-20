@@ -54,7 +54,7 @@ export function ProfileView({ own = false, userId, embedded = false }: { own?: b
       </div>
       <div className="profile-identity">
         <h1>{profile.fullName}</h1>
-        <div className="profile-meta"><TrustBadge verified={profile.verified} /><span>Trust score {formatTrustScore(profile.trustScore)}</span><span><CalendarDays size={15} /> Member since {joined}</span></div>
+        <div className="profile-meta"><TrustBadge verified={profile.verified} /><span>Trust score · {formatTrustScore(profile.trustScore)}</span><span><CalendarDays size={15} /> Member since {joined}</span></div>
         {own && profile.email && <p>{profile.email}</p>}
         {!own && <div className="profile-report"><ReportButton targetType="USER" targetId={profile.id} label="Report this member" /></div>}
       </div>

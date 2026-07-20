@@ -41,6 +41,8 @@ export function AdminUsersView() {
   const canSuspendUsers = useCan(P.IDENTITY_USER_SUSPEND);
   const canResetPassword = useCan(P.IDENTITY_USER_RESET_PASSWORD);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [page, setPage] = useState(0);
+  const [pageInfo, setPageInfo] = useState({ last: true, total: 0 });
   const [filter, setFilter] = useState<"" | UserProfile["status"]>("");
   const [kyc, setKyc] = useState("");
   const [query, setQuery] = useState("");
@@ -52,9 +54,11 @@ export function AdminUsersView() {
 
   useEffect(() => {
     let active = true;
-    adminApi.users(filter || undefined)
-      .then((page) => {
-        if (active) setUsers(page.content);
+    adminApi.users(filter || undefined, page, 25)
+      .then((res) => {
+        if (!active) return;
+        setUsers(res.content);
+        setPageInfo({ last: res.last, total: res.totalElements });
       })
       .catch((caught) => {
         if (active) setError(messageOf(caught, "Users could not be loaded."));
@@ -65,7 +69,7 @@ export function AdminUsersView() {
     return () => {
       active = false;
     };
-  }, [filter]);
+  }, [filter, page]);
 
   const visibleUsers = users.filter((user) => {
     const matchesQuery = `${user.fullName} ${user.email} ${user.phoneNumber ?? ""}`.toLowerCase().includes(query.trim().toLowerCase());
@@ -93,7 +97,7 @@ export function AdminUsersView() {
       <AdminPageHeader
         title="Users"
         description="Manage marketplace accounts, verification status, and staff access."
-        actions={<AdminCount>{users.length} records</AdminCount>}
+        actions={<AdminCount>{pageInfo.total} records</AdminCount>}
       />
 
       <FilterBar
@@ -105,7 +109,7 @@ export function AdminUsersView() {
             id: "status",
             label: "Status",
             value: filter,
-            onChange: (value) => { setLoading(true); setFilter(value as UserProfile["status"]); },
+            onChange: (value) => { setLoading(true); setPage(0); setFilter(value as UserProfile["status"]); },
             allLabel: "All statuses",
             options: [
               { label: "Pending", value: "PENDING_VERIFICATION" },
@@ -179,6 +183,16 @@ export function AdminUsersView() {
         </AdminTableShell>
       ) : (
         <AdminEmptyState icon={Users} title="No users match this view" description="Change the account status or search term to see other users." />
+      )}
+
+      {!loading && (pageInfo.total > 25 || page > 0) && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>Page {page + 1}{query || kyc ? " · search filters this page" : ""}</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => { setLoading(true); setPage((p) => Math.max(0, p - 1)); }}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={pageInfo.last} onClick={() => { setLoading(true); setPage((p) => p + 1); }}>Next</Button>
+          </div>
+        </div>
       )}
 
       <UserAssignmentsDialog

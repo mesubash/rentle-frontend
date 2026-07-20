@@ -105,8 +105,8 @@ export function AdminCategoriesView() {
                 {canManage && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/admin/categories/${category.id}/templates`}>Fields</Link>
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/admin/categories/${category.id}/templates`}>Edit fields</Link>
                       </Button>
                       <Button
                         variant={category.active ? "outline" : "default"}

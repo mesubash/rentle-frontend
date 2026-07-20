@@ -151,7 +151,7 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Amount</TableHead>
-                {kind === "listings" && <TableHead className="text-right">Moderation</TableHead>}
+                {kind === "listings" && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
