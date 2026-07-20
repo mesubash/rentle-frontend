@@ -6,6 +6,8 @@ import { useAuth } from "./auth-provider";
 import { useToast } from "./toast-provider";
 import { usersApi, type UserProfile } from "@/lib/api/users";
 import { ApiError } from "@/lib/api/client";
+import { NepalPhoneInput } from "./nepal-phone-input";
+import { toNepalInternationalPhone, toNepalLocalPhone } from "@/lib/phone";
 
 function message(caught: unknown, fallback: string) {
   return caught instanceof ApiError ? caught.message : fallback;
@@ -78,7 +80,7 @@ function PhoneStep({
   phone: string | null;
   onVerified: (u: UserProfile) => void;
 }) {
-  const [number, setNumber] = useState(phone ?? "+977");
+  const [number, setNumber] = useState(toNepalLocalPhone(phone));
   const [sent, setSent] = useState(false);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -89,7 +91,7 @@ function PhoneStep({
 
   async function send() {
     setBusy(true); setError("");
-    try { await usersApi.setPhone(number.replace(/\s+/g, "")); setSent(true); showToast("A verification code was sent by SMS.", { tone: "success" }); }
+    try { await usersApi.setPhone(toNepalInternationalPhone(number)); setSent(true); showToast("A verification code was sent by SMS.", { tone: "success" }); }
     catch (caught) { const detail = message(caught, "Could not send the code."); setError(detail); showToast(detail, { tone: "error" }); }
     finally { setBusy(false); }
   }
@@ -105,12 +107,12 @@ function PhoneStep({
       <div className="verify-step__head"><Phone size={18} /><strong>Verify your phone</strong></div>
       <div className="field">
         <label htmlFor="verify-phone">Phone number</label>
-        <input id="verify-phone" inputMode="tel" autoComplete="tel" value={number}
-          onChange={(e) => setNumber(e.target.value.replace(/[^+\d ]/g, ""))} disabled={sent} />
-        <small>International format, e.g. +9779812345678.</small>
+        <NepalPhoneInput id="verify-phone" autoComplete="tel-national" value={number}
+          onChange={(e) => setNumber(e.target.value)} disabled={sent} required pattern="[0-9]{10}" placeholder="98XXXXXXXX" />
+        <small>Enter the 10-digit Nepal number. The +977 country code is added automatically.</small>
       </div>
       {!sent ? (
-        <button className="button button--secondary" disabled={busy || number.length < 8} onClick={send}>
+        <button className="button button--secondary" disabled={busy || number.length !== 10} onClick={send}>
           {busy ? "Sending…" : "Send code by SMS"}
         </button>
       ) : (

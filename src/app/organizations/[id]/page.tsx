@@ -11,6 +11,8 @@ import { listingsApi, type ListingSummary } from "@/lib/api/listings";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import type { Worker } from "@/lib/api/workers";
 import { ApiError } from "@/lib/api/client";
+import { NepalPhoneInput } from "@/components/nepal-phone-input";
+import { toNepalInternationalPhone } from "@/lib/phone";
 import { useAuth } from "@/components/auth-provider";
 import { useOrg } from "@/components/org-provider";
 import { useToast } from "@/components/toast-provider";
@@ -99,10 +101,11 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
+    const localPhone = String(data.get("phone")).trim();
     try {
       const worker = await organizationsApi.addWorker(id, {
         name: String(data.get("name")).trim(),
-        phone: String(data.get("phone")).trim() || undefined,
+        phone: localPhone ? toNepalInternationalPhone(localPhone) : undefined,
         role: String(data.get("role")).trim() || undefined,
       });
       setWorkers((cur) => [...cur, worker]);
@@ -234,7 +237,7 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
               <form className="card card-pad form-grid" onSubmit={addWorker} style={{ marginTop: 12 }}>
                 <div className="field"><label htmlFor="w-name">Name</label><input id="w-name" name="name" required maxLength={120} /></div>
                 <div className="field"><label htmlFor="w-role">Role (optional)</label><input id="w-role" name="role" maxLength={80} placeholder="e.g. Plumber" /></div>
-                <div className="field"><label htmlFor="w-phone">Phone (optional)</label><input id="w-phone" name="phone" maxLength={20} /></div>
+                <div className="field"><label htmlFor="w-phone">Phone (optional)</label><NepalPhoneInput id="w-phone" name="phone" autoComplete="tel-national" placeholder="98XXXXXXXX" pattern="[0-9]{7,10}" /></div>
                 <button className="button button--small">Add worker</button>
               </form>
             </section>
