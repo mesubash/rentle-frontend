@@ -48,8 +48,8 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
           fullName: String(form.get("fullName")).trim(),
         });
         setUser(session.user);
-        showToast("Account created. Verify your phone and email to book or list.", { tone: "success" });
-        router.push("/verification");
+        showToast("Account created. You can finish verification now or return to it later.", { tone: "success" });
+        router.push("/verification?onboarding=registration");
       } else {
         const session = await authApi.login({ identifier: email, password });
         setUser(session.user);

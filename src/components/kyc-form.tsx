@@ -26,7 +26,7 @@ function Req() {
   return <span className="req" aria-hidden="true">*</span>;
 }
 
-export function KycForm({ initial, contactReady }: { initial: Kyc | null; contactReady: boolean }) {
+export function KycForm({ initial, contactReady, onDefer }: { initial: Kyc | null; contactReady: boolean; onDefer?: () => void }) {
   const { reload } = useAuth();
   const { showToast } = useToast();
   const [kyc, setKyc] = useState<Kyc | null>(initial);
@@ -198,9 +198,10 @@ export function KycForm({ initial, contactReady }: { initial: Kyc | null; contac
         {error && <p className="form-error" role="alert">{error}</p>}
 
         <div className="kyc-nav">
-          {step > 0 ? (
-            <button type="button" className="button button--secondary" disabled={busy} onClick={() => setStep(step - 1)}>Back</button>
-          ) : <span />}
+          <div className="kyc-nav__secondary">
+            {step > 0 && <button type="button" className="button button--secondary" disabled={busy} onClick={() => setStep(step - 1)}>Back</button>}
+            {onDefer && <button type="button" className="text-button" disabled={busy} onClick={onDefer}>I&apos;ll verify later</button>}
+          </div>
           {step < STEP_LABELS.length - 1 ? (
             <button type="button" className="button" disabled={!contactReady || busy} onClick={next}>Continue</button>
           ) : (

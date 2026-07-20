@@ -2,16 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BadgeCheck, ShieldCheck } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { ContactVerification } from "./contact-verification";
 import { KycForm } from "./kyc-form";
 import { kycApi, type Kyc } from "@/lib/api/kyc";
 
-export function VerificationWorkspace() {
+export function VerificationWorkspace({ registrationOnboarding = false }: { registrationOnboarding?: boolean }) {
   const { user } = useAuth();
+  const router = useRouter();
   const [kyc, setKyc] = useState<Kyc | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [showKycForm, setShowKycForm] = useState(!registrationOnboarding);
 
   useEffect(() => {
     kycApi
@@ -22,6 +25,7 @@ export function VerificationWorkspace() {
   }, []);
 
   const contactReady = Boolean(user?.phoneVerified && user?.emailVerified);
+  const deferKyc = () => router.push("/explore");
 
   // Already fully verified — don't show the onboarding steps again.
   if (user?.status === "VERIFIED") {
@@ -39,7 +43,18 @@ export function VerificationWorkspace() {
   return (
     <>
       <ContactVerification />
-      {loaded && <KycForm initial={kyc} contactReady={contactReady} />}
+      {loaded && registrationOnboarding && !kyc && !showKycForm ? (
+        <section className="verify-step card kyc-choice">
+          <div className="verify-step__head"><ShieldCheck size={18} /><strong>Identity verification is optional for now</strong></div>
+          <p className="verify-step__hint">Verify now to start the review sooner, or continue exploring and return from your profile when you are ready. You will need approval before booking or listing.</p>
+          <div className="button-row">
+            <button type="button" className="button" onClick={() => setShowKycForm(true)}>Verify identity now</button>
+            <button type="button" className="button button--secondary" onClick={deferKyc}>I&apos;ll verify later</button>
+          </div>
+        </section>
+      ) : loaded ? (
+        <KycForm initial={kyc} contactReady={contactReady} onDefer={registrationOnboarding && !kyc ? deferKyc : undefined} />
+      ) : null}
     </>
   );
 }
