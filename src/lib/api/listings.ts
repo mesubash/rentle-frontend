@@ -12,7 +12,7 @@ export type Category = { id: UUID; parentId: UUID | null; name: string; slug: st
 export type ProductDetail = { condition: ItemCondition; brand?: string; model?: string; minRentalDays?: number; maxRentalDays?: number };
 export type ServiceDetail = { serviceAreaKm?: number; typicalDuration?: ServiceDuration; minNoticeHours?: number; portfolioUrl?: string };
 export type ListingSearchQuery = { q?: string; type?: ListingType; categoryId?: UUID; district?: string; sort?: string; minPrice?: number; maxPrice?: number; page?: number; size?: number };
-/** Who provides a listing — an individual user (null on cards) or an organization. */
+/** Who provides a listing — an individual user or an organization. Present on cards for both. */
 export type ListingProvider = { type: "USER" | "ORG"; id: UUID; name: string; logoUrl: string | null; slug: string | null };
 export type ListingImageItem = { id: UUID; url: string; sortOrder: number };
 export type ListingSummary = { id: UUID; type: ListingType; status: ListingStatus; title: string; pricePerUnit: number; priceUnit: PriceUnit; depositAmount: number; district: string; averageRating: number; reviewCount: number; coverImage: string | null; provider: ListingProvider | null; createdAt: string };
