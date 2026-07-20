@@ -14,8 +14,9 @@ export type ServiceDetail = { serviceAreaKm?: number; typicalDuration?: ServiceD
 export type ListingSearchQuery = { q?: string; type?: ListingType; categoryId?: UUID; district?: string; sort?: string; minPrice?: number; maxPrice?: number; page?: number; size?: number };
 /** Who provides a listing — an individual user (null on cards) or an organization. */
 export type ListingProvider = { type: "USER" | "ORG"; id: UUID; name: string; logoUrl: string | null; slug: string | null };
+export type ListingImageItem = { id: UUID; url: string; sortOrder: number };
 export type ListingSummary = { id: UUID; type: ListingType; status: ListingStatus; title: string; pricePerUnit: number; priceUnit: PriceUnit; depositAmount: number; district: string; averageRating: number; reviewCount: number; coverImage: string | null; provider: ListingProvider | null; createdAt: string };
-export type ListingDetail = ListingSummary & { owner: PublicProfile; categoryId: UUID; categoryName: string; description: string; locationText: string | null; rentalTerms: string | null; totalBookings: number; images: string[]; product: ProductDetail | null; service: ServiceDetail | null };
+export type ListingDetail = ListingSummary & { owner: PublicProfile; categoryId: UUID; categoryName: string; description: string; locationText: string | null; rentalTerms: string | null; totalBookings: number; images: string[]; imageItems?: ListingImageItem[]; product: ProductDetail | null; service: ServiceDetail | null };
 export type CreateListingInput = { title: string; description: string; categoryId: UUID; type: ListingType; pricePerUnit: number; priceUnit: PriceUnit; district: string; locationText?: string; depositAmount?: number; rentalTerms?: string; attributes?: Record<string, unknown>; orgId?: UUID; product?: ProductDetail; service?: ServiceDetail };
 export type UpdateListingInput = Partial<Omit<CreateListingInput, "categoryId" | "type"> & { status: ListingStatus }>;
 export type BlockedRange = { rangeId: UUID | null; startDate: string; endDate: string; source: "OWNER_BLOCKED" | "BOOKED" };

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, Clock3, LogIn } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
+import styles from "./bookings.module.css";
 
 export default function BookingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -41,22 +42,28 @@ export default function BookingsPage() {
   const bookings = tab === "renting" ? renting : hosting;
   const loading = authLoading || Boolean(user && dataLoading);
 
-  return <main className="page"><div className="container bookings-page">
-    <header className="page-header"><p className="eyebrow">Your activity</p><h1>Bookings</h1><p>Requests, deposit proof, and messages stay attached to each agreement.</p></header>
+  return <main className="page"><div className={`container bookings-page ${styles.page}`}>
+    <header className={styles.header}><div><p className="eyebrow">Your activity</p><h1>Bookings</h1></div><p>Requests, deposit proof, and messages stay attached to each agreement.</p></header>
 
     {!authLoading && !user ? (
-      <section className="empty-state card access-gate"><LogIn size={30} /><p className="eyebrow">Account required</p><h2>Log in to access your bookings</h2><p>Your rental requests and owner bookings are private. Log in to view and manage them.</p><Link className="button" href="/login?next=/bookings">Log in to Rentle</Link><p className="access-gate__secondary">New to Rentle? <Link href="/register">Create an account</Link></p></section>
-    ) : loading ? (
-      <div className="booking-list" aria-label="Loading bookings">{[1, 2, 3].map((item) => <div className="skeleton" key={item} />)}</div>
+      <section className={`${styles.workspace} ${styles.gate}`}><span className={styles.icon}><LogIn size={22} /></span><div><p className="eyebrow">Account required</p><h2>Log in to access your bookings</h2><p>Your rental requests and owner bookings are private.</p></div><Link className="button" href="/login?next=/bookings">Log in</Link><p className={styles.secondary}>New to Rentle? <Link href="/register">Create an account</Link></p></section>
     ) : (
-      <>
-        <div className="tabs" role="tablist"><button role="tab" aria-selected={tab === "renting"} className={tab === "renting" ? "is-active" : ""} onClick={() => setTab("renting")}>Renting <span>{renting.length}</span></button><button role="tab" aria-selected={tab === "hosting"} className={tab === "hosting" ? "is-active" : ""} onClick={() => setTab("hosting")}>Owner requests <span>{hosting.length}</span></button></div>
-        {error ? <section className="empty-state card"><h2>Bookings are temporarily unavailable</h2><p>{error}</p><button className="button" onClick={() => window.location.reload()}>Try again</button></section> : bookings.length ? <div className="booking-list">{bookings.map((booking) => <BookingCard booking={booking} tab={tab} key={booking.id} />)}</div> : (tab === "renting"
-          ? <section className="empty-state card"><CalendarDays size={26} /><h2>Nothing booked yet</h2><p>Find a camera, an outfit, or a local pro nearby — your requests show up here.</p><Link className="button" href="/explore">Browse listings</Link></section>
-          : <section className="empty-state card"><CalendarDays size={26} /><h2>No requests yet</h2><p>When someone requests one of your listings, it lands here for you to approve.</p><Link className="button" href="/listings/manage">Manage your listings</Link></section>)}
-      </>
+      <section className={styles.workspace}>
+        <div className={styles.tabs} role="tablist" aria-label="Booking views"><button type="button" role="tab" id="renting-tab" aria-controls="bookings-panel" aria-selected={tab === "renting"} className={tab === "renting" ? styles.active : ""} onClick={() => setTab("renting")}>Renting <span>{loading ? "–" : renting.length}</span></button><button type="button" role="tab" id="hosting-tab" aria-controls="bookings-panel" aria-selected={tab === "hosting"} className={tab === "hosting" ? styles.active : ""} onClick={() => setTab("hosting")}>Owner requests <span>{loading ? "–" : hosting.length}</span></button></div>
+        <div className={styles.content} id="bookings-panel" role="tabpanel" aria-labelledby={`${tab}-tab`}>
+          {loading ? <div className="booking-list" aria-label="Loading bookings">{[1, 2].map((item) => <div className="skeleton" key={item} />)}</div>
+            : error ? <EmptyState title="Bookings are temporarily unavailable" description={error} action={<button className="button" onClick={() => window.location.reload()}>Try again</button>} />
+            : bookings.length ? <div className="booking-list">{bookings.map((booking) => <BookingCard booking={booking} tab={tab} key={booking.id} />)}</div>
+            : tab === "renting" ? <EmptyState title="Nothing booked yet" description="Find something useful nearby — your requests will appear here." action={<Link className="button" href="/explore">Browse listings</Link>} />
+            : <EmptyState title="No owner requests yet" description="New requests will appear here when someone books your listing." action={<Link className="button" href="/listings/manage">Manage listings</Link>} />}
+        </div>
+      </section>
     )}
   </div></main>;
+}
+
+function EmptyState({ title, description, action }: { title: string; description: string; action: React.ReactNode }) {
+  return <div className={styles.empty}><span className={styles.icon}><CalendarDays size={22} /></span><div><h2>{title}</h2><p>{description}</p></div>{action}</div>;
 }
 
 function BookingCard({ booking, tab }: { booking: Booking; tab: "renting" | "hosting" }) {

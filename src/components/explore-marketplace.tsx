@@ -4,11 +4,14 @@ import Form from "next/form";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
+import { ChevronDown, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
 import { ListingCard } from "./listing-card";
+import { FilterChipGroup } from "./filter-chip-group";
+import { ListingPagination } from "./listing-pagination";
 import { ApiError } from "@/lib/api/client";
 import { categoriesApi, listingsApi, type Category, type ListingSummary, type ListingType } from "@/lib/api/listings";
 import { DISTRICT_OPTIONS } from "@/lib/districts";
+import filterStyles from "./explore-filters.module.css";
 
 export function ExploreMarketplace({ initialQuery = "", home = false }: { initialQuery?: string; home?: boolean }) {
   const router = useRouter();
@@ -22,7 +25,7 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
   const [listingType, setListingType] = useState<ListingType | "">("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState("newest");
   const [categories, setCategories] = useState<Category[]>([]);
   const [listings, setListings] = useState<ListingSummary[]>([]);
@@ -46,7 +49,10 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
       setListings([]);
       setTotal(0);
       setTotalPages(0);
-      listingsApi.search({ q: query.trim() || undefined, type: listingType || undefined, categoryId: categoryId || undefined, district: district || undefined, minPrice: optionalPrice(minPrice), maxPrice: optionalPrice(maxPrice), sort, page: home ? 0 : currentPage, size: home ? 8 : 24 })
+      const parsedMin = optionalPrice(minPrice);
+      const parsedMax = optionalPrice(maxPrice);
+      const rangeValid = parsedMin === undefined || parsedMax === undefined || parsedMin <= parsedMax;
+      listingsApi.search({ q: query.trim() || undefined, type: listingType || undefined, categoryId: categoryId || undefined, district: district || undefined, minPrice: rangeValid ? parsedMin : undefined, maxPrice: rangeValid ? parsedMax : undefined, sort, page: home ? 0 : currentPage, size: home ? 8 : 24 })
         .then((page) => { if (active && version === searchVersion.current) { setListings(page.content); setTotal(page.totalElements); setTotalPages(page.totalPages); } })
         .catch((caught) => active && version === searchVersion.current && setError(caught instanceof ApiError ? caught.message : "We could not load listings."))
         .finally(() => active && version === searchVersion.current && setLoading(false));
@@ -79,23 +85,52 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
     setter(value);
   }
 
+  function updatePrice(kind: "min" | "max", value: string) {
+    resetPage();
+    const sanitized = value.replace(/\D/g, "");
+    if (kind === "min") setMinPrice(sanitized);
+    else setMaxPrice(sanitized);
+  }
+
+  function normalizePriceRange(kind: "min" | "max") {
+    if (!minPrice || !maxPrice || Number(minPrice) <= Number(maxPrice)) return;
+    if (kind === "min") setMaxPrice(minPrice);
+    else setMinPrice(maxPrice);
+  }
+
   const hasFilters = Boolean(query || categoryId || district || listingType || minPrice || maxPrice);
   const selectedCategory = categories.find((item) => item.id === categoryId);
+  const categoryOptions = [{ value: "", label: "All" }, ...categories.map((item) => ({ value: item.id, label: item.name }))];
+  const panelFilterCount = [listingType, district, minPrice, maxPrice].filter(Boolean).length;
+  const invalidPriceRange = Boolean(minPrice && maxPrice && Number(minPrice) > Number(maxPrice));
   const clear = () => { resetPage(); setQuery(""); setCategoryId(""); setDistrict(""); setListingType(""); setMinPrice(""); setMaxPrice(""); };
 
   return <>
     {home && <section className="market-masthead"><div className="container market-masthead__inner"><div><h1>Find what you need nearby.</h1><p>Rent useful things and book local skills in your area.</p></div><Form className="market-search" action="/explore"><Search size={20} aria-hidden="true" /><label className="sr-only" htmlFor="market-search">Search listings</label><input id="market-search" name="q" placeholder="Search cameras, tools, or services" /></Form></div></section>}
     <main className={home ? "page explore-page explore-page--home" : "page explore-page"}><div className="container">
-      <div className="filter-scroll" aria-label="Listing categories"><button onClick={() => updateFilter(setCategoryId, "")} className={!categoryId ? "filter-chip is-active" : "filter-chip"}>All</button>{categories.map((item) => <button key={item.id} onClick={() => updateFilter(setCategoryId, item.id)} className={categoryId === item.id ? "filter-chip is-active" : "filter-chip"}>{item.name}</button>)}</div>
-      {!home && <>
-        <details className="card card-pad" open={filtersOpen} onToggle={(event) => setFiltersOpen(event.currentTarget.open)}><summary className="button button--secondary button--small">Filters</summary><hr className="divider" /><div className="form-grid"><div className="field"><strong id="listing-type-filter">Listing type</strong><div className="filter-scroll" role="group" aria-labelledby="listing-type-filter"><button type="button" onClick={() => updateFilter(setListingType, "")} className={!listingType ? "filter-chip is-active" : "filter-chip"}>All</button><button type="button" onClick={() => updateFilter(setListingType, "PRODUCT")} className={listingType === "PRODUCT" ? "filter-chip is-active" : "filter-chip"}>Products</button><button type="button" onClick={() => updateFilter(setListingType, "SERVICE")} className={listingType === "SERVICE" ? "filter-chip is-active" : "filter-chip"}>Services</button></div></div><div className="form-grid form-grid--two"><div className="field"><label htmlFor="district-filter"><MapPin size={16} aria-hidden="true" /> District</label><select id="district-filter" value={district} onChange={(event) => updateFilter(setDistrict, event.target.value)}>{DISTRICT_OPTIONS.map((option) => <option key={option.value || "all"} value={option.value}>{option.label}</option>)}</select></div><div className="form-grid form-grid--two"><div className="field"><label htmlFor="min-price-filter">Minimum price (NPR)</label><input id="min-price-filter" type="number" min="0" step="1" inputMode="numeric" value={minPrice} onChange={(event) => updateFilter(setMinPrice, event.target.value)} placeholder="No minimum" /></div><div className="field"><label htmlFor="max-price-filter">Maximum price (NPR)</label><input id="max-price-filter" type="number" min="0" step="1" inputMode="numeric" value={maxPrice} onChange={(event) => updateFilter(setMaxPrice, event.target.value)} placeholder="No maximum" /></div></div></div></div></details>
-        <div className="explore-toolbar"><label className="sort-control"><SlidersHorizontal size={16} /><span className="sr-only">Sort listings</span><select value={sort} onChange={(event) => updateFilter(setSort, event.target.value)}><option value="newest">Newest</option><option value="rating">Highest rated</option><option value="price_asc">Lowest price</option><option value="price_desc">Highest price</option></select><ChevronDown size={15} /></label></div>
+      {home ? <FilterChipGroup options={categoryOptions} value={categoryId} onChange={(value) => updateFilter(setCategoryId, value)} ariaLabel="Listing categories" /> : <>
+        <section className={filterStyles.controls} aria-label="Listing controls">
+          <FilterChipGroup options={categoryOptions} value={categoryId} onChange={(value) => updateFilter(setCategoryId, value)} ariaLabel="Listing categories" contained />
+          <div className={filterStyles.toolbar}>
+            <button type="button" className={filtersOpen ? `${filterStyles.toggle} ${filterStyles.isOpen}` : filterStyles.toggle} aria-expanded={filtersOpen} aria-controls="advanced-listing-filters" onClick={() => setFiltersOpen((current) => !current)}><SlidersHorizontal size={17} /><strong>Filters</strong><small>{panelFilterCount ? `${panelFilterCount} active` : "Type, location and price"}</small><ChevronDown size={17} /></button>
+            <label className={`${filterStyles.sort} sort-control`}><SlidersHorizontal size={16} /><span className="sr-only">Sort listings</span><select value={sort} onChange={(event) => updateFilter(setSort, event.target.value)}><option value="newest">Newest</option><option value="rating">Highest rated</option><option value="price_asc">Lowest price</option><option value="price_desc">Highest price</option></select><ChevronDown size={15} /></label>
+          </div>
+          {filtersOpen && <div id="advanced-listing-filters" className={filterStyles.content}>
+            <div className={filterStyles.typeField}><strong id="listing-type-filter">Listing type</strong><FilterChipGroup options={[{ value: "", label: "All" }, { value: "PRODUCT", label: "Products" }, { value: "SERVICE", label: "Services" }]} value={listingType} onChange={(value) => updateFilter(setListingType, value)} ariaLabelledBy="listing-type-filter" flush /></div>
+            <div className={filterStyles.field}><label htmlFor="district-filter"><MapPin size={15} aria-hidden="true" /> District</label><select id="district-filter" value={district} onChange={(event) => updateFilter(setDistrict, event.target.value)}>{DISTRICT_OPTIONS.map((option) => <option key={option.value || "all"} value={option.value}>{option.label}</option>)}</select></div>
+            <div className={filterStyles.prices}>
+              <div className={filterStyles.field}><label htmlFor="min-price-filter">Min price (NPR)</label><input id="min-price-filter" type="text" inputMode="numeric" pattern="[0-9]*" value={minPrice} aria-invalid={invalidPriceRange} onChange={(event) => updatePrice("min", event.target.value)} onBlur={() => normalizePriceRange("min")} placeholder="No minimum" /></div>
+              <div className={filterStyles.field}><label htmlFor="max-price-filter">Max price (NPR)</label><input id="max-price-filter" type="text" inputMode="numeric" pattern="[0-9]*" value={maxPrice} aria-invalid={invalidPriceRange} onChange={(event) => updatePrice("max", event.target.value)} onBlur={() => normalizePriceRange("max")} placeholder="No maximum" /></div>
+              {invalidPriceRange && <small className={filterStyles.rangeError}>Minimum cannot be greater than maximum.</small>}
+            </div>
+          </div>}
+        </section>
         {hasFilters && <div className="active-filters"><strong>{total} result{total === 1 ? "" : "s"}</strong>{query && <button onClick={() => updateFilter(setQuery, "")}>“{query}” <X size={13} /></button>}{selectedCategory && <button onClick={() => updateFilter(setCategoryId, "")}>{selectedCategory.name} <X size={13} /></button>}{listingType && <button onClick={() => updateFilter(setListingType, "")}>{listingType === "PRODUCT" ? "Products" : "Services"} <X size={13} /></button>}{district && <button onClick={() => updateFilter(setDistrict, "")}>{district} <X size={13} /></button>}{minPrice && <button onClick={() => updateFilter(setMinPrice, "")}>From NPR {Number(minPrice).toLocaleString("en-NP")} <X size={13} /></button>}{maxPrice && <button onClick={() => updateFilter(setMaxPrice, "")}>Up to NPR {Number(maxPrice).toLocaleString("en-NP")} <X size={13} /></button>}<button className="clear-filters" onClick={clear}>Clear all</button></div>}
       </>}
       {home && <div className="section-heading"><h2>Fresh nearby</h2></div>}
       <div id="explore-results" className="explore-results-anchor" />
       {loading ? <div className="listing-grid listing-grid--four" aria-label="Loading listings">{Array.from({ length: 8 }).map((_, index) => <div className="skeleton" key={index} />)}</div> : error ? <section className="empty-state card"><p className="eyebrow">Connection problem</p><h2>Listings could not be loaded.</h2><p>{error}</p><button className="button" onClick={() => setRequestKey((value) => value + 1)}>Try again</button></section> : listings.length ? <div className="listing-grid listing-grid--four">{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 2} />)}</div> : <section className="empty-state card"><p className="eyebrow">No exact matches</p><h2>Try a broader search.</h2><p>Remove one or more filters to see more nearby listings.</p><button className="button" onClick={clear}>Show all listings</button></section>}
-      {!home && !loading && !error && listings.length > 0 && <ExplorePagination currentPage={currentPage} totalPages={totalPages} total={total} count={listings.length} onChange={goToPage} />}
+      {!home && !loading && !error && listings.length > 0 && <ListingPagination currentPage={currentPage} totalPages={totalPages} total={total} count={listings.length} pageSize={24} onChange={goToPage} />}
       {home && !error && <div className="see-more"><Link className="button" href="/explore">Explore all listings</Link></div>}
     </div></main>
   </>;
@@ -109,43 +144,4 @@ function optionalPrice(value: string) {
   if (!value) return undefined;
   const price = Number(value);
   return Number.isFinite(price) ? price : undefined;
-}
-
-function ExplorePagination({ currentPage, totalPages, total, count, onChange }: { currentPage: number; totalPages: number; total: number; count: number; onChange: (page: number) => void }) {
-  const start = currentPage * 24 + 1;
-  const end = Math.min(start + count - 1, total);
-
-  return (
-    <nav className="explore-pagination" aria-label="Listing pages">
-      <p>Showing <strong>{start}–{end}</strong> of <strong>{total}</strong> listings</p>
-      <div className="explore-pagination__controls">
-        <button type="button" className="pagination-button pagination-button--wide" disabled={currentPage === 0} onClick={() => onChange(currentPage - 1)}>
-          <ChevronLeft size={17} /> Previous
-        </button>
-        <div className="explore-pagination__pages">
-          {paginationItems(currentPage, totalPages).map((item) => typeof item === "number" ? (
-            <button key={item} type="button" className={item === currentPage ? "pagination-button is-active" : "pagination-button"} aria-label={`Page ${item + 1}`} aria-current={item === currentPage ? "page" : undefined} onClick={() => onChange(item)}>{item + 1}</button>
-          ) : <span key={item} aria-hidden="true">…</span>)}
-        </div>
-        <button type="button" className="pagination-button pagination-button--wide" disabled={currentPage >= totalPages - 1} onClick={() => onChange(currentPage + 1)}>
-          Next <ChevronRight size={17} />
-        </button>
-      </div>
-    </nav>
-  );
-}
-
-function paginationItems(currentPage: number, totalPages: number): Array<number | string> {
-  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index);
-
-  const items: Array<number | string> = [0];
-  let start = Math.max(1, currentPage - 1);
-  let end = Math.min(totalPages - 2, currentPage + 1);
-  if (currentPage <= 3) end = 4;
-  if (currentPage >= totalPages - 4) start = totalPages - 5;
-  if (start > 1) items.push("start-ellipsis");
-  for (let page = start; page <= end; page += 1) items.push(page);
-  if (end < totalPages - 2) items.push("end-ellipsis");
-  items.push(totalPages - 1);
-  return items;
 }

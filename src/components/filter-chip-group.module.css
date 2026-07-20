@@ -1,0 +1,91 @@
+.group {
+  position: relative;
+  margin: 0 -16px 18px;
+}
+
+.track {
+  display: flex;
+  gap: 8px;
+  padding: 0 38px 6px 16px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.track::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex: none;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--paper-deep);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--border);
+  font-size: .8rem;
+  font-weight: 650;
+  scroll-snap-align: start;
+  cursor: pointer;
+  transition: background 160ms ease-out, color 160ms ease-out, box-shadow 160ms ease-out, transform 120ms ease-out;
+}
+
+.chip:hover {
+  background: var(--pine-wash);
+  color: var(--pine-dark);
+  box-shadow: inset 0 0 0 1px #b8c9c1;
+}
+
+.chip:active { transform: scale(.98); }
+
+.chip.active {
+  background: var(--marigold);
+  color: var(--pine-dark);
+  box-shadow: none;
+}
+
+.fade {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  bottom: 6px;
+  width: 44px;
+  background: linear-gradient(to right, transparent, var(--paper) 76%);
+  pointer-events: none;
+}
+
+.flush {
+  margin: 0;
+}
+
+.flush .track {
+  flex-wrap: wrap;
+  padding: 0;
+  overflow: visible;
+  scroll-snap-type: none;
+}
+
+.flush .fade { display: none; }
+
+.contained {
+  margin: 0;
+}
+
+.contained .track {
+  padding: 0 38px 4px 0;
+}
+
+.contained .fade {
+  background: linear-gradient(to right, transparent, var(--paper-deep) 76%);
+}
+
+@media (min-width: 760px) {
+  .group { margin-inline: 0; }
+  .track { flex-wrap: wrap; padding: 0 0 6px; overflow: visible; scroll-snap-type: none; }
+  .contained .track { padding: 0 0 4px; }
+  .fade { display: none; }
+  .chip { min-height: 38px; }
+}

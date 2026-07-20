@@ -1,0 +1,14 @@
+.link {
+  width: fit-content;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: var(--pine);
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.link svg { transition: transform 150ms ease-out; }
+.link:hover svg { transform: translateX(-3px); }
