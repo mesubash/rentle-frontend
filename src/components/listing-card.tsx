@@ -6,7 +6,7 @@ import { assetUrl } from "@/lib/api/assets";
 import { priceUnitLabel, type ListingSummary } from "@/lib/api/listings";
 import { FavoriteHeart } from "./favorite-heart";
 
-export function ListingCard({ listing, priority = false }: { listing: ListingSummary; priority?: boolean }) {
+export function ListingCard({ listing, priority = false, hideFav = false }: { listing: ListingSummary; priority?: boolean; hideFav?: boolean }) {
   const href = `/listing/${listing.id}`;
   const image = assetUrl(listing.coverImage);
   const type = listing.type === "PRODUCT" ? "Product" : "Service";
@@ -16,7 +16,7 @@ export function ListingCard({ listing, priority = false }: { listing: ListingSum
         {image ? <Image src={image} alt={listing.title} fill sizes="(max-width: 700px) 100vw, (max-width: 1024px) 50vw, 33vw" priority={priority} /> : <span className="listing-card__placeholder">No photo yet</span>}
         <span className={`type-chip type-chip--${type.toLowerCase()}`}>{type}</span>
       </Link>
-      <FavoriteHeart listingId={listing.id} title={listing.title} />
+      {!hideFav && <FavoriteHeart listingId={listing.id} title={listing.title} />}
       <div className="listing-card__body">
         <div className="listing-card__eyebrow">
           <span><MapPin size={14} /> {listing.district}</span>

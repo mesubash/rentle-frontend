@@ -75,6 +75,10 @@ h3 { font-size: 1.18rem; }
 .org-stat { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius); background: var(--white); }
 .org-stat strong { font-size: 1.5rem; line-height: 1; color: var(--ink); }
 .org-stat small { color: var(--stone); font-size: .8rem; font-weight: 600; }
+.verification-done { display: flex; align-items: flex-start; gap: 14px; }
+.verification-done svg { flex: none; margin-top: 2px; color: var(--pine); }
+.verification-done h2 { margin: 0 0 4px; }
+.verification-done p { margin: 0; color: var(--stone); }
 .avatar--large { width: 80px; height: 80px; font: 700 1.4rem/1 var(--font-display), serif; }
 .admin-label { font-weight: 600; color: rgba(255,255,255,.8); }
 .nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 5px; padding: 0 5px; border-radius: 9px; background: var(--brick); color: white; font-size: .66rem; font-weight: 700; }

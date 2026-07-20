@@ -325,6 +325,8 @@ function RoleEditor({
             />
           </Can>
         )}
+        {/* Clears the sticky Save bar so the last permission rows aren't hidden behind it. */}
+        <div className="h-14" aria-hidden />
       </div>
 
       {error && <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">{error}</p>}

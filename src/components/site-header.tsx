@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Bell, Building2, CalendarDays, Check, Compass, Heart, LayoutList, ListPlus, LogIn, LogOut, MessageCircle, Plus, Search, ShieldCheck, UserCog, UserRound } from "lucide-react";
+import { Bell, Building2, CalendarDays, Check, Compass, Heart, LayoutList, ListPlus, LogIn, LogOut, MessageCircle, Plus, Search, ShieldCheck, UserRound } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { useOrg } from "./org-provider";
 import { BrandLogo } from "./brand-logo";
@@ -24,7 +24,6 @@ const nav = [
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/favorites", label: "Saved", icon: Heart, mobileOnly: true },
   { href: "/listings/manage", label: "Listings", icon: LayoutList, mobileOnly: true },
-  { href: "/workers", label: "Workers", icon: UserCog, mobileOnly: true },
   { href: "/profile", label: "Profile", icon: UserRound, mobileOnly: true },
 ];
 const guestNav = [
