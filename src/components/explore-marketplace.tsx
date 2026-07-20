@@ -93,6 +93,7 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
 
   const hasFilters = Boolean(query || categoryId || district || listingType || minPrice || maxPrice);
   const categoryOptions = [{ value: "", label: "All" }, ...categories.map((item) => ({ value: item.id, label: item.name }))];
+  const firstImageIndex = listings.findIndex((listing) => Boolean(listing.coverImage));
   const clear = () => { resetPage(); setQuery(""); setCategoryId(""); setDistrict(""); setListingType(""); setMinPrice(""); setMaxPrice(""); };
 
   return <>
@@ -105,7 +106,7 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
       </>}
       {home && <div className="section-heading"><h2>Fresh nearby</h2></div>}
       <div id="explore-results" className="explore-results-anchor" />
-      {loading ? <div className="listing-grid listing-grid--four" aria-label="Loading listings">{Array.from({ length: 8 }).map((_, index) => <div className="skeleton" key={index} />)}</div> : error ? <section className="empty-state"><p className="eyebrow">Connection problem</p><h2>Listings could not be loaded.</h2><p>{error}</p><button className="button" onClick={() => setRequestKey((value) => value + 1)}>Try again</button></section> : listings.length ? <div className="listing-grid listing-grid--four">{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 2} />)}</div> : <section className="empty-state"><p className="eyebrow">No exact matches</p><h2>Try a broader search.</h2><p>Remove one or more filters to see more nearby listings.</p><button className="button" onClick={clear}>Show all listings</button></section>}
+      {loading ? <div className="listing-grid listing-grid--four" aria-label="Loading listings">{Array.from({ length: 8 }).map((_, index) => <div className="skeleton" key={index} />)}</div> : error ? <section className="empty-state"><p className="eyebrow">Connection problem</p><h2>Listings could not be loaded.</h2><p>{error}</p><button className="button" onClick={() => setRequestKey((value) => value + 1)}>Try again</button></section> : listings.length ? <div className="listing-grid listing-grid--four">{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 2 || index === firstImageIndex} />)}</div> : <section className="empty-state"><p className="eyebrow">No exact matches</p><h2>Try a broader search.</h2><p>Remove one or more filters to see more nearby listings.</p><button className="button" onClick={clear}>Show all listings</button></section>}
       {!home && !loading && !error && listings.length > 0 && <ListingPagination currentPage={currentPage} totalPages={totalPages} total={total} count={listings.length} pageSize={24} onChange={goToPage} />}
       {home && !error && <div className="see-more"><Link className="button" href="/explore">Explore all listings</Link>{user && <Link className="button button--secondary" href="/listings/manage">Your listings</Link>}</div>}
     </div></main>

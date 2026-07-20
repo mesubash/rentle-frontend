@@ -24,7 +24,7 @@ export function ListingCard({ listing, priority = false, hideFavorite = false, c
     <article className={compact ? `${styles.card} ${styles.compact}` : styles.card}>
       {image && <span className="listing-card__ambient" style={{ backgroundImage: `url("${image}")` }} aria-hidden="true" />}
       <Link className="listing-card__image" href={href} aria-label={`View ${listing.title}`}>
-        {image ? <Image src={image} alt={listing.title} fill sizes="(max-width: 700px) 100vw, (max-width: 1024px) 50vw, 33vw" priority={priority} /> : <span className="listing-card__placeholder">No photo yet</span>}
+        {image ? <Image src={image} alt={listing.title} fill sizes="(max-width: 700px) 100vw, (max-width: 1024px) 50vw, 33vw" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} /> : <span className="listing-card__placeholder">No photo yet</span>}
         <span className={`type-chip type-chip--${type.toLowerCase()}`}>{type}</span>
       </Link>
       {!hideFavorite && <FavoriteHeart listingId={listing.id} title={listing.title} />}

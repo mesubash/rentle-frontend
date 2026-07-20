@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Bell, Building2, CalendarDays, Check, Compass, Heart, LayoutList, ListPlus, LogOut, Menu, MessageCircle, Plus, Search, Settings, ShieldCheck, UserRound, X } from "lucide-react";
+import { Building2, CalendarDays, Check, Compass, LayoutList, ListPlus, LogOut, Menu, MessageCircle, Plus, Search, Settings, ShieldCheck, UserRound, X } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { useOrg } from "./org-provider";
 import { BrandLogo } from "./brand-logo";
@@ -17,16 +17,17 @@ import { notificationsApi } from "@/lib/api/notifications";
 import type { UserProfile } from "@/lib/api/users";
 import { ADMIN_ENTRY_KEYS } from "@/lib/iam/admin-entry-keys";
 import { usePermissions } from "./permissions-provider";
+import { NotificationsPopover } from "./notifications-popover";
+import { SavedPopover } from "./saved-popover";
 
 const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/bookings", label: "Bookings", icon: CalendarDays },
   { href: "/messages", label: "Messages", icon: MessageCircle },
-  { href: "/favorites", label: "Saved", icon: Heart, mobileOnly: true },
   { href: "/listings/manage", label: "Listings", icon: LayoutList, mobileOnly: true },
   { href: "/profile", label: "Profile", icon: UserRound, mobileOnly: true },
 ];
-const mobilePrimaryNav = nav.filter((item) => ["/explore", "/bookings", "/messages", "/favorites"].includes(item.href));
+const mobilePrimaryNav = nav.filter((item) => ["/explore", "/bookings", "/messages"].includes(item.href));
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -34,6 +35,8 @@ export function SiteHeader() {
   const { canAny, ready } = usePermissions();
   const admin = Boolean(user && ready && canAny(...ADMIN_ENTRY_KEYS));
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [savedOpen, setSavedOpen] = useState(false);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const userId = user?.id;
@@ -85,7 +88,7 @@ export function SiteHeader() {
   const desktopNav = admin
     ? []
     : user
-      ? nav.filter((item) => !item.mobileOnly)
+      ? nav.filter((item) => !item.mobileOnly && item.href !== "/messages")
       : nav.filter((item) => item.href === "/explore");
 
   return (
@@ -93,7 +96,7 @@ export function SiteHeader() {
       <header className="site-header">
         <div className="site-header__inner">
           <BrandLogo href={admin ? "/admin" : "/"} priority inverted />
-          {!admin && pathname !== "/" && (
+          {!admin && (
             <Form className="header-search" action="/search">
               <Search size={18} aria-hidden="true" />
               <label className="sr-only" htmlFor="global-search">Search Rentle</label>
@@ -102,19 +105,13 @@ export function SiteHeader() {
           )}
           <nav className="desktop-nav" aria-label="Main navigation">
             {desktopNav.map((item) => {
-              const isMessages = item.href === "/messages";
-              const Icon = item.icon;
-
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`${pathname.startsWith(item.href) ? "is-active" : ""}${isMessages ? " desktop-nav__icon" : ""}`}
-                  aria-label={isMessages && messageUnreadCount > 0 ? `Messages, ${messageUnreadCount} unread` : item.label}
-                  title={isMessages ? "Messages" : undefined}
+                  className={pathname.startsWith(item.href) ? "is-active" : ""}
                 >
-                  {isMessages ? <><Icon size={20} aria-hidden="true" /><span className="sr-only">Messages</span></> : item.label}
-                  {isMessages && messageUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
+                  {item.label}
                 </Link>
               );
             })}
@@ -122,7 +119,26 @@ export function SiteHeader() {
           <div className="header-actions">
             {admin && <span className="admin-label">Admin</span>}
             {ready && !admin && user && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
-            {ready && !admin && user && <Link className="icon-button header-bell" href="/notifications" aria-label={notificationUnreadCount > 0 ? `Notifications, ${notificationUnreadCount} unread` : "Notifications"}><Bell size={19} />{notificationUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{notificationUnreadCount > 99 ? "99+" : notificationUnreadCount}</span>}</Link>}
+            {ready && !admin && user && (
+              <Link
+                className="icon-button header-utility"
+                href="/messages"
+                aria-label={messageUnreadCount > 0 ? `Messages, ${messageUnreadCount} unread` : "Messages"}
+                title="Messages"
+              >
+                <MessageCircle size={19} />
+                {messageUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
+              </Link>
+            )}
+            {ready && !admin && user && <SavedPopover open={savedOpen} onOpenChange={setSavedOpen} />}
+            {ready && !admin && user && (
+              <NotificationsPopover
+                open={notificationsOpen}
+                unreadCount={notificationUnreadCount}
+                onOpenChange={setNotificationsOpen}
+                onUnreadCountChange={setNotificationUnreadCount}
+              />
+            )}
             {!loading && !user && (
               <Link className="button button--small button--paper header-login" href="/login">Log in</Link>
             )}
@@ -138,8 +154,8 @@ export function SiteHeader() {
             <span>{label}</span>
           </Link>
         ))}
-        <button type="button" className={mobileMoreOpen || pathname.startsWith("/profile") || pathname.startsWith("/listings") || pathname.startsWith("/notifications") ? "mobile-nav__more is-active" : "mobile-nav__more"} aria-expanded={mobileMoreOpen} aria-controls="mobile-more-menu" onClick={() => setMobileMoreOpen((open) => !open)}>
-          <span className="mobile-nav__icon">{profilePhoto ? <Image className="mobile-nav__avatar" src={profilePhoto} alt="" width={24} height={24} sizes="24px" /> : <Menu size={21} />}{notificationUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{notificationUnreadCount > 99 ? "99+" : notificationUnreadCount}</span>}</span>
+        <button type="button" className={mobileMoreOpen || pathname.startsWith("/profile") || pathname.startsWith("/listings") ? "mobile-nav__more is-active" : "mobile-nav__more"} aria-expanded={mobileMoreOpen} aria-controls="mobile-more-menu" onClick={() => setMobileMoreOpen((open) => !open)}>
+          <span className="mobile-nav__icon">{profilePhoto ? <Image className="mobile-nav__avatar" src={profilePhoto} alt="" width={24} height={24} sizes="24px" /> : <Menu size={21} />}</span>
           <span>More</span>
         </button>
       </nav>}
@@ -151,7 +167,6 @@ export function SiteHeader() {
           <nav>
             <Link href="/list" onClick={() => setMobileMoreOpen(false)}><ListPlus size={19} /><span><strong>List an item</strong><small>Create a product or service listing</small></span></Link>
             <Link href="/listings/manage" onClick={() => setMobileMoreOpen(false)}><LayoutList size={19} /><span><strong>My listings</strong><small>Update listings and availability</small></span></Link>
-            <Link href="/notifications" onClick={() => setMobileMoreOpen(false)}><Bell size={19} /><span><strong>Notifications</strong><small>{notificationUnreadCount > 0 ? `${notificationUnreadCount} unread` : "You’re all caught up"}</small></span></Link>
             <Link href="/profile" onClick={() => setMobileMoreOpen(false)}><UserRound size={19} /><span><strong>Profile</strong><small>Account and verification</small></span></Link>
           </nav>
         </aside>

@@ -22,11 +22,14 @@ export default function FavoritesPage() {
 
   return (
     <>
-      <main className="page">
+      <main className="page favorites-page">
         <div className="container">
-          <header className="trust-hero" style={{ textAlign: "left", marginBottom: 24 }}>
-            <p className="eyebrow">Your list</p>
-            <h1>Saved listings</h1>
+          <header className="favorites-header">
+            <div>
+              <p className="eyebrow">Your saved list</p>
+              <h1>Things worth coming back to.</h1>
+            </div>
+            <p>Keep useful finds together while you compare the details and decide what to request.</p>
           </header>
           {!ready && <p>Loading…</p>}
           {ready && !user && (

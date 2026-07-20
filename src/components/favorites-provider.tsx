@@ -7,7 +7,8 @@ import { useAuth } from "./auth-provider";
 
 type FavoritesContext = {
   isSaved: (id: string) => boolean;
-  toggle: (id: string) => Promise<void>;
+  toggle: (id: string) => Promise<boolean>;
+  savedCount: number;
   ready: boolean;
 };
 
@@ -30,7 +31,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const toggle = useCallback(async (id: string) => {
-    if (!user) { router.push("/login"); return; }
+    if (!user) { router.push("/login"); return false; }
     // Optimistic
     setSaved((cur) => {
       const next = new Set(cur);
@@ -44,6 +45,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         if (nowSaved) next.add(id); else next.delete(id);
         return next;
       });
+      return true;
     } catch {
       // Revert on failure
       setSaved((cur) => {
@@ -51,11 +53,12 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         if (next.has(id)) next.delete(id); else next.add(id);
         return next;
       });
+      return false;
     }
   }, [user, router]);
 
   const value = useMemo<FavoritesContext>(
-    () => ({ isSaved: (id) => saved.has(id), toggle, ready }),
+    () => ({ isSaved: (id) => saved.has(id), toggle, savedCount: saved.size, ready }),
     [saved, toggle, ready],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

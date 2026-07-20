@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarCheck,
-  Bell,
   Building2,
   ChevronsUpDown,
   ClipboardCheck,
@@ -184,7 +183,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link href="/admin/profile" onClick={() => setMobileOpen(false)}><UserRound /> Profile</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link href="/profile/edit" onClick={() => setMobileOpen(false)}><Edit3 /> Edit profile</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link href="/notifications" onClick={() => setMobileOpen(false)}><Bell /> Notifications</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link href="/" target="_blank"><ExternalLink /> View marketplace</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
