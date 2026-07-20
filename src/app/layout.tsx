@@ -29,13 +29,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Rentle",
-    title: "Rentle — Borrow & lend nearby",
+    title: "Rentle - Borrow & lend nearby",
     description: "Rent useful items and book trusted local services from verified people nearby.",
     images: [{ url: "/logo.png", width: 1983, height: 793, alt: "Rentle" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rentle — Borrow & lend nearby",
+    title: "Rentle - Borrow & lend nearby",
     description: "Rent useful items and book trusted local services from verified people nearby.",
     images: ["/logo.png"],
   },
