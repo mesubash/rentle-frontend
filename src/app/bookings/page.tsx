@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, Clock3 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { useOrg } from "@/components/org-provider";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import styles from "./bookings.module.css";
 
 export default function BookingsPage() {
   const { user, loading: authLoading } = useAuth();
+  const { activeOrgId } = useOrg();
   const [tab, setTab] = useState<"renting" | "hosting">("renting");
   const [renting, setRenting] = useState<Booking[]>([]);
   const [hosting, setHosting] = useState<Booking[]>([]);
@@ -18,7 +20,7 @@ export default function BookingsPage() {
   useEffect(() => {
     if (!user) return;
     let active = true;
-    Promise.all([bookingsApi.asRenter(0, 50), bookingsApi.asOwner(0, 50)])
+    Promise.all([bookingsApi.asRenter(0, 50), bookingsApi.asOwner(0, 50, activeOrgId ?? undefined)])
       .then(([renter, owner]) => {
         if (!active) return;
         setRenting(renter.content);
@@ -37,7 +39,7 @@ export default function BookingsPage() {
         if (active) setDataLoading(false);
       });
     return () => { active = false; };
-  }, [user]);
+  }, [user, activeOrgId]);
 
   const bookings = tab === "renting" ? renting : hosting;
   const loading = authLoading || Boolean(user && dataLoading);

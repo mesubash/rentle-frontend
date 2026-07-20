@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import { useOrg } from "./org-provider";
 import { PageBackLink } from "./page-back-link";
 import { ListingCard } from "./listing-card";
 import { ListingPagination } from "./listing-pagination";
@@ -11,6 +12,7 @@ import { listingsApi, type ListingSummary } from "@/lib/api/listings";
 import styles from "./listings-manager.module.css";
 
 export function ListingsManager() {
+  const { activeOrgId } = useOrg();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -28,13 +30,13 @@ export function ListingsManager() {
     const timer = window.setTimeout(() => {
       setLoading(true);
       setError("");
-      listingsApi.mine(currentPage, pageSize)
+      listingsApi.mine(currentPage, pageSize, activeOrgId ?? undefined)
         .then((page) => { if (active) { setListings(page.content); setTotal(page.totalElements); setTotalPages(page.totalPages); } })
         .catch(() => { if (active) setError("Your listings could not be loaded."); })
         .finally(() => { if (active) setLoading(false); });
     }, 0);
     return () => { active = false; window.clearTimeout(timer); };
-  }, [currentPage]);
+  }, [currentPage, activeOrgId]);
 
   function goToPage(page: number) {
     if (loading || page === currentPage || page < 0 || page >= totalPages) return;

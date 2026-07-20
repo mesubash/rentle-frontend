@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Bell, Building2, CalendarDays, Check, Compass, Heart, LayoutList, ListPlus, LogOut, Menu, MessageCircle, Plus, Search, ShieldCheck, UserRound, X } from "lucide-react";
+import { Bell, Building2, CalendarDays, Check, Compass, Heart, LayoutList, ListPlus, LogOut, Menu, MessageCircle, Plus, Search, Settings, ShieldCheck, UserRound, X } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { useOrg } from "./org-provider";
 import { BrandLogo } from "./brand-logo";
@@ -162,7 +162,7 @@ export function SiteHeader() {
 
 function AvatarMenu({ user, profilePhoto, admin }: { user: UserProfile; profilePhoto?: string | null; admin?: boolean }) {
   const { signOut, leaving } = useSignOut();
-  const { orgs, activeOrgId, setActiveOrgId } = useOrg();
+  const { orgs, activeOrgId, activeOrg, setActiveOrgId } = useOrg();
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -186,13 +186,14 @@ function AvatarMenu({ user, profilePhoto, admin }: { user: UserProfile; profileP
   return (
     <div className="avatar-menu" ref={rootRef}>
       <button
-        className="avatar avatar--small"
-        aria-label="Account menu"
+        className={activeOrg ? "avatar avatar--small avatar--org" : "avatar avatar--small"}
+        aria-label={activeOrg ? `Account menu — acting as ${activeOrg.name}` : "Account menu"}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
         {profilePhoto ? <Image src={profilePhoto} alt="" width={34} height={34} sizes="34px" /> : initials(user.fullName)}
+        {activeOrg && <span className="avatar__org-badge" aria-hidden="true"><Building2 size={11} /></span>}
       </button>
       {open && (
         <div className="avatar-menu__list" role="menu">
@@ -208,11 +209,16 @@ function AvatarMenu({ user, profilePhoto, admin }: { user: UserProfile; profileP
                 <UserRound size={16} /> <span className="avatar-menu__grow">Personal</span> {!activeOrgId && <Check size={15} />}
               </button>
               {orgs.map((org) => (
-                <Link key={org.id} role="menuitemradio" aria-checked={activeOrgId === org.id} href={`/organizations/${org.id}`}
-                      onClick={() => { setActiveOrgId(org.id); setOpen(false); }}>
+                <button key={org.id} role="menuitemradio" aria-checked={activeOrgId === org.id}
+                        onClick={() => { setActiveOrgId(org.id); setOpen(false); }}>
                   <Building2 size={16} /> <span className="avatar-menu__grow">{org.name}</span> {activeOrgId === org.id && <Check size={15} />}
-                </Link>
+                </button>
               ))}
+              {activeOrg && (
+                <Link role="menuitem" href={`/organizations/${activeOrg.id}`} onClick={() => setOpen(false)}>
+                  <Settings size={16} /> Manage {activeOrg.name}
+                </Link>
+              )}
               <Link role="menuitem" href="/organizations/new" onClick={() => setOpen(false)}><Plus size={16} /> Create organization</Link>
             </>
           )}

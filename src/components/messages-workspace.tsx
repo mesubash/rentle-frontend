@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type FormEvent, useEffect, useState } from "react";
 import { ArrowLeft, CheckCheck, Info, Send } from "lucide-react";
 import { useAuth } from "./auth-provider";
+import { useOrg } from "./org-provider";
 import { useToast } from "./toast-provider";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
@@ -14,6 +15,7 @@ type BookingThread = Booking & { lastMessageAt: string | null; unreadCount: numb
 
 export function MessagesWorkspace({ activeId }: { activeId?: string }) {
   const { user } = useAuth();
+  const { activeOrgId } = useOrg();
   const { showToast } = useToast();
   const [threads, setThreads] = useState<BookingThread[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -25,7 +27,7 @@ export function MessagesWorkspace({ activeId }: { activeId?: string }) {
   useEffect(() => {
     Promise.all([
       bookingsApi.asRenter(0, 50),
-      bookingsApi.asOwner(0, 50),
+      bookingsApi.asOwner(0, 50, activeOrgId ?? undefined),
       messagesApi.threads(),
     ])
       .then(([renter, owner, summaries]) => {
@@ -53,7 +55,7 @@ export function MessagesWorkspace({ activeId }: { activeId?: string }) {
       })
       .catch(() => setError("Conversations could not be loaded."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [activeOrgId]);
   const active = threads.find((thread) => thread.id === activeId) || (!activeId ? threads[0] : undefined);
   const activeBookingId = active?.id;
   useEffect(() => {

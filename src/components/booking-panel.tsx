@@ -114,11 +114,11 @@ export function BookingPanel({ listing }: { listing: ListingDetail }) {
   useEffect(() => {
     if (!isOwner) return;
     let active = true;
-    bookingsApi.asOwner(0, 100)
+    bookingsApi.asOwner(0, 100, listing.provider?.type === "ORG" ? listing.provider.id : undefined)
       .then((page) => { if (active) { setOwnerBookings(page.content); setOwnerBookingsError(false); } })
       .catch(() => { if (active) { setOwnerBookings([]); setOwnerBookingsError(true); } });
     return () => { active = false; };
-  }, [isOwner]);
+  }, [isOwner, listing.provider]);
 
   // Move focus into the sheet on open and close it on Escape.
   useEffect(() => {

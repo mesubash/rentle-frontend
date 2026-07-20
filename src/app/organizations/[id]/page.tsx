@@ -2,7 +2,7 @@
 
 import { type FormEvent, use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Building2, Trash2, UserPlus } from "lucide-react";
+import { Building2, Check, Trash2, UserPlus } from "lucide-react";
 import {
   organizationsApi, ORG_PERM,
   type Org, type OrgMember, type OrgInvite, type OrgRole,
@@ -21,7 +21,7 @@ import { SiteFooter } from "@/components/site-footer";
 export default function OrganizationDashboard({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user, loading } = useAuth();
-  const { setActiveOrgId, reload: reloadOrgs } = useOrg();
+  const { activeOrgId, setActiveOrgId, reload: reloadOrgs } = useOrg();
   const { showToast } = useToast();
 
   const [org, setOrg] = useState<Org | null>(null);
@@ -43,7 +43,6 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
       .then((loaded) => {
         if (!active) return;
         setOrg(loaded);
-        setActiveOrgId(loaded.id);
         const perms = loaded.myPermissions;
         if (perms.includes(ORG_PERM.MEMBER_MANAGE)) {
           organizationsApi.members(id).then((m) => active && setMembers(m)).catch(() => undefined);
@@ -62,7 +61,7 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
       })
       .catch((caught) => active && setError(caught instanceof ApiError ? caught.message : "Could not open this organization."));
     return () => { active = false; };
-  }, [id, user, loading, setActiveOrgId]);
+  }, [id, user, loading]);
 
   async function invite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -174,6 +173,15 @@ export default function OrganizationDashboard({ params }: { params: Promise<{ id
               <>
                 <h1>{org.name}</h1>
                 {org.bio && <p>{org.bio}</p>}
+                <p className="org-acting">
+                  {activeOrgId === org.id ? (
+                    <><Check size={15} /> You are acting as {org.name}</>
+                  ) : (
+                    <button className="button button--small button--secondary" onClick={() => setActiveOrgId(org.id)}>
+                      Act as {org.name}
+                    </button>
+                  )}
+                </p>
                 {can(ORG_PERM.ORG_MANAGE) && <button className="link-button" onClick={() => setEditing(true)} style={{ marginTop: 4 }}>Edit organization</button>}
               </>
             )}
