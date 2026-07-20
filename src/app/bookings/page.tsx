@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, CalendarDays, Clock3, LogIn } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import styles from "./bookings.module.css";
@@ -43,19 +43,19 @@ export default function BookingsPage() {
   const loading = authLoading || Boolean(user && dataLoading);
 
   return <main className="page"><div className={`container bookings-page ${styles.page}`}>
-    <header className={styles.header}><div><p className="eyebrow">Your activity</p><h1>Bookings</h1></div><p>Requests, deposit proof, and messages stay attached to each agreement.</p></header>
+    <header className={styles.header}><h1>Bookings</h1><p>Track your rentals and requests for your listings.</p></header>
 
     {!authLoading && !user ? (
-      <section className={`${styles.workspace} ${styles.gate}`}><span className={styles.icon}><LogIn size={22} /></span><div><p className="eyebrow">Account required</p><h2>Log in to access your bookings</h2><p>Your rental requests and owner bookings are private.</p></div><Link className="button" href="/login?next=/bookings">Log in</Link><p className={styles.secondary}>New to Rentle? <Link href="/register">Create an account</Link></p></section>
+      <section className={styles.gate}><h2>Log in to view bookings</h2><p>Rental requests and booking details are private to your account.</p><Link className="button" href="/login?next=/bookings">Log in</Link><p className={styles.secondary}>New to Rentle? <Link href="/register">Create an account</Link></p></section>
     ) : (
-      <section className={styles.workspace}>
-        <div className={styles.tabs} role="tablist" aria-label="Booking views"><button type="button" role="tab" id="renting-tab" aria-controls="bookings-panel" aria-selected={tab === "renting"} className={tab === "renting" ? styles.active : ""} onClick={() => setTab("renting")}>Renting <span>{loading ? "–" : renting.length}</span></button><button type="button" role="tab" id="hosting-tab" aria-controls="bookings-panel" aria-selected={tab === "hosting"} className={tab === "hosting" ? styles.active : ""} onClick={() => setTab("hosting")}>Owner requests <span>{loading ? "–" : hosting.length}</span></button></div>
+      <section aria-label="Booking activity">
+        <div className={styles.tabs} role="tablist" aria-label="Booking views"><button type="button" role="tab" id="renting-tab" aria-controls="bookings-panel" aria-selected={tab === "renting"} className={tab === "renting" ? styles.active : ""} onClick={() => setTab("renting")}>My rentals <span>{loading ? "" : `(${renting.length})`}</span></button><button type="button" role="tab" id="hosting-tab" aria-controls="bookings-panel" aria-selected={tab === "hosting"} className={tab === "hosting" ? styles.active : ""} onClick={() => setTab("hosting")}>Listing requests <span>{loading ? "" : `(${hosting.length})`}</span></button></div>
         <div className={styles.content} id="bookings-panel" role="tabpanel" aria-labelledby={`${tab}-tab`}>
-          {loading ? <div className="booking-list" aria-label="Loading bookings">{[1, 2].map((item) => <div className="skeleton" key={item} />)}</div>
-            : error ? <EmptyState title="Bookings are temporarily unavailable" description={error} action={<button className="button" onClick={() => window.location.reload()}>Try again</button>} />
-            : bookings.length ? <div className="booking-list">{bookings.map((booking) => <BookingCard booking={booking} tab={tab} key={booking.id} />)}</div>
-            : tab === "renting" ? <EmptyState title="Nothing booked yet" description="Find something useful nearby — your requests will appear here." action={<Link className="button" href="/explore">Browse listings</Link>} />
-            : <EmptyState title="No owner requests yet" description="New requests will appear here when someone books your listing." action={<Link className="button" href="/listings/manage">Manage listings</Link>} />}
+          {loading ? <p className={styles.loading} role="status">Loading bookings…</p>
+            : error ? <EmptyState title="Bookings are unavailable" description={error} action={<button className={styles.textAction} onClick={() => window.location.reload()}>Reload bookings</button>} />
+            : bookings.length ? <div className={styles.list}>{bookings.map((booking) => <BookingCard booking={booking} tab={tab} key={booking.id} />)}</div>
+            : tab === "renting" ? <EmptyState title="No rental requests yet" description="Bookings you request will appear here." action={<Link className={styles.textAction} href="/explore">Browse listings <ArrowRight size={15} /></Link>} />
+            : <EmptyState title="No booking requests yet" description="Requests for your active listings will appear here." action={<Link className={styles.textAction} href="/listings/manage">Manage listings <ArrowRight size={15} /></Link>} />}
         </div>
       </section>
     )}
@@ -63,11 +63,11 @@ export default function BookingsPage() {
 }
 
 function EmptyState({ title, description, action }: { title: string; description: string; action: React.ReactNode }) {
-  return <div className={styles.empty}><span className={styles.icon}><CalendarDays size={22} /></span><div><h2>{title}</h2><p>{description}</p></div>{action}</div>;
+  return <div className={styles.empty}><h2>{title}</h2><p>{description}</p>{action}</div>;
 }
 
 function BookingCard({ booking, tab }: { booking: Booking; tab: "renting" | "hosting" }) {
-  return <article className="booking-card card"><div className="booking-card__main"><div className="booking-card__top"><span className={statusClass(booking.status)}><Clock3 size={13} />{humanize(booking.status)}</span><small>#{booking.id.slice(0, 8)}</small></div><h2>{booking.listingTitle}</h2><p><CalendarDays size={15} /> {formatDates(booking)} · {tab === "renting" ? `owned by ${booking.ownerName}` : `requested by ${booking.renterName}`}</p><Link className="booking-card__action" href={`/bookings/${booking.id}`}>{actionLabel(booking, tab)}<ArrowRight size={16} /></Link></div></article>;
+  return <article className={styles.bookingRow}><div className={styles.bookingMain}><div className={styles.bookingTop}><span className={statusClass(booking.status)}><Clock3 size={13} />{humanize(booking.status)}</span><small>#{booking.id.slice(0, 8)}</small></div><h2>{booking.listingTitle}</h2><p><CalendarDays size={15} /> {formatDates(booking)} · {tab === "renting" ? `owned by ${booking.ownerName}` : `requested by ${booking.renterName}`}</p></div><Link className={styles.bookingAction} href={`/bookings/${booking.id}`}>{actionLabel(booking, tab)}<ArrowRight size={16} /></Link></article>;
 }
 
 function actionLabel(booking: Booking, tab: "renting" | "hosting") { if (booking.status === "REQUESTED") return tab === "hosting" ? "Review request" : "View request"; if (booking.status === "APPROVED") return tab === "renting" ? "Upload deposit proof" : "View booking"; if (booking.status === "DEPOSIT_PENDING") return tab === "hosting" ? "Confirm deposit" : "View proof status"; if (booking.status === "COMPLETED") return "Leave or view review"; return "View booking"; }

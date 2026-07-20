@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, CheckCheck, CheckCircle2 } from "lucide-react";
+import {
+  Bell,
+  CalendarCheck,
+  CheckCheck,
+  ShieldCheck,
+  WalletCards,
+  XCircle,
+} from "lucide-react";
 import { type MouseEvent, useEffect, useState } from "react";
 import {
   notificationsApi,
@@ -103,21 +110,22 @@ export function NotificationsView() {
   return (
     <main className="page">
       <div className="container notifications-page">
-        <header className="page-header">
-          <p className="eyebrow">Account activity</p>
-          <h1>Notifications</h1>
-          <p>Updates about your bookings, listings, messages, and account.</p>
-          <div className="button-row">
+        <header className="notification-header">
+          <div>
+            <h1>Notifications</h1>
+            <p>Booking, listing, message, and account updates.</p>
+          </div>
+          {unread && <div className="button-row">
             <button
               type="button"
-              className="button button--secondary button--small"
+              className="notification-mark-all"
               disabled={loading || markingAll || !unread}
               onClick={markAllRead}
             >
               <CheckCheck size={17} aria-hidden="true" />
               {markingAll ? "Marking as read…" : "Mark all read"}
             </button>
-          </div>
+          </div>}
         </header>
 
         {error && (
@@ -134,10 +142,11 @@ export function NotificationsView() {
           <div className="notification-list">
             {notifications.map((notification) => {
               const time = formatNotificationTime(notification.createdAt);
+              const { Icon, tone } = notificationLook(notification.type);
               const cardContents = (
                 <>
-                  <span aria-hidden="true">
-                    <Bell size={19} />
+                  <span className={`notification-icon notification-icon--${tone}`} aria-hidden="true">
+                    <Icon size={17} />
                   </span>
                   <div>
                     {notification.read ? (
@@ -145,14 +154,12 @@ export function NotificationsView() {
                     ) : (
                       <strong>{notification.message}</strong>
                     )}
-                    <br />
                     <small>
                       <time dateTime={notification.createdAt} title={time.absolute}>
                         {time.display}
                       </time>
                     </small>
                   </div>
-                  {!notification.read && <i aria-hidden="true" />}
                 </>
               );
 
@@ -161,8 +168,8 @@ export function NotificationsView() {
                   key={notification.id}
                   className={
                     notification.read
-                      ? "notification-card card"
-                      : "notification-card card is-unread"
+                      ? "notification-card"
+                      : "notification-card is-unread"
                   }
                   href={notification.link}
                   aria-busy={openingId === notification.id}
@@ -177,8 +184,8 @@ export function NotificationsView() {
                   key={notification.id}
                   className={
                     notification.read
-                      ? "notification-card card"
-                      : "notification-card card is-unread"
+                      ? "notification-card"
+                      : "notification-card is-unread"
                   }
                   role="button"
                   tabIndex={0}
@@ -215,14 +222,21 @@ export function NotificationsView() {
             </button>
           </div>
         ) : (
-          <div className="inline-success">
-            <CheckCircle2 size={18} aria-hidden="true" />
-            <span>You have no notifications yet.</span>
-          </div>
+          <div className="notifications-empty"><h2>You’re all caught up</h2><p>New booking and account updates will appear here.</p></div>
         )}
       </div>
     </main>
   );
+}
+
+function notificationLook(type: string) {
+  const tone = type.endsWith("_REJECTED") || type.endsWith("_CANCELLED") ? "bad" : "good";
+  if (tone === "bad") return { Icon: XCircle, tone };
+  if (type.startsWith("DEPOSIT_")) return { Icon: WalletCards, tone };
+  if (type.startsWith("BOOKING_")) return { Icon: CalendarCheck, tone };
+  if (type.startsWith("KYC_") || type.startsWith("PROVIDER_"))
+    return { Icon: ShieldCheck, tone };
+  return { Icon: Bell, tone: "neutral" as const };
 }
 
 function formatNotificationTime(value: string) {

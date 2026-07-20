@@ -26,12 +26,12 @@ export function ProfileActivity({ userId, own }: { userId: string; own: boolean 
 
   return <>
     <section className={styles.section}>
-      <div className={styles.heading}><h2>Listings</h2>{own && <Link className={`button button--small ${styles.addButton}`} href="/list"><Plus size={16} /><span>Add listing</span></Link>}</div>
+      <div className={styles.heading}><h2>Listings</h2>{own && <Link className={styles.addButton} href="/list"><Plus size={15} /><span>Add listing</span></Link>}</div>
       {loading ? <div className={styles.grid}>{[1, 2, 3, 4].map((item) => <div className="skeleton" key={item} />)}</div>
         : error ? <div className="inline-notice" role="status">{error}</div>
         : listings.length ? <><div className={styles.grid}>{listings.map((listing, index) => <ListingCard listing={listing} key={listing.id} compact hideFavorite={own} priority={index < 2} />)}</div>{own && <div className={styles.more}><Link className={styles.moreLink} href="/listings/manage">View all {total} listing{total === 1 ? "" : "s"} & manage <ArrowRight size={16} /></Link></div>}</>
-        : <p className="empty-note">No active listings yet.</p>}
+        : <div className={styles.empty}><p>No active listings yet.</p>{own && <span>Create a listing when you are ready to lend an item or offer a service.</span>}</div>}
     </section>
-    <section className="profile-section"><h2>Reviews</h2><ReviewList userId={userId} /></section>
+    <section className={styles.section}><div className={styles.heading}><h2>Reviews</h2></div><ReviewList userId={userId} /></section>
   </>;
 }

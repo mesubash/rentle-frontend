@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, ShieldCheck } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "./auth-provider";
 import { ReportButton } from "./report-button";
@@ -42,13 +42,13 @@ export function ProfileView({ own = false, userId, embedded = false }: { own?: b
   const loading = own ? auth.loading : Boolean(userId && loadingPublic);
 
   if (loading) return <Shell className="page"><div className="container profile-page" aria-label="Loading profile"><div className="profile-hero skeleton" /><div className="profile-summary-skeleton skeleton" /></div></Shell>;
-  if (!profile) return <Shell className="page"><div className="container narrow-page"><section className="empty-state card"><p className="eyebrow">{own ? "Your account" : "Member profile"}</p><h1>{own ? "Log in to view your profile" : "Profile unavailable"}</h1><p>{error || (userId ? "We could not find this member." : "This profile link is incomplete.")}</p><Link className="button" href={own ? "/login" : "/explore"}>{own ? "Log in" : "Browse listings"}</Link></section></div></Shell>;
+  if (!profile) return <Shell className="page"><div className="container narrow-page"><section className="empty-state"><p className="eyebrow">{own ? "Your account" : "Member profile"}</p><h1>{own ? "Log in to view your profile" : "Profile unavailable"}</h1><p>{error || (userId ? "We could not find this member." : "This profile link is incomplete.")}</p><Link className="button" href={own ? "/login" : "/explore"}>{own ? "Log in" : "Browse listings"}</Link></section></div></Shell>;
 
   const joined = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date(profile.memberSince));
   const photo = assetUrl(profile.profilePhotoUrl);
 
   return <Shell className="page"><div className="container profile-page">
-    <section className="profile-hero card">
+    <section className="profile-hero">
       <div className="profile-photo">
         {photo ? <Image src={photo} alt={profile.fullName} fill sizes="120px" /> : <span className="avatar">{initials(profile.fullName)}</span>}
       </div>
@@ -61,7 +61,7 @@ export function ProfileView({ own = false, userId, embedded = false }: { own?: b
       {own && <AccountActions />}
     </section>
 
-    {own && !profile.verified && <section className="verification-banner card"><ShieldCheck size={24} /><h2>{profile.kycStatus === "SUBMITTED" ? "Your identity is under review." : profile.kycStatus === "REJECTED" ? "Your verification was rejected — resubmit." : "Get verified to book and list."}</h2>{profile.kycStatus !== "SUBMITTED" && <Link className="button" href="/verification">{profile.kycStatus === "REJECTED" ? "Resubmit" : "Start verification"}</Link>}</section>}
+    {own && !profile.verified && <section className="verification-prompt"><div><h2>{profile.kycStatus === "SUBMITTED" ? "Identity verification under review" : profile.kycStatus === "REJECTED" ? "Verification needs attention" : "Verify your identity"}</h2><p>{profile.kycStatus === "SUBMITTED" ? "We’ll update you when the review is complete." : "Verification is required before you can book or publish a listing."}</p></div>{profile.kycStatus !== "SUBMITTED" && <Link href="/verification">{profile.kycStatus === "REJECTED" ? "Review submission" : "Start verification"} <span aria-hidden="true">→</span></Link>}</section>}
 
     <ProfileActivity userId={profile.id} own={own} />
   </div></Shell>;

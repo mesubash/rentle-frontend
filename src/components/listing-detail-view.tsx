@@ -26,7 +26,7 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
   }, [attempt, listingId]);
 
   if (!listing && !error) return <main className="page"><div className="container"><div className="skeleton" /></div></main>;
-  if (!listing) return <main className="page"><div className="container narrow-page"><section className="empty-state card"><p className="eyebrow">Listing unavailable</p><h1>We could not open this listing.</h1><p>{error}</p><button className="button" onClick={() => { setError(""); setAttempt((value) => value + 1); }}>Try again</button></section></div></main>;
+  if (!listing) return <main className="page"><div className="container narrow-page"><section className="empty-state"><p className="eyebrow">Listing unavailable</p><h1>We could not open this listing.</h1><p>{error}</p><button className="button" onClick={() => { setError(""); setAttempt((value) => value + 1); }}>Try again</button></section></div></main>;
 
   const images = listing.images.map(assetUrl).filter((value): value is string => Boolean(value));
   const type = listing.type === "PRODUCT" ? "Product" : "Service";

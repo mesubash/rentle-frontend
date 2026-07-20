@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Mail, Phone, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Mail, Phone } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { useToast } from "./toast-provider";
 import { usersApi, type UserProfile } from "@/lib/api/users";
@@ -23,20 +23,17 @@ export function ContactVerification() {
   if (!user) return null;
 
   return (
-    <div className="contact-verification">
-      {!user.phoneVerified && (
-        <div className="form-note form-note--warn">
-          <ShieldAlert size={18} />
-          <span>Add and verify your phone number to book or list on Rentle.</span>
-        </div>
-      )}
-      <EmailStep verified={user.emailVerified} email={user.email} />
-      <PhoneStep
-        verified={user.phoneVerified}
-        phone={user.phoneNumber}
-        onVerified={setUser}
-      />
-    </div>
+    <section className="verification-section">
+      <header><h2>Contact details</h2><p>Confirm where we can send account and booking updates.</p></header>
+      <div className="contact-verification">
+        <EmailStep verified={user.emailVerified} email={user.email} />
+        <PhoneStep
+          verified={user.phoneVerified}
+          phone={user.phoneNumber}
+          onVerified={setUser}
+        />
+      </div>
+    </section>
   );
 }
 
@@ -60,14 +57,14 @@ function EmailStep({ verified, email }: { verified: boolean; email: string }) {
   }
 
   return (
-    <section className="verify-step card">
+    <div className="verify-step">
       <div className="verify-step__head"><Mail size={18} /><strong>Verify your email</strong></div>
       <p className="verify-step__hint">We sent a verification link to <strong>{email}</strong>. Open it to confirm your address — you can keep using Rentle in the meantime.</p>
       <button className="button button--secondary" disabled={busy} onClick={resend}>
         {busy ? "Sending…" : "Resend verification link"}
       </button>
       {error && <p className="form-error" role="alert">{error}</p>}
-    </section>
+    </div>
   );
 }
 
@@ -103,7 +100,7 @@ function PhoneStep({
   }
 
   return (
-    <section className="verify-step card">
+    <div className="verify-step">
       <div className="verify-step__head"><Phone size={18} /><strong>Verify your phone</strong></div>
       <div className="field">
         <label htmlFor="verify-phone">Phone number</label>
@@ -126,14 +123,14 @@ function PhoneStep({
         </div>
       )}
       {error && <p className="form-error" role="alert">{error}</p>}
-    </section>
+    </div>
   );
 }
 
 function VerifiedRow({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <section className="verify-step card is-done">
+    <div className="verify-step is-done">
       <div className="verify-step__head">{icon}<strong>{label}</strong><CheckCircle2 size={18} className="verify-step__check" /></div>
-    </section>
+    </div>
   );
 }

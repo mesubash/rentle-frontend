@@ -18,13 +18,18 @@ type AuthMode = "login" | "register";
 export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string }) {
   const router = useRouter();
   const { showToast } = useToast();
-  const { setUser } = useAuth();
+  const { user, loading: sessionLoading, setUser } = useAuth();
   const { canAny, ready } = usePermissions();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loginDestination, setLoginDestination] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (sessionLoading || !user || !ready) return;
+    router.replace(canAny(...ADMIN_ENTRY_KEYS) ? "/admin" : safeNext(nextPath));
+  }, [canAny, nextPath, ready, router, sessionLoading, user]);
 
   useEffect(() => {
     if (!loginDestination || !ready) return;
@@ -67,6 +72,10 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
   }
 
   const title = mode === "login" ? "Welcome back" : "Create your account";
+
+  if (sessionLoading || user) {
+    return <main className="auth-page"><p className="auth-redirect" role="status">{user ? "Taking you to your account…" : "Checking your session…"}</p></main>;
+  }
 
   return (
     <main className="auth-page">
@@ -174,5 +183,8 @@ export function AuthForm({ mode, nextPath }: { mode: AuthMode; nextPath?: string
 }
 
 function safeNext(value?: string) {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/explore";
+  if (!value?.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/explore";
+  const pathname = value.split(/[?#]/, 1)[0];
+  const authRoutes = ["/login", "/register", "/auth/login", "/auth/register"];
+  return authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`)) ? "/explore" : value;
 }

@@ -117,10 +117,10 @@ export function ListingWizard() {
   // Only verified users can publish (backend enforces it) — gate before the wizard so an
   // unverified owner isn't sent through five steps only to be rejected at publish.
   if (!authLoading && !user) {
-    return <main className="page"><div className="container narrow-page"><PageBackLink href="/listings/manage">Back to manage listings</PageBackLink><section className="empty-state card"><ShieldCheck size={26} /><h1>Log in to list</h1><p>You need an account to create a listing.</p><Link className="button" href="/login?next=/list">Log in</Link></section></div></main>;
+    return <main className="page"><div className="container narrow-page"><PageBackLink href="/listings/manage">Back to manage listings</PageBackLink><section className="access-gate"><h1>Log in to create a listing</h1><p>Your listings and booking requests are connected to your Rentle account.</p><Link className="button" href="/login?next=/list">Log in</Link></section></div></main>;
   }
   if (!authLoading && user && user.status !== "VERIFIED") {
-    return <main className="page"><div className="container narrow-page"><PageBackLink href="/listings/manage">Back to manage listings</PageBackLink><section className="empty-state card"><ShieldCheck size={26} /><h1>Get verified to list</h1><p>{user.status === "SUSPENDED" ? "Your account is suspended. Contact support if you think this is a mistake." : "Verify your identity (phone, email, and citizenship) before creating a listing. It only takes a few minutes."}</p>{user.status !== "SUSPENDED" && <Link className="button" href="/verification">Start verification</Link>}</section></div></main>;
+    return <main className="page"><div className="container narrow-page"><PageBackLink href="/listings/manage">Back to manage listings</PageBackLink><section className="access-gate"><h1>{user.status === "SUSPENDED" ? "Listing is unavailable" : "Verify your identity to list"}</h1><p>{user.status === "SUSPENDED" ? "Your account is suspended. Contact support if you think this is a mistake." : "Complete phone, email, and identity verification before publishing a listing."}</p>{user.status !== "SUSPENDED" && <Link className="button" href="/verification">Start verification</Link>}</section></div></main>;
   }
 
   return <main className="page"><div className="container listing-wizard">

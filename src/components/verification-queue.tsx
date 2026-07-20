@@ -43,6 +43,7 @@ export function VerificationQueue() {
               <li key={row.userId}>
                 <Link
                   href={`/admin/verifications/${row.userId}`}
+                  prefetch
                   className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted"
                 >
                   <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold">{initials(row.realName)}</span>

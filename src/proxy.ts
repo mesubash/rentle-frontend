@@ -10,6 +10,16 @@ export function proxy(request: NextRequest) {
     request.cookies.get(REFRESH_COOKIE)?.value,
   );
 
+  const isAuthPage = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register";
+
+  if (isAuthPage) {
+    if (!hasSession) return NextResponse.next();
+
+    const requestedNext = request.nextUrl.searchParams.get("next");
+    const destination = safeNext(requestedNext);
+    return NextResponse.redirect(new URL(destination, request.url));
+  }
+
   if (hasSession) return NextResponse.next();
 
   const loginUrl = new URL("/login", request.url);
@@ -33,5 +43,14 @@ export const config = {
     "/workers/:path*",
     "/provider-verification/:path*",
     "/admin/:path*",
+    "/login",
+    "/register",
   ],
 };
+
+function safeNext(value: string | null) {
+  if (!value?.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/explore";
+  const pathname = value.split(/[?#]/, 1)[0];
+  const authRoutes = ["/login", "/register", "/auth/login", "/auth/register"];
+  return authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`)) ? "/explore" : value;
+}

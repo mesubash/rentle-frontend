@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Bell, Building2, CalendarDays, Check, Compass, Heart, LayoutList, ListPlus, LogIn, LogOut, MessageCircle, Plus, Search, ShieldCheck, UserRound } from "lucide-react";
+import { Bell, Building2, CalendarDays, Check, Compass, Heart, LayoutList, ListPlus, LogOut, Menu, MessageCircle, Plus, Search, ShieldCheck, UserRound, X } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { useOrg } from "./org-provider";
 import { BrandLogo } from "./brand-logo";
@@ -26,10 +26,7 @@ const nav = [
   { href: "/listings/manage", label: "Listings", icon: LayoutList, mobileOnly: true },
   { href: "/profile", label: "Profile", icon: UserRound, mobileOnly: true },
 ];
-const guestNav = [
-  { href: "/explore", label: "Explore", icon: Compass },
-  { href: "/login", label: "Log in", icon: LogIn },
-];
+const mobilePrimaryNav = nav.filter((item) => ["/explore", "/bookings", "/messages", "/favorites"].includes(item.href));
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -38,6 +35,7 @@ export function SiteHeader() {
   const admin = Boolean(user && ready && canAny(...ADMIN_ENTRY_KEYS));
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const userId = user?.id;
   const profilePhoto = assetUrl(user?.profilePhotoUrl);
 
@@ -73,6 +71,15 @@ export function SiteHeader() {
     };
   }, [admin, ready, userId]);
 
+  useEffect(() => {
+    if (!mobileMoreOpen) return;
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMoreOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileMoreOpen]);
+
   if (pathname.startsWith("/admin")) return null;
   // Admin navigation lives in the admin sidebar — the header stays clean.
   const desktopNav = admin
@@ -80,7 +87,6 @@ export function SiteHeader() {
     : user
       ? nav.filter((item) => !item.mobileOnly)
       : nav.filter((item) => item.href === "/explore");
-  const mobileNav = user ? nav : guestNav;
 
   return (
     <>
@@ -95,32 +101,61 @@ export function SiteHeader() {
             </Form>
           )}
           <nav className="desktop-nav" aria-label="Main navigation">
-            {desktopNav.map((item) => (
-              <Link key={item.href} href={item.href} className={pathname.startsWith(item.href) ? "is-active" : ""} aria-label={item.href === "/messages" && messageUnreadCount > 0 ? `Messages, ${messageUnreadCount} unread` : undefined}>
-                {item.label}{item.href === "/messages" && messageUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
-              </Link>
-            ))}
+            {desktopNav.map((item) => {
+              const isMessages = item.href === "/messages";
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`${pathname.startsWith(item.href) ? "is-active" : ""}${isMessages ? " desktop-nav__icon" : ""}`}
+                  aria-label={isMessages && messageUnreadCount > 0 ? `Messages, ${messageUnreadCount} unread` : item.label}
+                  title={isMessages ? "Messages" : undefined}
+                >
+                  {isMessages ? <><Icon size={20} aria-hidden="true" /><span className="sr-only">Messages</span></> : item.label}
+                  {isMessages && messageUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
+                </Link>
+              );
+            })}
           </nav>
           <div className="header-actions">
             {admin && <span className="admin-label">Admin</span>}
             {ready && !admin && user && <Link className="button button--small button--paper" href="/list"><ListPlus size={17} /> List an item</Link>}
             {ready && !admin && user && <Link className="icon-button header-bell" href="/notifications" aria-label={notificationUnreadCount > 0 ? `Notifications, ${notificationUnreadCount} unread` : "Notifications"}><Bell size={19} />{notificationUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{notificationUnreadCount > 99 ? "99+" : notificationUnreadCount}</span>}</Link>}
             {!loading && !user && (
-              <Link className="button button--small button--paper" href="/login">Log in</Link>
+              <Link className="button button--small button--paper header-login" href="/login">Log in</Link>
             )}
             {user && <AvatarMenu user={user} profilePhoto={profilePhoto} admin={admin} />}
           </div>
         </div>
       </header>
 
-      {ready && !admin && <nav className={user ? "mobile-nav" : "mobile-nav mobile-nav--guest"} aria-label="Mobile navigation">
-        {mobileNav.map(({ href, label, icon: Icon }) => (
+      {ready && !admin && user && <nav className="mobile-nav" aria-label="Mobile navigation">
+        {mobilePrimaryNav.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} className={pathname.startsWith(href) ? "is-active" : ""} aria-label={href === "/messages" && messageUnreadCount > 0 ? `Messages, ${messageUnreadCount} unread` : undefined}>
-            <span className="mobile-nav__icon">{href === "/profile" && profilePhoto ? <Image className="mobile-nav__avatar" src={profilePhoto} alt="" width={24} height={24} sizes="24px" /> : <Icon size={21} />}{href === "/messages" && messageUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}</span>
+            <span className="mobile-nav__icon"><Icon size={21} />{href === "/messages" && messageUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}</span>
             <span>{label}</span>
           </Link>
         ))}
+        <button type="button" className={mobileMoreOpen || pathname.startsWith("/profile") || pathname.startsWith("/listings") || pathname.startsWith("/notifications") ? "mobile-nav__more is-active" : "mobile-nav__more"} aria-expanded={mobileMoreOpen} aria-controls="mobile-more-menu" onClick={() => setMobileMoreOpen((open) => !open)}>
+          <span className="mobile-nav__icon">{profilePhoto ? <Image className="mobile-nav__avatar" src={profilePhoto} alt="" width={24} height={24} sizes="24px" /> : <Menu size={21} />}{notificationUnreadCount > 0 && <span className="nav-badge" aria-hidden="true">{notificationUnreadCount > 99 ? "99+" : notificationUnreadCount}</span>}</span>
+          <span>More</span>
+        </button>
       </nav>}
+
+      {ready && !admin && user && mobileMoreOpen && <>
+        <button type="button" className="mobile-more-backdrop" aria-label="Close more navigation" onClick={() => setMobileMoreOpen(false)} />
+        <aside className="mobile-more" id="mobile-more-menu" aria-label="More navigation">
+          <header><strong>More</strong><button type="button" className="icon-button" aria-label="Close more navigation" onClick={() => setMobileMoreOpen(false)}><X size={20} /></button></header>
+          <nav>
+            <Link href="/list" onClick={() => setMobileMoreOpen(false)}><ListPlus size={19} /><span><strong>List an item</strong><small>Create a product or service listing</small></span></Link>
+            <Link href="/listings/manage" onClick={() => setMobileMoreOpen(false)}><LayoutList size={19} /><span><strong>My listings</strong><small>Update listings and availability</small></span></Link>
+            <Link href="/notifications" onClick={() => setMobileMoreOpen(false)}><Bell size={19} /><span><strong>Notifications</strong><small>{notificationUnreadCount > 0 ? `${notificationUnreadCount} unread` : "You’re all caught up"}</small></span></Link>
+            <Link href="/profile" onClick={() => setMobileMoreOpen(false)}><UserRound size={19} /><span><strong>Profile</strong><small>Account and verification</small></span></Link>
+          </nav>
+        </aside>
+      </>}
     </>
   );
 }

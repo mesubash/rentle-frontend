@@ -15,8 +15,8 @@ import { useToast } from "./toast-provider";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Label } from "./ui/label";
-import { Skeleton } from "./ui/skeleton";
 import { Textarea } from "./ui/textarea";
+import { VerificationDetailSkeleton } from "./verification-detail-skeleton";
 
 export function VerificationDetail({ userId }: { userId: string }) {
   const router = useRouter();
@@ -62,6 +62,8 @@ export function VerificationDetail({ userId }: { userId: string }) {
     }
   }
 
+  if (loading) return <VerificationDetailSkeleton />;
+
   return (
     <div className="admin-scope space-y-4">
       <Link href="/admin/verifications" className="inline-flex items-center gap-1 text-sm text-muted-foreground">
@@ -69,9 +71,7 @@ export function VerificationDetail({ userId }: { userId: string }) {
       </Link>
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
 
-      {loading || !detail ? (
-        <Card><CardContent className="space-y-4 pt-6"><Skeleton className="h-16" /><Skeleton className="h-72" /><Skeleton className="h-48" /></CardContent></Card>
-      ) : (
+      {!detail ? null : (
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-4 border-b">
             <div>

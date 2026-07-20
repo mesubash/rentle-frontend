@@ -30,7 +30,7 @@ export default function FavoritesPage() {
           </header>
           {!ready && <p>Loading…</p>}
           {ready && !user && (
-            <section className="empty-state card">
+            <section className="empty-state">
               <Heart size={26} />
               <h2>Log in to save listings</h2>
               <p>Tap the heart on any listing to keep it here.</p>
@@ -38,7 +38,7 @@ export default function FavoritesPage() {
             </section>
           )}
           {ready && user && listings.length === 0 && (
-            <section className="empty-state card">
+            <section className="empty-state">
               <Heart size={26} />
               <h2>Nothing saved yet</h2>
               <p>Tap the heart on a listing to save it for later.</p>

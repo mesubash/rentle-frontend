@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, ShieldCheck } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { ContactVerification } from "./contact-verification";
 import { KycForm } from "./kyc-form";
@@ -30,7 +30,7 @@ export function VerificationWorkspace({ registrationOnboarding = false }: { regi
   // Already fully verified — don't show the onboarding steps again.
   if (user?.status === "VERIFIED") {
     return (
-      <div className="card card-pad verification-done">
+      <div className="verification-done verification-section">
         <BadgeCheck size={28} />
         <div>
           <h2>You&apos;re verified</h2>
@@ -44,12 +44,12 @@ export function VerificationWorkspace({ registrationOnboarding = false }: { regi
     <>
       <ContactVerification />
       {loaded && registrationOnboarding && !kyc && !showKycForm ? (
-        <section className="verify-step card kyc-choice">
-          <div className="verify-step__head"><ShieldCheck size={18} /><strong>Identity verification is optional for now</strong></div>
+        <section className="verification-section kyc-choice">
+          <header><h2>Identity verification</h2></header>
           <p className="verify-step__hint">Verify now to start the review sooner, or continue exploring and return from your profile when you are ready. You will need approval before booking or listing.</p>
           <div className="button-row">
             <button type="button" className="button" onClick={() => setShowKycForm(true)}>Verify identity now</button>
-            <button type="button" className="button button--secondary" onClick={deferKyc}>I&apos;ll verify later</button>
+            <button type="button" className="text-button" onClick={deferKyc}>I&apos;ll verify later</button>
           </div>
         </section>
       ) : loaded ? (

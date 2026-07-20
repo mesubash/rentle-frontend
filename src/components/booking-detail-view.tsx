@@ -6,11 +6,13 @@ import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
+  Image as ImageIcon,
   Info,
   ShieldCheck,
   WalletCards,
+  X,
 } from "lucide-react";
-import { type ChangeEvent, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "./auth-provider";
 import { ReportButton } from "./report-button";
 import { ReviewForm } from "./review-form";
@@ -22,6 +24,8 @@ import {
   type BookingConditionPhase,
 } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
+import { assetUrl } from "@/lib/api/assets";
+import { listingsApi } from "@/lib/api/listings";
 import { reviewsApi } from "@/lib/api/reviews";
 import { formatNpr } from "@/lib/format";
 
@@ -36,6 +40,7 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
   const [reviewed, setReviewed] = useState<boolean | null>(null);
   const [reviewStatusError, setReviewStatusError] = useState("");
   const [workers, setWorkers] = useState<import("@/lib/api/workers").Worker[]>([]);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   useEffect(() => {
     bookingsApi
       .detail(bookingId)
@@ -56,6 +61,16 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
       .catch(() => undefined);
     return () => { active = false; };
   }, [user?.accountType, user?.id, booking?.ownerId]);
+  useEffect(() => {
+    const listingId = booking?.listingId;
+    if (!listingId) return;
+    let active = true;
+    listingsApi
+      .detail(listingId)
+      .then((listing) => { if (active) setCoverImage(assetUrl(listing.coverImage)); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [booking?.listingId]);
   useEffect(() => {
     if (booking?.status !== "COMPLETED") return;
     let active = true;
@@ -144,7 +159,11 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
         <header className="booking-detail__header">
           <div>
             <p className="eyebrow">Booking #{booking.id.slice(0, 8)}</p>
-            <h1>{booking.listingTitle}</h1>
+            <h1>
+              <Link href={`/listing/${booking.listingId}`}>
+                {booking.listingTitle}
+              </Link>
+            </h1>
             <p>
               {formatDates(booking)} · with {counterpart}
             </p>
@@ -170,8 +189,7 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
         </section>
         <div className="booking-detail__grid">
           <div className="booking-detail__primary">
-            <section className="card booking-action-card">
-              <p className="eyebrow">Available actions</p>
+            <section className="booking-section">
               <h2>{actionHeading(booking, isOwner)}</h2>
               {booking.renterNote && (
                 <div className="form-note">
@@ -328,30 +346,33 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                 </button>
               )}
               {!terminal && !(booking.status === "REQUESTED" && isOwner) && (
-                <div className="form-grid">
-                  <div className="field">
-                    <label htmlFor="cancel-reason">
-                      Cancellation reason (optional)
-                    </label>
-                    <textarea
-                      id="cancel-reason"
-                      maxLength={500}
-                      value={reason}
-                      onChange={(event) => setReason(event.target.value)}
-                    />
+                <details className="disclosure">
+                  <summary>Cancel this booking</summary>
+                  <div className="form-grid">
+                    <div className="field">
+                      <label htmlFor="cancel-reason">
+                        Cancellation reason (optional)
+                      </label>
+                      <textarea
+                        id="cancel-reason"
+                        maxLength={500}
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                      />
+                    </div>
+                    <button
+                      className="button button--danger"
+                      disabled={acting}
+                      onClick={() =>
+                        act(() =>
+                          bookingsApi.cancel(booking.id, reason || undefined),
+                        )
+                      }
+                    >
+                      Cancel booking
+                    </button>
                   </div>
-                  <button
-                    className="button button--danger"
-                    disabled={acting}
-                    onClick={() =>
-                      act(() =>
-                        bookingsApi.cancel(booking.id, reason || undefined),
-                      )
-                    }
-                  >
-                    Cancel booking
-                  </button>
-                </div>
+                </details>
               )}
               {terminal && (
                 <p>
@@ -369,9 +390,8 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
             </section>
             {(booking.status === "ACTIVE" ||
               booking.status === "COMPLETED") && (
-              <section className="card booking-action-card">
-                <p className="eyebrow">Condition &amp; handover</p>
-                <h2>Photo evidence for both participants</h2>
+              <section className="booking-section">
+                <h2>Condition &amp; handover</h2>
                 <p>
                   Either participant can record the item condition. This helps
                   protect both sides if there is a deposit dispute.
@@ -400,26 +420,28 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                   savedNote={booking.checkoutNote}
                   onSave={recordCondition}
                 />
-                <ConditionCapture
-                  bookingId={booking.id}
-                  phase="RETURN"
-                  title="Item condition at return"
-                  hasCondition={booking.hasReturnCondition}
-                  savedNote={booking.returnNote}
-                  onSave={recordCondition}
-                  separated
-                />
+                {(booking.hasCheckoutCondition || booking.hasReturnCondition) && (
+                  <ConditionCapture
+                    bookingId={booking.id}
+                    phase="RETURN"
+                    title="Item condition at return"
+                    hasCondition={booking.hasReturnCondition}
+                    savedNote={booking.returnNote}
+                    onSave={recordCondition}
+                    separated
+                  />
+                )}
               </section>
             )}
             {booking.status === "COMPLETED" && (
               reviewStatusError ? (
-                <section className="card booking-action-card">
+                <section className="booking-section">
                   <p className="form-error" role="alert">{reviewStatusError}</p>
                 </section>
               ) : reviewed === null ? (
-                <section className="card booking-action-card"><p>Checking your review status…</p></section>
+                <section className="booking-section"><p>Checking your review status…</p></section>
               ) : reviewed ? (
-                <section className="card booking-action-card">
+                <section className="booking-section">
                   <CheckCircle2 className="state-icon state-icon--success" size={30} />
                   <p className="eyebrow">Review complete</p>
                   <h2>You reviewed this booking</h2>
@@ -429,7 +451,7 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
                 <ReviewForm bookingId={booking.id} subjectName={reviewSubjectName} />
               )
             )}
-            <section className="card booking-facts">
+            <section className="booking-section booking-facts">
               <h2>Booking details</h2>
               <dl>
                 <div>
@@ -460,7 +482,20 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
             </section>
           </div>
           <aside className="booking-detail__aside">
-            <section className="card counterpart-card">
+            <Link className="listing-peek" href={`/listing/${booking.listingId}`}>
+              <span className="listing-peek__image">
+                {coverImage ? (
+                  <Image src={coverImage} alt="" fill sizes="72px" unoptimized />
+                ) : (
+                  <ImageIcon size={18} aria-hidden="true" />
+                )}
+              </span>
+              <span className="listing-peek__copy">
+                <strong>{booking.listingTitle}</strong>
+                <small>View listing</small>
+              </span>
+            </Link>
+            <section className="counterpart-card">
               <span className="avatar avatar--large">
                 {initials(counterpart)}
               </span>
@@ -523,6 +558,7 @@ function ConditionCapture({
   separated?: boolean;
 }) {
   const [file, setFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -538,6 +574,11 @@ function ConditionCapture({
     [previewUrl],
   );
 
+  function clearFile() {
+    setFile(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   const inputId = `condition-${bookingId}-${phase.toLowerCase()}`;
   const noteId = `${inputId}-note`;
   const imageUrl = `/api/rentle/bookings/${bookingId}/condition/${phase}`;
@@ -548,7 +589,7 @@ function ConditionCapture({
     setError("");
     try {
       await onSave(phase, file, note.trim() || undefined);
-      setFile(null);
+      clearFile();
       setNote("");
     } catch (caught) {
       setError(
@@ -632,32 +673,40 @@ function ConditionCapture({
           <div className="field">
             <label htmlFor={inputId}>Condition photo</label>
             <input
+              ref={fileRef}
               id={inputId}
               type="file"
               accept="image/jpeg,image/png,image/webp"
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              hidden={Boolean(file)}
             />
-            <small>
-              {file?.name || "Choose a clear photo of the item condition."}
-            </small>
+            {previewUrl && file ? (
+              <div className="file-preview">
+                <Image
+                  className="file-preview__thumb"
+                  src={previewUrl}
+                  alt="Selected condition photo preview"
+                  width={160}
+                  height={160}
+                  unoptimized
+                />
+                <div className="file-preview__meta">
+                  <strong>{file.name}</strong>
+                  <small>{Math.round(file.size / 1024)} KB</small>
+                </div>
+                <button
+                  type="button"
+                  className="file-preview__remove"
+                  onClick={clearFile}
+                  aria-label="Remove the selected photo"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <small>Choose a clear photo of the item condition.</small>
+            )}
           </div>
-          {previewUrl && (
-            <Image
-              src={previewUrl}
-              alt="Selected condition photo preview"
-              width={960}
-              height={720}
-              unoptimized
-              style={{
-                display: "block",
-                height: "auto",
-                maxHeight: 420,
-                objectFit: "cover",
-                width: "100%",
-                borderRadius: "var(--radius)",
-              }}
-            />
-          )}
           <div className="field">
             <label htmlFor={noteId}>Condition note (optional)</label>
             <textarea
@@ -669,8 +718,9 @@ function ConditionCapture({
             />
           </div>
           <button
-            className="button button--wide"
+            className="button"
             type="button"
+            style={{ justifySelf: "start" }}
             disabled={!file || saving}
             onClick={saveCondition}
           >

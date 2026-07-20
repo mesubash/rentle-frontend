@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  devIndicators: false,
   turbopack: {
     root: process.cwd(),
   },
@@ -11,6 +12,7 @@ const nextConfig: NextConfig = {
     // Cloudinary-hosted images (production storage). Local files are proxied same-origin.
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
   },
 };

@@ -16,7 +16,21 @@
 @source "../../components/admin-staff-view.tsx";
 @source "../../components/admin-users-view.tsx";
 @source "../../components/verification-queue.tsx";
+@source "../../components/verification-detail.tsx";
+@source "../../components/verification-detail-skeleton.tsx";
 @source "../../components/admin-profile-view.tsx";
+
+.verification-detail-skeleton__heading { width: 220px; }
+.verification-detail-skeleton__eyebrow { width: 112px; height: 12px; }
+.verification-detail-skeleton__title { width: 190px; height: 24px; }
+.verification-detail-skeleton__status { width: 80px; height: 24px; }
+.verification-detail-skeleton__documents { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.verification-detail-skeleton__document { width: 100%; min-height: 220px; }
+
+@media (min-width: 640px) {
+  .verification-detail-skeleton__documents { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .verification-detail-skeleton__document { min-height: 260px; }
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 3px);

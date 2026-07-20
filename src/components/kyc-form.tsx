@@ -40,24 +40,32 @@ export function KycForm({ initial, contactReady, onDefer }: { initial: Kyc | nul
 
   if (kyc?.status === "APPROVED") {
     return (
-      <section className="verify-step card is-done kyc-status">
-        <ShieldCheck size={22} />
+      <section className="verification-section kyc-status">
+        <CheckCircle2 size={21} />
         <div>
           <strong>Identity verified</strong>
           <p className="verify-step__hint">Your legal name <strong>{kyc.realName}</strong> and details are confirmed and locked.</p>
         </div>
-        <CheckCircle2 size={18} className="verify-step__check" />
       </section>
     );
   }
   if (kyc?.status === "SUBMITTED") {
     return (
-      <section className="verify-step card kyc-status">
+      <section className="verification-section kyc-status">
         <Clock size={22} />
         <div>
           <strong>Under review</strong>
           <p className="verify-step__hint">We have your details and documents. The Rentle team will review them shortly.</p>
         </div>
+      </section>
+    );
+  }
+
+  if (!contactReady) {
+    return (
+      <section className="verification-section verification-blocked">
+        <h2>Identity details</h2>
+        <p>Complete your email and phone verification above to continue.</p>
       </section>
     );
   }
@@ -119,19 +127,13 @@ export function KycForm({ initial, contactReady, onDefer }: { initial: Kyc | nul
   }
 
   return (
-    <section className="verify-step card kyc-form">
-      <div className="verify-step__head"><ShieldCheck size={18} /><strong>Verify your identity (KYC)</strong></div>
+    <section className="verification-section kyc-form">
+      <header><h2>Identity details</h2><p>Use the information shown on your citizenship card.</p></header>
 
       {rejected && (
         <div className="form-note form-note--warn">
           <AlertTriangle size={18} />
           <span>Your previous submission was rejected: {kyc?.rejectionReason}. Please correct and resubmit.</span>
-        </div>
-      )}
-
-      {!contactReady && (
-        <div className="form-note">
-          <span>Verify your email and phone above before submitting your identity.</span>
         </div>
       )}
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
+import { useAuth } from "./auth-provider";
 import { ListingCard } from "./listing-card";
 import { FilterChipGroup } from "./filter-chip-group";
 import { ListingPagination } from "./listing-pagination";
@@ -13,6 +14,7 @@ import { ApiError } from "@/lib/api/client";
 import { categoriesApi, listingsApi, type Category, type ListingSummary, type ListingType } from "@/lib/api/listings";
 
 export function ExploreMarketplace({ initialQuery = "", home = false }: { initialQuery?: string; home?: boolean }) {
+  const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -103,9 +105,9 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
       </>}
       {home && <div className="section-heading"><h2>Fresh nearby</h2></div>}
       <div id="explore-results" className="explore-results-anchor" />
-      {loading ? <div className="listing-grid listing-grid--four" aria-label="Loading listings">{Array.from({ length: 8 }).map((_, index) => <div className="skeleton" key={index} />)}</div> : error ? <section className="empty-state card"><p className="eyebrow">Connection problem</p><h2>Listings could not be loaded.</h2><p>{error}</p><button className="button" onClick={() => setRequestKey((value) => value + 1)}>Try again</button></section> : listings.length ? <div className="listing-grid listing-grid--four">{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 2} />)}</div> : <section className="empty-state card"><p className="eyebrow">No exact matches</p><h2>Try a broader search.</h2><p>Remove one or more filters to see more nearby listings.</p><button className="button" onClick={clear}>Show all listings</button></section>}
+      {loading ? <div className="listing-grid listing-grid--four" aria-label="Loading listings">{Array.from({ length: 8 }).map((_, index) => <div className="skeleton" key={index} />)}</div> : error ? <section className="empty-state"><p className="eyebrow">Connection problem</p><h2>Listings could not be loaded.</h2><p>{error}</p><button className="button" onClick={() => setRequestKey((value) => value + 1)}>Try again</button></section> : listings.length ? <div className="listing-grid listing-grid--four">{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 2} />)}</div> : <section className="empty-state"><p className="eyebrow">No exact matches</p><h2>Try a broader search.</h2><p>Remove one or more filters to see more nearby listings.</p><button className="button" onClick={clear}>Show all listings</button></section>}
       {!home && !loading && !error && listings.length > 0 && <ListingPagination currentPage={currentPage} totalPages={totalPages} total={total} count={listings.length} pageSize={24} onChange={goToPage} />}
-      {home && !error && <div className="see-more"><Link className="button" href="/explore">Explore all listings</Link></div>}
+      {home && !error && <div className="see-more"><Link className="button" href="/explore">Explore all listings</Link>{user && <Link className="button button--secondary" href="/listings/manage">Your listings</Link>}</div>}
     </div></main>
   </>;
 }

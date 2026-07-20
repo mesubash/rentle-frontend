@@ -1,6 +1,8 @@
 .root {
-  width: min(100% - 32px, 980px);
+  max-width: none;
 }
+
+.root > * { max-width: 980px; }
 
 .root :global(.manage-loading) {
   min-height: 220px;
