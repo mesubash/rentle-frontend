@@ -1,14 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  CalendarCheck,
-  MessageCircle,
-  PackageSearch,
-  ShieldCheck,
-  Star,
-  WalletCards,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
@@ -19,133 +11,167 @@ export const metadata: Metadata = {
 
 const steps = [
   {
-    icon: PackageSearch,
-    title: "List or find",
-    copy: "Owners list a product to rent or a service to offer. Renters search by category and city and open a listing.",
+    title: "Find what is nearby",
+    copy: "Browse useful things and local services, with the price and any deposit shown before you request.",
   },
   {
-    icon: CalendarCheck,
-    title: "Request & approve",
-    copy: "The renter requests dates; the owner approves or declines. An approval opens a booking-scoped conversation.",
+    title: "Agree with the owner",
+    copy: "Choose your dates, send a request, and use the booking conversation to settle the handover details.",
   },
   {
-    icon: WalletCards,
-    title: "Deposit, direct",
-    copy: "If a deposit is set, the renter pays the owner via eSewa or Khalti and uploads proof. The owner confirms after checking their own account.",
+    title: "Pay them directly",
+    copy: "Send any agreed deposit through eSewa or Khalti. The proof and confirmation stay with the booking.",
   },
   {
-    icon: Star,
-    title: "Complete & review",
-    copy: "After the rental or service, either side marks it complete and both leave a review — building a reputation that carries forward.",
+    title: "Return and review",
+    copy: "Complete the exchange and leave an honest review. Each good handover makes the next one easier.",
   },
 ];
 
 const principles = [
   {
-    icon: ShieldCheck,
-    title: "Everyone is a real person",
-    copy: "Email, phone and citizenship are verified before anyone can book or list. Each signal is shown separately so you know what was actually checked.",
+    label: "Real people",
+    title: "Know who you are dealing with.",
+    copy: "Email, phone, and identity checks are shown separately. You can see what has actually been verified before deciding.",
   },
   {
-    icon: MessageCircle,
-    title: "Everything stays on record",
-    copy: "Dates, deposits, proof, messages and confirmations all attach to one booking — so there is a clear trail if something goes wrong.",
+    label: "A shared record",
+    title: "Keep the agreement in one place.",
+    copy: "Dates, messages, deposit proof, and confirmations belong to the booking—not across screenshots and scattered chats.",
   },
   {
-    icon: PackageSearch,
-    title: "One place for things and help",
-    copy: "A camera for a wedding and the photographer to run it live under the same listing model, the same trust layer, and the same booking flow.",
+    label: "Useful, not idle",
+    title: "Get more from what already exists.",
+    copy: "A tool, camera, spare vehicle, or practical skill can help someone nearby and earn for its owner at the same time.",
   },
 ];
 
 export default function AboutPage() {
   return (
     <>
-      <main className="page trust-page">
-        <div className="container">
-          <header className="trust-hero">
-            <p className="eyebrow">About Rentle</p>
-            <h1>Rent, lend and hire — with people you can trust.</h1>
-            <p>
-              Rentle is a peer-to-peer marketplace for Nepal. Rent a camera or a saree,
-              or book a mover or a photographer — from verified people nearby, with
-              deposits, reviews and a record of what was agreed.
-            </p>
-          </header>
-
-          <section className="trust-example card">
-            <div>
-              <ShieldCheck size={28} />
-              <div>
-                <strong>Why we built it</strong>
-                <span>
-                  Renting a camera or hiring a mover in Nepal usually happens through
-                  WhatsApp groups and Facebook posts — no verification, no shared record,
-                  no recourse when something goes wrong.
-                </span>
+      <main className="about-page">
+        <section className="about-hero">
+          <div className="container about-hero__layout">
+            <div className="about-hero__copy">
+              <p className="eyebrow">About Rentle</p>
+              <h1>Useful things are already nearby.</h1>
+              <p>
+                Rentle helps people across Nepal rent what they need, earn from
+                what they own, and book trusted local help—without treating every
+                exchange like a purchase from a faceless shop.
+              </p>
+              <div className="about-hero__actions">
+                <Link className="button" href="/explore">
+                  See what is nearby <ArrowRight size={16} />
+                </Link>
+                <Link className="about-text-link" href="/list">
+                  List something of yours
+                </Link>
               </div>
             </div>
-            <p>
-              Rentle brings that everyday exchange into one trusted place: verified
-              profiles, deposits tracked in the open, dual-sided reviews, and messages
-              tied to each booking. Trust is not a feature here — it is the product.
-            </p>
-          </section>
 
-          <section className="about-steps">
-            <div className="section-heading">
-              <p className="eyebrow">How Rentle works</p>
-              <h2>From listing to review, in four steps.</h2>
-            </div>
-            <div className="trust-points">
-              {steps.map(({ icon: Icon, title, copy }, index) => (
-                <article key={title} className="card about-step">
-                  <span className="about-step__num">{index + 1}</span>
-                  <Icon />
-                  <h3>{title}</h3>
-                  <p>{copy}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="about-steps">
-            <div className="section-heading">
-              <p className="eyebrow">What makes it different</p>
-              <h2>Built around trust between strangers.</h2>
-            </div>
-            <div className="trust-points">
-              {principles.map(({ icon: Icon, title, copy }) => (
-                <article key={title} className="card">
-                  <Icon />
-                  <h3>{title}</h3>
-                  <p>{copy}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="deposit-explainer">
-            <WalletCards />
-            <div>
-              <p className="eyebrow">Payments</p>
-              <h2>Money moves directly. The evidence stays here.</h2>
+            <aside className="about-vignette" aria-label="An example of a local exchange">
+              <p className="about-vignette__label">Picture a Saturday in the valley</p>
               <p>
-                Rentle records the agreed amount, the deposit proof and the confirmations,
-                but never holds your money — you pay the owner directly and both sides keep
-                the receipt. Always confirm condition, timing and payment yourself.
+                A camera sits unused in Lalitpur. Someone in Bhaktapur needs one
+                for a family gathering—but not forever.
               </p>
+              <strong>One person earns. One person avoids buying. The camera gets used.</strong>
+            </aside>
+          </div>
+        </section>
+
+        <div className="container">
+          <section className="about-story">
+            <p className="eyebrow">Why we are building it</p>
+            <div className="about-story__body">
+              <h2>Renting here already happens. The trust layer is what is missing.</h2>
+              <div className="about-story__copy">
+                <p>
+                  People find cameras, rooms, tools, vehicles, and local help through
+                  friends, Facebook posts, and chat groups every day. It works—until
+                  the listing is unclear, the person is anonymous, or nobody remembers
+                  exactly what was agreed.
+                </p>
+                <p>
+                  Rentle gives that familiar person-to-person exchange a proper home:
+                  a clear listing, visible verification, one booking record, and a
+                  reputation that follows both sides.
+                </p>
+              </div>
+              <blockquote>
+                We are not trying to replace the neighbourly exchange. We are trying
+                to make it easier to trust.
+              </blockquote>
             </div>
           </section>
 
-          <section className="about-cta card">
+          <section className="about-process" aria-labelledby="about-process-title">
+            <header className="about-section-heading">
+              <div>
+                <p className="eyebrow">How it works</p>
+                <h2 id="about-process-title">From a need to a handover.</h2>
+              </div>
+              <p>No checkout maze. Just a clear agreement between two people.</p>
+            </header>
+
+            <ol className="about-process__list">
+              {steps.map(({ title, copy }, index) => (
+                <li key={title}>
+                  <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                  <div>
+                    <h3>{title}</h3>
+                    <p>{copy}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className="about-principles" aria-labelledby="about-principles-title">
+            <header>
+              <p className="eyebrow">What matters here</p>
+              <h2 id="about-principles-title">Trust should be visible, not assumed.</h2>
+            </header>
+            <div className="about-principles__list">
+              {principles.map(({ label, title, copy }) => (
+                <article key={label}>
+                  <p>{label}</p>
+                  <h3>{title}</h3>
+                  <span>{copy}</span>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="about-payment-note">
+            <p className="eyebrow">A clear boundary</p>
             <div>
-              <h2>Ready to start?</h2>
-              <p>Browse what neighbours are offering, or list something of your own.</p>
+              <h2>Your money stays between you and the owner.</h2>
+              <p>
+                Rentle records the agreed deposit, payment proof, and confirmation,
+                but does not hold the money. You pay the owner directly and check the
+                condition, timing, and payment together.
+              </p>
+              <Link className="about-text-link" href="/trust">
+                Read how Rentle keeps both sides safe <ArrowRight size={15} />
+              </Link>
+            </div>
+          </section>
+
+          <section className="about-cta about-cta--editorial">
+            <p className="eyebrow">Start nearby</p>
+            <div>
+              <h2>Need something—or have something sitting idle?</h2>
+              <p>See what people are offering, or put something useful back into circulation.</p>
             </div>
             <div className="about-cta__actions">
-              <Link className="button" href="/explore">Explore listings <ArrowRight size={16} /></Link>
-              <Link className="button button--secondary" href="/register">Create an account</Link>
+              <Link className="button" href="/explore">
+                Explore Rentle <ArrowRight size={16} />
+              </Link>
+              <Link className="button button--secondary" href="/register">
+                Join Rentle
+              </Link>
             </div>
           </section>
         </div>

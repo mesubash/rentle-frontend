@@ -1,13 +1,159 @@
-import { CheckCircle2, ClipboardCheck, MessageCircle, ShieldCheck, Star, WalletCards } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 
-const points = [
-  { icon: ShieldCheck, title: "Identity signals", copy: "Phone verification and citizenship review are shown separately, so you can tell what has actually been checked." },
-  { icon: ClipboardCheck, title: "Recorded agreements", copy: "Dates, deposit amounts, proof, and confirmations stay attached to one booking." },
-  { icon: MessageCircle, title: "Booking-only messages", copy: "Conversations open after approval and retain the listing and date context." },
-  { icon: Star, title: "Earned reviews", copy: "Only participants in a completed booking can leave a review." },
+export const metadata: Metadata = {
+  title: "Trust and safety — Rentle",
+  description:
+    "Understand Rentle verification, booking records, reviews, direct deposits, and the checks to make before an exchange.",
+};
+
+const signals = [
+  {
+    label: "Identity",
+    title: "See what was actually checked.",
+    copy: "Phone verification and citizenship review appear as separate signals. One does not silently stand in for the other.",
+  },
+  {
+    label: "Agreement",
+    title: "Keep the important details together.",
+    copy: "Dates, the agreed deposit, uploaded proof, and both confirmations stay attached to the booking.",
+  },
+  {
+    label: "Conversation",
+    title: "Make changes where both people can see them.",
+    copy: "Booking messages retain the listing and date context, so a changed handover time is not lost in another chat.",
+  },
+  {
+    label: "Reputation",
+    title: "Reviews come from completed exchanges.",
+    copy: "Only people who took part in a completed booking can review each other. The history grows through real activity.",
+  },
+];
+
+const renterChecks = [
+  "Compare the item with its current photos and description.",
+  "Ask about existing wear, what is included, and the return time.",
+  "Keep any changed dates or conditions in the booking conversation.",
+];
+
+const ownerChecks = [
+  "Check the money in your own wallet or bank account—not only a screenshot.",
+  "Confirm the item condition together before it leaves your hands.",
+  "Do not share an OTP, wallet PIN, password, or full payment credentials.",
 ];
 
 export default function TrustPage() {
-  return <><main className="page trust-page"><div className="container"><header className="trust-hero"><p className="eyebrow">Trust at Rentle</p><h1>Evidence from real marketplace activity.</h1><p>Trust signals combine verified identity with completed bookings and reviews. They are context, not a guarantee—confirm condition, timing, and payment details yourself.</p></header><section className="trust-example card"><div><ShieldCheck size={28} /><div><strong>Read each signal on its own</strong><span>Phone, citizenship, activity, and reviews answer different questions.</span></div></div><ul><li><CheckCircle2 /> Check current photos and description</li><li><CheckCircle2 /> Keep changes in booking messages</li><li><CheckCircle2 /> Verify money in your own account</li></ul></section><div className="trust-points">{points.map(({ icon: Icon, title, copy }) => <article key={title} className="card"><Icon /><h2>{title}</h2><p>{copy}</p></article>)}</div><section className="deposit-explainer"><WalletCards /><div><p className="eyebrow">Direct deposits</p><h2>Money moves directly. The evidence stays here.</h2><p>After approval, the renter pays the owner and uploads proof. The owner checks their own account before confirming. Rentle records the agreed amount and actions but does not hold the money.</p></div></section></div></main><SiteFooter /></>;
+  return (
+    <>
+      <main className="trust-story-page">
+        <section className="trust-story-hero">
+          <div className="container trust-story-hero__layout">
+            <div>
+              <p className="eyebrow">Trust at Rentle</p>
+              <h1>Trust is not one badge.</h1>
+              <p>
+                A verified identity says one thing. A completed booking says another.
+                Rentle keeps those signals separate so you can make your own decision
+                with better context.
+              </p>
+            </div>
+
+            <aside className="trust-boundary">
+              <div>
+                <p>Rentle can show</p>
+                <strong>Identity checks, past activity, reviews, messages, and the booking record.</strong>
+              </div>
+              <div>
+                <p>Rentle cannot promise</p>
+                <strong>An item&rsquo;s current condition, someone&rsquo;s punctuality, or that uploaded proof means money arrived.</strong>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <div className="container">
+          <section className="trust-signals" aria-labelledby="trust-signals-title">
+            <header>
+              <p className="eyebrow">Read the evidence</p>
+              <h2 id="trust-signals-title">One signal at a time.</h2>
+              <p>
+                No single check makes an exchange risk-free. Together, these signals
+                help both people understand who they are dealing with and what was agreed.
+              </p>
+            </header>
+
+            <div className="trust-signals__list">
+              {signals.map(({ label, title, copy }, index) => (
+                <article key={label}>
+                  <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                  <p>{label}</p>
+                  <div>
+                    <h3>{title}</h3>
+                    <p>{copy}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="trust-handover" aria-labelledby="trust-handover-title">
+            <header>
+              <p className="eyebrow">At the handover</p>
+              <h2 id="trust-handover-title">Pause, check, then confirm.</h2>
+              <p>A few careful minutes protect both sides better than assumptions do.</p>
+            </header>
+
+            <div className="trust-handover__columns">
+              <section>
+                <p>When you are renting</p>
+                <ol>
+                  {renterChecks.map((check, index) => (
+                    <li key={check}><span>{index + 1}</span>{check}</li>
+                  ))}
+                </ol>
+              </section>
+              <section>
+                <p>When you are lending</p>
+                <ol>
+                  {ownerChecks.map((check, index) => (
+                    <li key={check}><span>{index + 1}</span>{check}</li>
+                  ))}
+                </ol>
+              </section>
+            </div>
+          </section>
+
+          <section className="trust-payment">
+            <p className="eyebrow">Direct deposits</p>
+            <div>
+              <h2>The money moves between people. The evidence stays here.</h2>
+              <p>
+                After approval, the renter pays the owner directly through the agreed
+                method and uploads proof. The owner checks their own account before
+                confirming. Rentle records the amount and actions but does not hold or
+                release the money.
+              </p>
+            </div>
+          </section>
+
+          <section className="trust-report">
+            <div>
+              <p className="eyebrow">Something does not look right?</p>
+              <h2>Stop before the handover and tell us.</h2>
+              <p>
+                Keep the listing, profile, or booking link. A clear record helps the
+                Rentle team review suspected fraud, unsafe behaviour, and disputes.
+              </p>
+            </div>
+            <Link className="button" href="/support">
+              Contact support <ArrowRight size={16} />
+            </Link>
+          </section>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
+  );
 }
