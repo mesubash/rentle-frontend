@@ -1,0 +1,155 @@
+.calendar {
+  width: 100%;
+  max-width: 440px;
+}
+
+.head {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.head button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.head button:hover:not(:disabled) {
+  background: var(--pine-wash);
+  color: var(--pine);
+}
+
+.head button:disabled {
+  opacity: .25;
+  cursor: not-allowed;
+}
+
+.head svg {
+  width: 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.grid > small {
+  padding: 4px 0 6px;
+  color: var(--stone);
+  font-size: .68rem;
+  text-align: center;
+}
+
+.day,
+.blank {
+  aspect-ratio: 1;
+  min-width: 0;
+}
+
+.day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.available {
+  background: var(--pine-wash);
+  color: var(--pine-dark);
+}
+
+.blocked,
+.past {
+  background: rgba(119, 113, 103, .08);
+  color: #aaa49a;
+}
+
+.booked {
+  background: #f8e5df;
+  color: #91452f;
+}
+
+.blocked::after,
+.booked::after {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.today span {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  color: var(--stone);
+  font-size: .7rem;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legend .available {
+  background: var(--pine-wash);
+}
+
+.unavailableKey {
+  background: rgba(119, 113, 103, .12);
+}
+
+.bookedKey {
+  background: #f8e5df;
+}
+
+.note {
+  min-height: 17px;
+  margin: 14px 0 0;
+  color: var(--stone);
+  font-size: .72rem;
+}
+
+.error {
+  color: var(--brick);
+}
+
+@media (max-width: 420px) {
+  .grid {
+    gap: 3px;
+  }
+
+  .day {
+    border-radius: 7px;
+    font-size: .75rem;
+  }
+}
