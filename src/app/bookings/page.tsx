@@ -15,6 +15,8 @@ export default function BookingsPage() {
   const { activeOrgId } = useOrg();
   const [tab, setTab] = useState<"renting" | "hosting">("renting");
   const [renting, setRenting] = useState<Booking[]>([]);
+  const [rentingTotal, setRentingTotal] = useState(0);
+  const [hostingTotal, setHostingTotal] = useState(0);
   const [hosting, setHosting] = useState<Booking[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,6 +29,8 @@ export default function BookingsPage() {
         if (!active) return;
         setRenting(renter.content);
         setHosting(owner.content);
+        setRentingTotal(renter.totalElements);
+        setHostingTotal(owner.totalElements);
         // Open on the side that needs attention: owner requests waiting, or when there's
         // nothing being rented but requests are coming in.
         const pendingOwner = owner.content.some((b) => b.status === "REQUESTED");
@@ -60,7 +64,7 @@ export default function BookingsPage() {
       <section className={styles.gate}><h2>Log in to view bookings</h2><p>Rental requests and booking details are private to your account.</p><Link className="button" href="/login?next=/bookings">Log in</Link><p className={styles.secondary}>New to Rentle? <Link href="/register">Create an account</Link></p></section>
     ) : (
       <section aria-label="Booking activity">
-        <div className={styles.tabs} role="tablist" aria-label="Booking views"><button type="button" role="tab" id="renting-tab" aria-controls="bookings-panel" aria-selected={tab === "renting"} className={tab === "renting" ? styles.active : ""} onClick={() => setTab("renting")}>My rentals <span>{loading ? "" : renting.length}</span></button><button type="button" role="tab" id="hosting-tab" aria-controls="bookings-panel" aria-selected={tab === "hosting"} className={tab === "hosting" ? styles.active : ""} onClick={() => setTab("hosting")}>Requests for my listings <span>{loading ? "" : hosting.length}</span></button></div>
+        <div className={styles.tabs} role="tablist" aria-label="Booking views"><button type="button" role="tab" id="renting-tab" aria-controls="bookings-panel" aria-selected={tab === "renting"} className={tab === "renting" ? styles.active : ""} onClick={() => setTab("renting")}>My rentals <span>{loading ? "" : rentingTotal}</span></button><button type="button" role="tab" id="hosting-tab" aria-controls="bookings-panel" aria-selected={tab === "hosting"} className={tab === "hosting" ? styles.active : ""} onClick={() => setTab("hosting")}>Requests for my listings <span>{loading ? "" : hostingTotal}</span></button></div>
         <div className={styles.content} id="bookings-panel" role="tabpanel" aria-labelledby={`${tab}-tab`}>
           {loading ? <p className={styles.loading} role="status">Loading bookings…</p>
             : error ? <EmptyState title="Bookings are unavailable" description={error} action={<button className={styles.textAction} onClick={() => window.location.reload()}>Reload bookings</button>} />
