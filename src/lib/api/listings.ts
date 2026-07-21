@@ -1,4 +1,5 @@
 import { apiRequest, toFormData } from "./client";
+import { sharedRead } from "./dedupe";
 import type { PageResponse, UUID } from "./shared";
 import type { PublicProfile } from "./users";
 
@@ -22,9 +23,14 @@ export type UpdateListingInput = Partial<Omit<CreateListingInput, "categoryId" |
 export type BlockedRange = { rangeId: UUID | null; startDate: string; endDate: string; source: "OWNER_BLOCKED" | "BOOKED" };
 export type Availability = { listingId: UUID; blocked: BlockedRange[] };
 
+// Availability is read by two sibling components on the listing page; the tree is static
+// taxonomy re-requested on every marketplace mount.
+const readAvailability = sharedRead<Availability>((id) => apiRequest<Availability>(`/listings/${id}/availability`), 15_000);
+const readCategoryTree = sharedRead<Category[]>(() => apiRequest<Category[]>("/categories/tree"), 5 * 60_000);
+
 export const categoriesApi = {
   list: () => apiRequest<Category[]>("/categories"),
-  tree: () => apiRequest<Category[]>("/categories/tree"),
+  tree: () => readCategoryTree("tree"),
 };
 
 export const listingsApi = {
@@ -37,9 +43,9 @@ export const listingsApi = {
   remove: (id: UUID) => apiRequest<string>(`/listings/${id}`, { method: "DELETE" }),
   uploadImages: (id: UUID, files: File[]) => apiRequest<string[]>(`/listings/${id}/images`, { method: "POST", body: toFormData({ files }) }),
   deleteImage: (id: UUID, imageId: UUID) => apiRequest<string>(`/listings/${id}/images/${imageId}`, { method: "DELETE" }),
-  availability: (id: UUID) => apiRequest<Availability>(`/listings/${id}/availability`),
-  blockDates: (id: UUID, input: { startDate: string; endDate: string; reason?: string }) => apiRequest<Availability>(`/listings/${id}/availability`, { method: "POST", body: input }),
-  unblockDates: (id: UUID, rangeId: UUID) => apiRequest<string>(`/listings/${id}/availability/${rangeId}`, { method: "DELETE" }),
+  availability: (id: UUID) => readAvailability(id),
+  blockDates: (id: UUID, input: { startDate: string; endDate: string; reason?: string }) => apiRequest<Availability>(`/listings/${id}/availability`, { method: "POST", body: input }).then((result) => { readAvailability.invalidate(id); return result; }),
+  unblockDates: (id: UUID, rangeId: UUID) => apiRequest<string>(`/listings/${id}/availability/${rangeId}`, { method: "DELETE" }).then((result) => { readAvailability.invalidate(id); return result; }),
 };
 
 export function priceUnitLabel(unit: PriceUnit) {
