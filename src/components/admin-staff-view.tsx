@@ -54,6 +54,7 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
+import { humanize } from "@/lib/format";
 
 type KnownUser = Pick<UserLookupResponse, "id" | "email" | "fullName" | "status">;
 
@@ -125,28 +126,31 @@ function AssignmentsManager({ user, compact = false }: { user?: KnownUser; compa
         if (active) setLoading(false);
       });
 
-    if (can(P.PLATFORM_ROLE_READ)) {
-      platformApi.roles()
-        .then((result) => {
-          if (active) setRoles(result);
-        })
-        .catch((caught) => {
-          if (active) showToast(messageOf(caught, "Roles could not be loaded."), { tone: "error" });
-        });
-    }
-
     return () => {
       active = false;
     };
-  }, [can, showToast, userId]);
+  }, [userId]);
+
+  // The role catalog only feeds GrantRoleDialog, which does not mount its content until
+  // it is opened - so most visits to this page never needed it.
+  useEffect(() => {
+    if (!granting || roles.length || !can(P.PLATFORM_ROLE_READ)) return;
+    let active = true;
+    platformApi.roles()
+      .then((result) => { if (active) setRoles(result); })
+      .catch((caught) => { if (active) showToast(messageOf(caught, "Roles could not be loaded."), { tone: "error" }); });
+    return () => { active = false; };
+  }, [granting, roles.length, can, showToast]);
 
   const revoke = async () => {
     if (!revoking) return;
     setBusy(true);
     try {
-      await platformApi.revokeAssignment(revoking.id);
+      const revokedId = revoking.id;
+      await platformApi.revokeAssignment(revokedId);
       setRevoking(null);
-      await loadAssignments();
+      // The removed row is known, so drop it locally instead of re-reading every assignment.
+      setAssignments((current) => current.filter((assignment) => assignment.id !== revokedId));
       showToast("Role assignment revoked. The change applies on the person’s next request.", { tone: "success" });
     } catch (caught) {
       showToast(messageOf(caught, "The assignment could not be revoked."), { tone: "error", duration: 6000 });
@@ -389,9 +393,6 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(value));
 }
 
-function humanize(value: string) {
-  return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
-}
 
 function messageOf(caught: unknown, fallback: string) {
   return caught instanceof ApiError ? caught.message : fallback;

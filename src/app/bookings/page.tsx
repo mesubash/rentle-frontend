@@ -8,12 +8,15 @@ import { useOrg } from "@/components/org-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import styles from "./bookings.module.css";
+import { humanize } from "@/lib/format";
 
 export default function BookingsPage() {
   const { user, loading: authLoading } = useAuth();
   const { activeOrgId } = useOrg();
   const [tab, setTab] = useState<"renting" | "hosting">("renting");
   const [renting, setRenting] = useState<Booking[]>([]);
+  const [rentingTotal, setRentingTotal] = useState(0);
+  const [hostingTotal, setHostingTotal] = useState(0);
   const [hosting, setHosting] = useState<Booking[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState("");
@@ -26,6 +29,8 @@ export default function BookingsPage() {
         if (!active) return;
         setRenting(renter.content);
         setHosting(owner.content);
+        setRentingTotal(renter.totalElements);
+        setHostingTotal(owner.totalElements);
         // Open on the side that needs attention: owner requests waiting, or when there's
         // nothing being rented but requests are coming in.
         const pendingOwner = owner.content.some((b) => b.status === "REQUESTED");
@@ -59,7 +64,7 @@ export default function BookingsPage() {
       <section className={styles.gate}><h2>Log in to view bookings</h2><p>Rental requests and booking details are private to your account.</p><Link className="button" href="/login?next=/bookings">Log in</Link><p className={styles.secondary}>New to Rentle? <Link href="/register">Create an account</Link></p></section>
     ) : (
       <section aria-label="Booking activity">
-        <div className={styles.tabs} role="tablist" aria-label="Booking views"><button type="button" role="tab" id="renting-tab" aria-controls="bookings-panel" aria-selected={tab === "renting"} className={tab === "renting" ? styles.active : ""} onClick={() => setTab("renting")}>My rentals <span>{loading ? "" : renting.length}</span></button><button type="button" role="tab" id="hosting-tab" aria-controls="bookings-panel" aria-selected={tab === "hosting"} className={tab === "hosting" ? styles.active : ""} onClick={() => setTab("hosting")}>Requests for my listings <span>{loading ? "" : hosting.length}</span></button></div>
+        <div className={styles.tabs} role="tablist" aria-label="Booking views"><button type="button" role="tab" id="renting-tab" aria-controls="bookings-panel" aria-selected={tab === "renting"} className={tab === "renting" ? styles.active : ""} onClick={() => setTab("renting")}>My rentals <span>{loading ? "" : rentingTotal}</span></button><button type="button" role="tab" id="hosting-tab" aria-controls="bookings-panel" aria-selected={tab === "hosting"} className={tab === "hosting" ? styles.active : ""} onClick={() => setTab("hosting")}>Requests for my listings <span>{loading ? "" : hostingTotal}</span></button></div>
         <div className={styles.content} id="bookings-panel" role="tabpanel" aria-labelledby={`${tab}-tab`}>
           {loading ? <p className={styles.loading} role="status">Loading bookings…</p>
             : error ? <EmptyState title="Bookings are unavailable" description={error} action={<button className={styles.textAction} onClick={() => window.location.reload()}>Reload bookings</button>} />
@@ -99,5 +104,4 @@ function BookingCard({ booking, tab }: { booking: Booking; tab: "renting" | "hos
 function actionLabel(booking: Booking, tab: "renting" | "hosting") { if (booking.status === "REQUESTED") return tab === "hosting" ? "Review request" : "View request"; if (booking.status === "APPROVED") return tab === "renting" ? "Upload deposit proof" : "View booking"; if (booking.status === "DEPOSIT_PENDING") return tab === "hosting" ? "Confirm deposit" : "View proof status"; if (booking.status === "COMPLETED") return "Leave or view review"; return "View booking"; }
 function formatDates(booking: Booking) { const format = (value: string) => new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T00:00:00`)); return booking.startDate === booking.endDate ? format(booking.startDate) : `${format(booking.startDate)} – ${format(booking.endDate)}`; }
 function dateMarker(booking: Booking) { const start = new Date(`${booking.startDate}T00:00:00`); const end = new Date(`${booking.endDate}T00:00:00`); const month = new Intl.DateTimeFormat("en", { month: "short" }).format(start); const day = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(start); const detail = booking.startDate === booking.endDate ? String(start.getFullYear()) : `to ${new Intl.DateTimeFormat("en", { day: "numeric", month: start.getMonth() === end.getMonth() ? undefined : "short" }).format(end)}`; return { month, day, detail }; }
-function humanize(value: string) { return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase()); }
 function statusClass(status: Booking["status"]) { return status === "ACTIVE" || status === "COMPLETED" ? "status-chip status-chip--verified" : "status-chip status-chip--requested"; }

@@ -11,6 +11,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
+import { humanize, initials } from "@/lib/format";
 
 export function AdminProfileView() {
   const { user, loading } = useAuth();
@@ -94,14 +95,8 @@ function ProfileField({ icon: Icon, label, value, verified }: { icon: typeof Mai
   );
 }
 
-function initials(name: string) {
-  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", { dateStyle: "long" }).format(new Date(value));
 }
 
-function humanize(value: string) {
-  return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
-}

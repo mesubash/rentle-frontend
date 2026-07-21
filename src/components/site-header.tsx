@@ -4,12 +4,12 @@ import Form from "next/form";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Building2, CalendarDays, Check, Compass, LayoutList, ListPlus, LogOut, Menu, MessageCircle, Plus, Search, Settings, ShieldCheck, UserRound, X } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { useOrg } from "./org-provider";
 import { BrandLogo } from "./brand-logo";
-import { ConfirmDialog } from "./confirm-dialog";
+import dynamic from "next/dynamic";
 import { useSignOut } from "@/lib/use-sign-out";
 import { assetUrl } from "@/lib/api/assets";
 import { messagesApi } from "@/lib/api/messages";
@@ -17,8 +17,18 @@ import { notificationsApi } from "@/lib/api/notifications";
 import type { UserProfile } from "@/lib/api/users";
 import { ADMIN_ENTRY_KEYS } from "@/lib/iam/admin-entry-keys";
 import { usePermissions } from "./permissions-provider";
-import { NotificationsPopover } from "./notifications-popover";
-import { SavedPopover } from "./saved-popover";
+import { initials } from "@/lib/format";
+// Split out of the shared chunk: the header is in the root layout, so statically
+// importing these put ~440 lines of closed-by-default UI into every route's bundle,
+// including logged-out marketing pages. All three already render only after `ready`
+// (or after a confirm is triggered), so deferring the chunk adds no new layout shift.
+const NotificationsPopover = dynamic(() => import("./notifications-popover").then((m) => m.NotificationsPopover), {
+  loading: () => <span className="icon-button header-expandable" aria-hidden="true" />,
+});
+const SavedPopover = dynamic(() => import("./saved-popover").then((m) => m.SavedPopover), {
+  loading: () => <span className="icon-button header-expandable" aria-hidden="true" />,
+});
+const ConfirmDialog = dynamic(() => import("./confirm-dialog").then((m) => m.ConfirmDialog));
 
 const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
@@ -37,6 +47,16 @@ export function SiteHeader() {
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
+  // Stable identities: both popovers list onOpenChange in the dep array of the effect
+  // that loads their contents, so an inline arrow refetched on every header re-render.
+  const handleSavedOpenChange = useCallback((open: boolean) => {
+    setSavedOpen(open);
+    if (open) setNotificationsOpen(false);
+  }, []);
+  const handleNotificationsOpenChange = useCallback((open: boolean) => {
+    setNotificationsOpen(open);
+    if (open) setSavedOpen(false);
+  }, []);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const userId = user?.id;
@@ -72,11 +92,22 @@ export function SiteHeader() {
     };
 
     refreshUnreadCounts();
-    const intervalId = window.setInterval(refreshUnreadCounts, 60_000);
+    // Poll only while the tab is actually being looked at. Without this the pair of count
+    // requests ran every 60s forever in every background tab, on every route.
+    const tick = () => {
+      if (document.visibilityState === "visible") refreshUnreadCounts();
+    };
+    const intervalId = window.setInterval(tick, 60_000);
+    // Refresh on return so a tab that was hidden for a while isn't showing a stale badge.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshUnreadCounts();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       active = false;
       window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [admin, ready, userId]);
 
@@ -140,20 +171,14 @@ export function SiteHeader() {
             {ready && !admin && user && (
               <SavedPopover
                 open={savedOpen}
-                onOpenChange={(open) => {
-                  setSavedOpen(open);
-                  if (open) setNotificationsOpen(false);
-                }}
+                onOpenChange={handleSavedOpenChange}
               />
             )}
             {ready && !admin && user && (
               <NotificationsPopover
                 open={notificationsOpen}
                 unreadCount={notificationUnreadCount}
-                onOpenChange={(open) => {
-                  setNotificationsOpen(open);
-                  if (open) setSavedOpen(false);
-                }}
+                onOpenChange={handleNotificationsOpenChange}
                 onUnreadCountChange={setNotificationUnreadCount}
               />
             )}
@@ -273,6 +298,3 @@ function AvatarMenu({ user, profilePhoto, admin }: { user: UserProfile; profileP
   );
 }
 
-function initials(name: string) {
-  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-}

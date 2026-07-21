@@ -27,7 +27,7 @@ import { ApiError } from "@/lib/api/client";
 import { assetUrl } from "@/lib/api/assets";
 import { listingsApi } from "@/lib/api/listings";
 import { reviewsApi } from "@/lib/api/reviews";
-import { formatNpr } from "@/lib/format";
+import { formatNpr, humanize, initials } from "@/lib/format";
 
 export function BookingDetailView({ bookingId }: { bookingId: string }) {
   const { user } = useAuth();
@@ -136,8 +136,6 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
       note,
     );
     setBooking(updated);
-    const refreshed = await bookingsApi.detail(bookingId);
-    setBooking(refreshed);
     showToast(
       phase === "CHECKOUT"
         ? "Hand-over condition saved."
@@ -485,7 +483,7 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
             <Link className="listing-peek" href={`/listing/${booking.listingId}`}>
               <span className="listing-peek__image">
                 {coverImage ? (
-                  <Image src={coverImage} alt="" fill sizes="72px" unoptimized />
+                  <Image src={coverImage} alt="" fill sizes="72px" />
                 ) : (
                   <ImageIcon size={18} aria-hidden="true" />
                 )}
@@ -639,7 +637,6 @@ function ConditionCapture({
                 width={960}
                 height={720}
                 sizes="(max-width: 959px) calc(100vw - 68px), 600px"
-                unoptimized
                 style={{
                   display: "block",
                   height: "auto",
@@ -751,20 +748,6 @@ function formatDates(booking: Booking) {
   return booking.startDate === booking.endDate
     ? f(booking.startDate)
     : `${f(booking.startDate)} – ${f(booking.endDate)}`;
-}
-function humanize(value: string) {
-  return value
-    .toLowerCase()
-    .replaceAll("_", " ")
-    .replace(/^./, (letter) => letter.toUpperCase());
-}
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 }
 function actionHeading(booking: Booking, owner: boolean) {
   if (booking.status === "REQUESTED")

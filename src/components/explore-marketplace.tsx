@@ -30,11 +30,16 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
   const [categories, setCategories] = useState<Category[]>([]);
   const [listings, setListings] = useState<ListingSummary[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [error, setError] = useState("");
   const [requestKey, setRequestKey] = useState(0);
   const searchVersion = useRef(0);
+  // Identity of the current filter set. `loading` is true whenever the set we last
+  // finished loading isn't the one currently selected, so a filter click shows the
+  // skeleton immediately without a synchronous setState inside the effect.
+  const filterKey = JSON.stringify([categoryId, currentPage, district, home, listingType, maxPrice, minPrice, query, requestKey, sort]);
+  const loading = loadedKey !== filterKey;
 
   useEffect(() => {
     categoriesApi.tree().then((items) => setCategories(flattenCategories(items))).catch(() => undefined);
@@ -43,22 +48,18 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
   useEffect(() => {
     let active = true;
     const version = ++searchVersion.current;
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      setError("");
-      setListings([]);
-      setTotal(0);
-      setTotalPages(0);
-      const parsedMin = optionalPrice(minPrice);
-      const parsedMax = optionalPrice(maxPrice);
-      const rangeValid = parsedMin === undefined || parsedMax === undefined || parsedMin <= parsedMax;
-      listingsApi.search({ q: query.trim() || undefined, type: listingType || undefined, categoryId: categoryId || undefined, district: district || undefined, minPrice: rangeValid ? parsedMin : undefined, maxPrice: rangeValid ? parsedMax : undefined, sort, page: home ? 0 : currentPage, size: home ? 8 : 24 })
-        .then((page) => { if (active && version === searchVersion.current) { setListings(page.content); setTotal(page.totalElements); setTotalPages(page.totalPages); } })
-        .catch((caught) => active && version === searchVersion.current && setError(caught instanceof ApiError ? caught.message : "We could not load listings."))
-        .finally(() => active && version === searchVersion.current && setLoading(false));
-    }, 250);
-    return () => { active = false; window.clearTimeout(timer); };
-  }, [categoryId, currentPage, district, home, listingType, maxPrice, minPrice, query, requestKey, sort]);
+    // No debounce: every input feeding this effect is a discrete click (category chips,
+    // filter menus, pagination, and price behind an explicit Apply). There is no typed
+    // text in the deps, so a timer only added latency to the first paint and each click.
+    const parsedMin = optionalPrice(minPrice);
+    const parsedMax = optionalPrice(maxPrice);
+    const rangeValid = parsedMin === undefined || parsedMax === undefined || parsedMin <= parsedMax;
+    listingsApi.search({ q: query.trim() || undefined, type: listingType || undefined, categoryId: categoryId || undefined, district: district || undefined, minPrice: rangeValid ? parsedMin : undefined, maxPrice: rangeValid ? parsedMax : undefined, sort, page: home ? 0 : currentPage, size: home ? 8 : 24 })
+      .then((page) => { if (active && version === searchVersion.current) { setListings(page.content); setTotal(page.totalElements); setTotalPages(page.totalPages); setError(""); } })
+      .catch((caught) => active && version === searchVersion.current && setError(caught instanceof ApiError ? caught.message : "We could not load listings."))
+      .finally(() => { if (active && version === searchVersion.current) setLoadedKey(filterKey); });
+    return () => { active = false; };
+  }, [filterKey, categoryId, currentPage, district, home, listingType, maxPrice, minPrice, query, sort]);
 
   function updatePageUrl(page: number, replace = false) {
     const params = new URLSearchParams(searchParams.toString());
@@ -106,7 +107,7 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
       </>}
       {home && <div className="section-heading"><h2>Fresh nearby</h2></div>}
       <div id="explore-results" className="explore-results-anchor" />
-      {loading ? <div className="listing-grid listing-grid--four" aria-label="Loading listings">{Array.from({ length: 8 }).map((_, index) => <div className="skeleton" key={index} />)}</div> : error ? <section className="empty-state"><p className="eyebrow">Connection problem</p><h2>Listings could not be loaded.</h2><p>{error}</p><button className="button" onClick={() => setRequestKey((value) => value + 1)}>Try again</button></section> : listings.length ? <div className="listing-grid listing-grid--four">{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 2 || index === firstImageIndex} />)}</div> : <section className="empty-state"><p className="eyebrow">No exact matches</p><h2>Try a broader search.</h2><p>Remove one or more filters to see more nearby listings.</p><button className="button" onClick={clear}>Show all listings</button></section>}
+      {loading ? <div className="listing-grid listing-grid--four" aria-label="Loading listings">{Array.from({ length: 8 }).map((_, index) => <div className="skeleton" key={index} />)}</div> : error ? <section className="empty-state"><p className="eyebrow">Connection problem</p><h2>Listings could not be loaded.</h2><p>{error}</p><button className="button" onClick={() => setRequestKey((value) => value + 1)}>Try again</button></section> : listings.length ? <div className="listing-grid listing-grid--four">{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 4 || index === firstImageIndex} />)}</div> : <section className="empty-state"><p className="eyebrow">No exact matches</p><h2>Try a broader search.</h2><p>Remove one or more filters to see more nearby listings.</p><button className="button" onClick={clear}>Show all listings</button></section>}
       {!home && !loading && !error && listings.length > 0 && <ListingPagination currentPage={currentPage} totalPages={totalPages} total={total} count={listings.length} pageSize={24} onChange={goToPage} />}
       {home && !error && <div className="see-more"><Link className="button" href="/explore">Explore all listings</Link>{user && <Link className="button button--secondary" href="/listings/manage">Your listings</Link>}</div>}
     </div></main>

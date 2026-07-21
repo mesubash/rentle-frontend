@@ -14,16 +14,21 @@ import { ShareListingButton } from "./share-listing-button";
 import { assetUrl } from "@/lib/api/assets";
 import { ApiError } from "@/lib/api/client";
 import { listingsApi, type ListingDetail } from "@/lib/api/listings";
+import { humanize, initials } from "@/lib/format";
 
-export function ListingDetailView({ listingId }: { listingId: string }) {
-  const [listing, setListing] = useState<ListingDetail | null>(null);
+export function ListingDetailView({ listingId, initialListing = null }: { listingId: string; initialListing?: ListingDetail | null }) {
+  const [listing, setListing] = useState<ListingDetail | null>(initialListing);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  // The page server-renders the listing, so this only runs when that failed (backend down)
+  // or when the user hits Try again.
+  const needsFetch = !listing || attempt > 0;
   useEffect(() => {
+    if (!needsFetch) return;
     let active = true;
     listingsApi.detail(listingId).then((value) => active && setListing(value)).catch((caught) => active && setError(caught instanceof ApiError ? caught.message : "This listing could not be loaded."));
     return () => { active = false; };
-  }, [attempt, listingId]);
+  }, [attempt, listingId, needsFetch]);
 
   if (!listing && !error) return <main className="page"><div className="container"><div className="skeleton" /></div></main>;
   if (!listing) return <main className="page"><div className="container narrow-page"><section className="empty-state"><p className="eyebrow">Listing unavailable</p><h1>We could not open this listing.</h1><p>{error}</p><button className="button" onClick={() => { setError(""); setAttempt((value) => value + 1); }}>Try again</button></section></div></main>;
@@ -34,7 +39,7 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
 
   return <><main className="page listing-detail-page"><div className="container">
     <nav className="breadcrumbs" aria-label="Breadcrumb"><Link href="/explore">Explore</Link><span>/</span><span>{listing.categoryName}</span></nav>
-    {images.length ? <div className="gallery">{images.map((image, index) => <div key={image} className={index === 0 ? "gallery__main" : "gallery__thumb"}><Image src={image} alt={`${listing.title}${index ? ` photo ${index + 1}` : ""}`} fill sizes={index === 0 ? "(max-width: 800px) 100vw, 60vw" : "25vw"} loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} /></div>)}</div> : <div className="gallery-empty"><ImageOff size={22} /><span>No photos added yet</span></div>}
+    {images.length ? <div className="gallery">{images.map((image, index) => <div key={image} className={index === 0 ? "gallery__main" : "gallery__thumb"}><Image src={image} alt={`${listing.title}${index ? ` photo ${index + 1}` : ""}`} fill sizes={index === 0 ? "(max-width: 800px) 100vw, 60vw" : "25vw"} priority={index === 0} loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} /></div>)}</div> : <div className="gallery-empty"><ImageOff size={22} /><span>No photos added yet</span></div>}
     <div className="listing-detail-layout"><article className="listing-content">
       <div className="listing-title-row"><div><div className="listing-title-row__meta"><span className={`type-chip type-chip--${type.toLowerCase()}`}>{type}</span><span><MapPin size={15} /> {listing.locationText ? `${listing.locationText}, ` : ""}{listing.district}</span></div><h1>{listing.title}</h1><p className="listing-subline"><span className="rating"><Star size={16} fill="currentColor" /> {listing.reviewCount ? `${(listing.averageRating ?? 0).toFixed(1)} (${listing.reviewCount} reviews)` : "No reviews yet"}</span><TrustBadge verified={listing.owner.verified} /></p></div><ShareListingButton listingId={listing.id} title={listing.title} /></div>
       <section className="detail-section listing-overview"><h2>About this {listing.type === "SERVICE" ? "service" : "item"}</h2><p>{listing.description}</p>{listing.rentalTerms && <div className="listing-terms"><h3>Rental terms</h3><p>{listing.rentalTerms}</p></div>}<div className="spec-grid">{listing.product ? <><div><small>Condition</small><strong>{humanize(listing.product.condition)}</strong></div><div><small>Brand</small><strong>{listing.product.brand || "Not specified"}</strong></div><div><small>Model</small><strong>{listing.product.model || "Not specified"}</strong></div><div><small>Rental period</small><strong>{listing.product.minRentalDays || 1}{listing.product.maxRentalDays ? `–${listing.product.maxRentalDays}` : "+"} days</strong></div></> : <><div><Clock3 /><small>Minimum notice</small><strong>{listing.service?.minNoticeHours ?? 0} hours</strong></div><div><MapPin /><small>Service area</small><strong>{listing.service?.serviceAreaKm ? `${listing.service.serviceAreaKm} km` : listing.district}</strong></div><div><CalendarDays /><small>Typical duration</small><strong>{humanize(listing.service?.typicalDuration || "CUSTOM")}</strong></div><div><small>Portfolio</small><strong>{listing.service?.portfolioUrl ? <a href={listing.service.portfolioUrl}>Open link</a> : "Not provided"}</strong></div></>}</div></section>
@@ -48,6 +53,4 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
   </div></main><SiteFooter /></>;
 }
 
-function initials(name: string) { return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase(); }
-function humanize(value: string) { return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase()); }
 function formatTrustScore(value: number | null | undefined) { return value && value > 0 ? `${value.toFixed(1)} / 5` : "No reviews yet"; }

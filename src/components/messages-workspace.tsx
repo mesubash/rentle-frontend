@@ -9,6 +9,7 @@ import { useToast } from "./toast-provider";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
 import { messagesApi, type Message } from "@/lib/api/messages";
+import { humanize, initials } from "@/lib/format";
 
 const messageable = new Set(["REQUESTED", "APPROVED", "DEPOSIT_PENDING", "ACTIVE", "COMPLETED", "CANCELLED"]);
 type BookingThread = Booking & { lastMessageAt: string | null; unreadCount: number };
@@ -145,7 +146,5 @@ export function MessagesWorkspace({ activeId }: { activeId?: string }) {
   </main>;
 }
 
-function initials(name: string) { return name.split(/\s+/).slice(0,2).map((part) => part[0]).join("").toUpperCase(); }
-function humanize(value: string) { return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase()); }
 function formatDate(value: string) { return new Intl.DateTimeFormat("en", { day: "numeric", month: "short" }).format(new Date(value)); }
 function formatTime(value: string) { return new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(new Date(value)); }

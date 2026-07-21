@@ -16,13 +16,17 @@ export function VerificationWorkspace({ registrationOnboarding = false }: { regi
   const [loaded, setLoaded] = useState(false);
   const [showKycForm, setShowKycForm] = useState(!registrationOnboarding);
 
+  // A verified user early-returns below without ever reading `kyc`, so skip the request
+  // entirely for them rather than fetching and discarding it on every visit.
+  const alreadyVerified = user?.status === "VERIFIED";
   useEffect(() => {
+    if (alreadyVerified) return;
     kycApi
       .mine()
       .then(setKyc)
       .catch(() => setKyc(null))
       .finally(() => setLoaded(true));
-  }, []);
+  }, [alreadyVerified]);
 
   const contactReady = Boolean(user?.phoneVerified && user?.emailVerified);
   const deferKyc = () => router.push("/explore");

@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api/client";
 import type { KycAdminRow } from "@/lib/api/kyc";
 import { AdminCount, AdminEmptyState, AdminPageHeader, AdminTableShell } from "./admin-ui";
 import { Skeleton } from "./ui/skeleton";
+import { initials } from "@/lib/format";
 
 export function VerificationQueue() {
   const [rows, setRows] = useState<KycAdminRow[]>([]);
@@ -65,7 +66,4 @@ export function VerificationQueue() {
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
-}
-function initials(name: string) {
-  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 }

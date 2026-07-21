@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ExploreMarketplace } from "@/components/explore-marketplace";
 import { SiteFooter } from "@/components/site-footer";
@@ -6,5 +7,5 @@ export const metadata: Metadata = { title: "Explore", description: "Browse verif
 
 export default async function ExplorePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
-  return <><ExploreMarketplace initialQuery={q} /><SiteFooter /></>;
+  return <><Suspense fallback={null}><ExploreMarketplace initialQuery={q} /></Suspense><SiteFooter /></>;
 }
