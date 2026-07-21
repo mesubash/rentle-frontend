@@ -9,7 +9,7 @@ import { Building2, CalendarDays, Check, Compass, LayoutList, ListPlus, LogOut, 
 import { useAuth } from "./auth-provider";
 import { useOrg } from "./org-provider";
 import { BrandLogo } from "./brand-logo";
-import { ConfirmDialog } from "./confirm-dialog";
+import dynamic from "next/dynamic";
 import { useSignOut } from "@/lib/use-sign-out";
 import { assetUrl } from "@/lib/api/assets";
 import { messagesApi } from "@/lib/api/messages";
@@ -17,8 +17,17 @@ import { notificationsApi } from "@/lib/api/notifications";
 import type { UserProfile } from "@/lib/api/users";
 import { ADMIN_ENTRY_KEYS } from "@/lib/iam/admin-entry-keys";
 import { usePermissions } from "./permissions-provider";
-import { NotificationsPopover } from "./notifications-popover";
-import { SavedPopover } from "./saved-popover";
+// Split out of the shared chunk: the header is in the root layout, so statically
+// importing these put ~440 lines of closed-by-default UI into every route's bundle,
+// including logged-out marketing pages. All three already render only after `ready`
+// (or after a confirm is triggered), so deferring the chunk adds no new layout shift.
+const NotificationsPopover = dynamic(() => import("./notifications-popover").then((m) => m.NotificationsPopover), {
+  loading: () => <span className="icon-button header-expandable" aria-hidden="true" />,
+});
+const SavedPopover = dynamic(() => import("./saved-popover").then((m) => m.SavedPopover), {
+  loading: () => <span className="icon-button header-expandable" aria-hidden="true" />,
+});
+const ConfirmDialog = dynamic(() => import("./confirm-dialog").then((m) => m.ConfirmDialog));
 
 const nav = [
   { href: "/explore", label: "Explore", icon: Compass },
