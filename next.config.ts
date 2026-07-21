@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
       {
         // Static files under public/ otherwise inherit max-age=0. These are versioned by
         // deploy, not by filename, so a day with revalidation is the safe ceiling.
-        source: "/:file(favicon.ico|logo.svg|logo-header.svg|logo.png|apple-touch-icon.png|site.webmanifest)",
+        source: "/:file(favicon.ico|logo.svg|logo-header.svg|logo-og.jpg|apple-touch-icon.png|site.webmanifest)",
         headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
       },
     ];

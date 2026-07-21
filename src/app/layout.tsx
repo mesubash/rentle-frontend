@@ -31,13 +31,13 @@ export const metadata: Metadata = {
     siteName: "Rentle",
     title: "Rentle - Borrow & lend nearby",
     description: "Rent useful items and book trusted local services from verified people nearby.",
-    images: [{ url: "/logo.png", width: 1983, height: 793, alt: "Rentle" }],
+    images: [{ url: "/logo-og.jpg", width: 1200, height: 480, alt: "Rentle" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Rentle - Borrow & lend nearby",
     description: "Rent useful items and book trusted local services from verified people nearby.",
-    images: ["/logo.png"],
+    images: ["/logo-og.jpg"],
   },
 };
 
