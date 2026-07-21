@@ -103,13 +103,16 @@ export function BookingPanel({ listing }: { listing: ListingDetail }) {
   }, [listing.id]);
 
   // Load this category's BOOKING field template (docs/12) to collect extra request details.
+  // Only the booking sheet reads these, so defer until it opens — owners and passing
+  // visitors never need them.
   useEffect(() => {
+    if (!open || isOwner) return;
     let active = true;
     templatesApi.current(listing.categoryId, "BOOKING")
       .then((tpl) => { if (active) setBookingFields(tpl?.fields ?? []); })
       .catch(() => { if (active) setBookingFields([]); });
     return () => { active = false; };
-  }, [listing.categoryId]);
+  }, [listing.categoryId, open, isOwner]);
 
   useEffect(() => {
     if (!isOwner) return;

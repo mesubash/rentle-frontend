@@ -30,11 +30,16 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
   const [categories, setCategories] = useState<Category[]>([]);
   const [listings, setListings] = useState<ListingSummary[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [error, setError] = useState("");
   const [requestKey, setRequestKey] = useState(0);
   const searchVersion = useRef(0);
+  // Identity of the current filter set. `loading` is true whenever the set we last
+  // finished loading isn't the one currently selected, so a filter click shows the
+  // skeleton immediately without a synchronous setState inside the effect.
+  const filterKey = JSON.stringify([categoryId, currentPage, district, home, listingType, maxPrice, minPrice, query, requestKey, sort]);
+  const loading = loadedKey !== filterKey;
 
   useEffect(() => {
     categoriesApi.tree().then((items) => setCategories(flattenCategories(items))).catch(() => undefined);
@@ -43,22 +48,18 @@ export function ExploreMarketplace({ initialQuery = "", home = false }: { initia
   useEffect(() => {
     let active = true;
     const version = ++searchVersion.current;
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      setError("");
-      setListings([]);
-      setTotal(0);
-      setTotalPages(0);
-      const parsedMin = optionalPrice(minPrice);
-      const parsedMax = optionalPrice(maxPrice);
-      const rangeValid = parsedMin === undefined || parsedMax === undefined || parsedMin <= parsedMax;
-      listingsApi.search({ q: query.trim() || undefined, type: listingType || undefined, categoryId: categoryId || undefined, district: district || undefined, minPrice: rangeValid ? parsedMin : undefined, maxPrice: rangeValid ? parsedMax : undefined, sort, page: home ? 0 : currentPage, size: home ? 8 : 24 })
-        .then((page) => { if (active && version === searchVersion.current) { setListings(page.content); setTotal(page.totalElements); setTotalPages(page.totalPages); } })
-        .catch((caught) => active && version === searchVersion.current && setError(caught instanceof ApiError ? caught.message : "We could not load listings."))
-        .finally(() => active && version === searchVersion.current && setLoading(false));
-    }, 250);
-    return () => { active = false; window.clearTimeout(timer); };
-  }, [categoryId, currentPage, district, home, listingType, maxPrice, minPrice, query, requestKey, sort]);
+    // No debounce: every input feeding this effect is a discrete click (category chips,
+    // filter menus, pagination, and price behind an explicit Apply). There is no typed
+    // text in the deps, so a timer only added latency to the first paint and each click.
+    const parsedMin = optionalPrice(minPrice);
+    const parsedMax = optionalPrice(maxPrice);
+    const rangeValid = parsedMin === undefined || parsedMax === undefined || parsedMin <= parsedMax;
+    listingsApi.search({ q: query.trim() || undefined, type: listingType || undefined, categoryId: categoryId || undefined, district: district || undefined, minPrice: rangeValid ? parsedMin : undefined, maxPrice: rangeValid ? parsedMax : undefined, sort, page: home ? 0 : currentPage, size: home ? 8 : 24 })
+      .then((page) => { if (active && version === searchVersion.current) { setListings(page.content); setTotal(page.totalElements); setTotalPages(page.totalPages); setError(""); } })
+      .catch((caught) => active && version === searchVersion.current && setError(caught instanceof ApiError ? caught.message : "We could not load listings."))
+      .finally(() => { if (active && version === searchVersion.current) setLoadedKey(filterKey); });
+    return () => { active = false; };
+  }, [filterKey, categoryId, currentPage, district, home, listingType, maxPrice, minPrice, query, sort]);
 
   function updatePageUrl(page: number, replace = false) {
     const params = new URLSearchParams(searchParams.toString());

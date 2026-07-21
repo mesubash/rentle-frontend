@@ -136,8 +136,6 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
       note,
     );
     setBooking(updated);
-    const refreshed = await bookingsApi.detail(bookingId);
-    setBooking(refreshed);
     showToast(
       phase === "CHECKOUT"
         ? "Hand-over condition saved."
