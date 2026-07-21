@@ -4,7 +4,7 @@ import Form from "next/form";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Building2, CalendarDays, Check, Compass, LayoutList, ListPlus, LogOut, Menu, MessageCircle, Plus, Search, Settings, ShieldCheck, UserRound, X } from "lucide-react";
 import { useAuth } from "./auth-provider";
 import { useOrg } from "./org-provider";
@@ -46,6 +46,16 @@ export function SiteHeader() {
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
+  // Stable identities: both popovers list onOpenChange in the dep array of the effect
+  // that loads their contents, so an inline arrow refetched on every header re-render.
+  const handleSavedOpenChange = useCallback((open: boolean) => {
+    setSavedOpen(open);
+    if (open) setNotificationsOpen(false);
+  }, []);
+  const handleNotificationsOpenChange = useCallback((open: boolean) => {
+    setNotificationsOpen(open);
+    if (open) setSavedOpen(false);
+  }, []);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const userId = user?.id;
@@ -149,20 +159,14 @@ export function SiteHeader() {
             {ready && !admin && user && (
               <SavedPopover
                 open={savedOpen}
-                onOpenChange={(open) => {
-                  setSavedOpen(open);
-                  if (open) setNotificationsOpen(false);
-                }}
+                onOpenChange={handleSavedOpenChange}
               />
             )}
             {ready && !admin && user && (
               <NotificationsPopover
                 open={notificationsOpen}
                 unreadCount={notificationUnreadCount}
-                onOpenChange={(open) => {
-                  setNotificationsOpen(open);
-                  if (open) setSavedOpen(false);
-                }}
+                onOpenChange={handleNotificationsOpenChange}
                 onUnreadCountChange={setNotificationUnreadCount}
               />
             )}
