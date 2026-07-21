@@ -35,6 +35,9 @@ import {
   TableRow,
 } from "./ui/table";
 import { Textarea } from "./ui/textarea";
+import { Button } from "./ui/button";
+
+const PAGE_SIZE = 25;
 
 type ModerationAction = { listing: ListingSummary; action: "deactivate" | "remove" };
 
@@ -50,15 +53,34 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [type, setType] = useState("");
+  // Page is derived from the active filter signature rather than reset in an effect, so
+  // changing a filter returns to page 1 without a cascading render.
+  const [pageState, setPageState] = useState({ key: "", page: 0 });
+  const [totalPages, setTotalPages] = useState(0);
+  const [total, setTotal] = useState(0);
+  // Debounced so typing does not fire a request per keystroke now that filtering is
+  // server-side; the previous in-browser filter re-serialised every record instead.
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(query), 300);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+  const filterKey = `${kind}|${debouncedQuery}|${status}|${type}`;
+  const page = pageState.key === filterKey ? pageState.page : 0;
+  const setPage = (next: number | ((current: number) => number)) =>
+    setPageState({ key: filterKey, page: typeof next === "function" ? next(page) : next });
 
   useEffect(() => {
     let active = true;
-    const request = kind === "bookings" ? adminApi.bookings() : adminApi.listings();
+    const params = { q: debouncedQuery || undefined, status: status || undefined, type: type || undefined, page, size: PAGE_SIZE };
+    const request = kind === "bookings" ? adminApi.bookings(params) : adminApi.listings(params);
     request
-      .then((page) => {
+      .then((result) => {
         if (!active) return;
-        if (kind === "bookings") setBookings(page.content as Booking[]);
-        else setListings(page.content as ListingSummary[]);
+        if (kind === "bookings") setBookings(result.content as Booking[]);
+        else setListings(result.content as ListingSummary[]);
+        setTotalPages(result.totalPages);
+        setTotal(result.totalElements);
       })
       .catch((caught) => {
         if (active) setError(messageOf(caught, `${kind === "bookings" ? "Bookings" : "Listings"} could not be loaded.`));
@@ -69,7 +91,7 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
     return () => {
       active = false;
     };
-  }, [kind]);
+  }, [kind, debouncedQuery, status, type, page]);
 
   const moderate = async () => {
     if (!moderating) return;
@@ -89,15 +111,8 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
     }
   };
 
-  const records = kind === "bookings" ? bookings : listings;
-  const visibleRecords = records.filter((record) => {
-    const matchesQuery = JSON.stringify(record).toLowerCase().includes(query.trim().toLowerCase());
-    const recordStatus = (record as { status: string }).status;
-    const recordType = kind === "bookings" ? (record as Booking).listingType : (record as ListingSummary).type;
-    const matchesStatus = !status || recordStatus === status;
-    const matchesType = !type || recordType === type;
-    return matchesQuery && matchesStatus && matchesType;
-  });
+  // Filtering and paging happen server-side; the list is already the page to render.
+  const visibleRecords = kind === "bookings" ? bookings : listings;
 
   const statusOptions = kind === "bookings"
     ? ["REQUESTED", "APPROVED", "DEPOSIT_PENDING", "ACTIVE", "COMPLETED", "CANCELLED", "REJECTED"]
@@ -108,7 +123,7 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
       <AdminPageHeader
         title={kind === "bookings" ? "Bookings" : "Listings"}
         description={kind === "bookings" ? "Review marketplace agreements and payment totals for support operations." : "Review marketplace inventory and take moderation action when needed."}
-        actions={<AdminCount>{records.length} records</AdminCount>}
+        actions={<AdminCount>{total} records</AdminCount>}
       />
 
       <FilterBar
@@ -196,6 +211,22 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
           title={`No ${kind} to show`}
           description={query ? "Try a different search term." : "New marketplace activity will appear here."}
         />
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3 pt-4">
+          <span className="text-sm text-muted-foreground">
+            Page {page + 1} of {totalPages} · {total} records
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 0 || loading} onClick={() => setPage((current) => Math.max(0, current - 1))}>
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" disabled={page + 1 >= totalPages || loading} onClick={() => setPage((current) => current + 1)}>
+              Next
+            </Button>
+          </div>
+        </div>
       )}
 
       <AlertDialog open={Boolean(moderating)} onOpenChange={(open) => { if (!open && !busy) { setModerating(null); setReason(""); } }}>

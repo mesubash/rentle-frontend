@@ -1,8 +1,10 @@
 import { apiRequest } from "./client";
+import type { BookingStatus } from "./bookings";
 import type { PageResponse, UUID } from "./shared";
 
 export type Message = { id: UUID; bookingId: UUID; senderId: UUID; senderName: string; content: string; isRead: boolean; readAt: string | null; createdAt: string };
-export type MessageThreadSummary = { bookingId: UUID; lastMessageAt: string; unreadCount: number };
+export type MessageThreadSummary = { bookingId: UUID; lastMessageAt: string; unreadCount: number;
+  listingTitle: string; ownerId: UUID; ownerName: string; renterName: string; status: BookingStatus };
 export const messagesApi = {
   threads: () => apiRequest<MessageThreadSummary[]>("/messages/threads"),
   unreadCount: () => apiRequest<{ count: number }>("/messages/unread-count"),

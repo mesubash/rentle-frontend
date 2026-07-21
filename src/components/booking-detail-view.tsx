@@ -25,7 +25,6 @@ import {
 } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
 import { assetUrl } from "@/lib/api/assets";
-import { listingsApi } from "@/lib/api/listings";
 import { reviewsApi } from "@/lib/api/reviews";
 import { formatNpr, humanize, initials } from "@/lib/format";
 
@@ -40,7 +39,6 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
   const [reviewed, setReviewed] = useState<boolean | null>(null);
   const [reviewStatusError, setReviewStatusError] = useState("");
   const [workers, setWorkers] = useState<import("@/lib/api/workers").Worker[]>([]);
-  const [coverImage, setCoverImage] = useState<string | null>(null);
   useEffect(() => {
     bookingsApi
       .detail(bookingId)
@@ -61,16 +59,6 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
       .catch(() => undefined);
     return () => { active = false; };
   }, [user?.accountType, user?.id, booking?.ownerId]);
-  useEffect(() => {
-    const listingId = booking?.listingId;
-    if (!listingId) return;
-    let active = true;
-    listingsApi
-      .detail(listingId)
-      .then((listing) => { if (active) setCoverImage(assetUrl(listing.coverImage)); })
-      .catch(() => undefined);
-    return () => { active = false; };
-  }, [booking?.listingId]);
   useEffect(() => {
     if (booking?.status !== "COMPLETED") return;
     let active = true;
@@ -143,6 +131,7 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
       { tone: "success" },
     );
   }
+  const cover = assetUrl(booking.coverImage);
   const terminal =
     booking.status === "COMPLETED" ||
     booking.status === "CANCELLED" ||
@@ -482,8 +471,8 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
           <aside className="booking-detail__aside">
             <Link className="listing-peek" href={`/listing/${booking.listingId}`}>
               <span className="listing-peek__image">
-                {coverImage ? (
-                  <Image src={coverImage} alt="" fill sizes="72px" />
+                {cover ? (
+                  <Image src={cover} alt="" fill sizes="72px" />
                 ) : (
                   <ImageIcon size={18} aria-hidden="true" />
                 )}
