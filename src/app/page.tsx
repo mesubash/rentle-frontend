@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ExploreMarketplace } from "@/components/explore-marketplace";
@@ -21,7 +22,7 @@ const steps = [
 export default function HomePage() {
   return (
     <>
-      <ExploreMarketplace home />
+      <Suspense fallback={null}><ExploreMarketplace home /></Suspense>
       <section className="page landing-steps">
         <div className="container">
           <div className="about-steps">

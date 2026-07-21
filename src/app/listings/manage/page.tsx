@@ -1,4 +1,7 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ListingsManager } from "@/components/listings-manager";
 export const metadata: Metadata = { title: "Manage listings" };
-export default function ManageListingsPage() { return <ListingsManager />; }
+export default function ManageListingsPage() {
+  return <Suspense fallback={null}><ListingsManager /></Suspense>;
+}
