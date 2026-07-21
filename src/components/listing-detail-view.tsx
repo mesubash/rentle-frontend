@@ -16,15 +16,19 @@ import { ApiError } from "@/lib/api/client";
 import { listingsApi, type ListingDetail } from "@/lib/api/listings";
 import { humanize, initials } from "@/lib/format";
 
-export function ListingDetailView({ listingId }: { listingId: string }) {
-  const [listing, setListing] = useState<ListingDetail | null>(null);
+export function ListingDetailView({ listingId, initialListing = null }: { listingId: string; initialListing?: ListingDetail | null }) {
+  const [listing, setListing] = useState<ListingDetail | null>(initialListing);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  // The page server-renders the listing, so this only runs when that failed (backend down)
+  // or when the user hits Try again.
+  const needsFetch = !listing || attempt > 0;
   useEffect(() => {
+    if (!needsFetch) return;
     let active = true;
     listingsApi.detail(listingId).then((value) => active && setListing(value)).catch((caught) => active && setError(caught instanceof ApiError ? caught.message : "This listing could not be loaded."));
     return () => { active = false; };
-  }, [attempt, listingId]);
+  }, [attempt, listingId, needsFetch]);
 
   if (!listing && !error) return <main className="page"><div className="container"><div className="skeleton" /></div></main>;
   if (!listing) return <main className="page"><div className="container narrow-page"><section className="empty-state"><p className="eyebrow">Listing unavailable</p><h1>We could not open this listing.</h1><p>{error}</p><button className="button" onClick={() => { setError(""); setAttempt((value) => value + 1); }}>Try again</button></section></div></main>;
