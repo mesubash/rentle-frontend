@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarCheck,
@@ -90,6 +90,7 @@ const navGroups: Array<{ label: string; links: AdminLink[] }> = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, loading } = useAuth();
   const { can, canAny, ready } = usePermissions();
   const { signOut, leaving } = useSignOut();
@@ -113,25 +114,20 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href),
   )?.label ?? (pathname.startsWith("/admin/profile") ? "Profile" : "Admin");
 
-  if (loading || !ready) {
+  // No admin entry: send them somewhere useful rather than showing a dead-end notice.
+  // Signed out -> login (returning here afterwards); signed in without permission -> home.
+  const accessDenied = !loading && ready && (!user || !hasAdminEntry);
+  useEffect(() => {
+    if (!accessDenied) return;
+    router.replace(user ? "/" : `/login?next=${encodeURIComponent(pathname)}`);
+  }, [accessDenied, user, router, pathname]);
+
+  if (loading || !ready || !user || !hasAdminEntry) {
     return (
       <div className="admin-app-loading">
         <aside><Skeleton className="h-9 w-28" />{[0, 1, 2, 3, 4].map((item) => <Skeleton key={item} className="h-9 w-full" />)}</aside>
         <main><Skeleton className="h-12 w-full" /><Skeleton className="mt-8 h-72 w-full" /></main>
       </div>
-    );
-  }
-
-  if (!user || !hasAdminEntry) {
-    return (
-      <main className="grid min-h-screen place-items-center bg-background p-6">
-        <section className="w-full max-w-md rounded-lg border bg-card p-8 text-center shadow-sm">
-          <ShieldCheck className="mx-auto mb-4 size-10 text-muted-foreground" />
-          <h1 className="text-2xl! font-bold tracking-tight">Staff access required</h1>
-          <p className="mt-2 text-sm text-muted-foreground">You do not currently have permission to open the staff workspace.</p>
-          <Button className="mt-5" asChild><Link href={user ? "/" : "/login"}>{user ? "Return home" : "Log in"}</Link></Button>
-        </section>
-      </main>
     );
   }
 
