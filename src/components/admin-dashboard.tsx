@@ -35,6 +35,7 @@ import {
 } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { humanize } from "@/lib/format";
 
 type Stats = {
   pendingKyc: number;
@@ -545,6 +546,3 @@ function formatShortDate(value: string) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
 }
 
-function humanize(value: string) {
-  return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
-}

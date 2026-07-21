@@ -11,6 +11,7 @@ import { ProfileActivity } from "./profile-activity";
 import { AccountActions } from "./account-actions";
 import { assetUrl } from "@/lib/api/assets";
 import { usersApi, type PublicProfile, type UserProfile } from "@/lib/api/users";
+import { initials } from "@/lib/format";
 
 type DisplayProfile = Pick<PublicProfile, "id" | "fullName" | "profilePhotoUrl" | "trustScore" | "memberSince"> & {
   verified: boolean;
@@ -72,9 +73,6 @@ function toDisplayProfile(profile: UserProfile | null): DisplayProfile | null {
   return { ...profile, verified: profile.citizenshipVerified, memberSince: profile.createdAt };
 }
 
-function initials(name: string) {
-  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-}
 
 function formatTrustScore(value: number | null | undefined) {
   return value && value > 0 ? `${value.toFixed(1)} / 5` : "No reviews yet";

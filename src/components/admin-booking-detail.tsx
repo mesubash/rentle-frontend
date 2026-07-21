@@ -16,7 +16,7 @@ import type { LucideIcon } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import type { Booking } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
-import { formatNpr } from "@/lib/format";
+import { formatNpr, humanize } from "@/lib/format";
 import { AdminEmptyState, AdminPageHeader, AdminStatus } from "./admin-ui";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
@@ -144,6 +144,3 @@ function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
-function humanize(value: string) {
-  return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
-}

@@ -14,6 +14,7 @@ import { ShareListingButton } from "./share-listing-button";
 import { assetUrl } from "@/lib/api/assets";
 import { ApiError } from "@/lib/api/client";
 import { listingsApi, type ListingDetail } from "@/lib/api/listings";
+import { humanize, initials } from "@/lib/format";
 
 export function ListingDetailView({ listingId }: { listingId: string }) {
   const [listing, setListing] = useState<ListingDetail | null>(null);
@@ -48,6 +49,4 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
   </div></main><SiteFooter /></>;
 }
 
-function initials(name: string) { return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase(); }
-function humanize(value: string) { return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase()); }
 function formatTrustScore(value: number | null | undefined) { return value && value > 0 ? `${value.toFixed(1)} / 5` : "No reviews yet"; }

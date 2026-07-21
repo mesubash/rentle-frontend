@@ -45,6 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { initials } from "@/lib/format";
 
 type AdminLink = {
   href: string;
@@ -229,6 +230,3 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function initials(name: string) {
-  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-}

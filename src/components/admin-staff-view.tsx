@@ -54,6 +54,7 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
+import { humanize } from "@/lib/format";
 
 type KnownUser = Pick<UserLookupResponse, "id" | "email" | "fullName" | "status">;
 
@@ -392,9 +393,6 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(value));
 }
 
-function humanize(value: string) {
-  return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
-}
 
 function messageOf(caught: unknown, fallback: string) {
   return caught instanceof ApiError ? caught.message : fallback;

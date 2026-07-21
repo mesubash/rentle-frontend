@@ -8,6 +8,7 @@ import { useOrg } from "@/components/org-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import styles from "./bookings.module.css";
+import { humanize } from "@/lib/format";
 
 export default function BookingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -99,5 +100,4 @@ function BookingCard({ booking, tab }: { booking: Booking; tab: "renting" | "hos
 function actionLabel(booking: Booking, tab: "renting" | "hosting") { if (booking.status === "REQUESTED") return tab === "hosting" ? "Review request" : "View request"; if (booking.status === "APPROVED") return tab === "renting" ? "Upload deposit proof" : "View booking"; if (booking.status === "DEPOSIT_PENDING") return tab === "hosting" ? "Confirm deposit" : "View proof status"; if (booking.status === "COMPLETED") return "Leave or view review"; return "View booking"; }
 function formatDates(booking: Booking) { const format = (value: string) => new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T00:00:00`)); return booking.startDate === booking.endDate ? format(booking.startDate) : `${format(booking.startDate)} – ${format(booking.endDate)}`; }
 function dateMarker(booking: Booking) { const start = new Date(`${booking.startDate}T00:00:00`); const end = new Date(`${booking.endDate}T00:00:00`); const month = new Intl.DateTimeFormat("en", { month: "short" }).format(start); const day = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(start); const detail = booking.startDate === booking.endDate ? String(start.getFullYear()) : `to ${new Intl.DateTimeFormat("en", { day: "numeric", month: start.getMonth() === end.getMonth() ? undefined : "short" }).format(end)}`; return { month, day, detail }; }
-function humanize(value: string) { return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase()); }
 function statusClass(status: Booking["status"]) { return status === "ACTIVE" || status === "COMPLETED" ? "status-chip status-chip--verified" : "status-chip status-chip--requested"; }

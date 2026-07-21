@@ -6,7 +6,7 @@ import { adminApi } from "@/lib/api/admin";
 import type { Booking } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
 import { priceUnitLabel, type ListingSummary } from "@/lib/api/listings";
-import { formatNpr } from "@/lib/format";
+import { formatNpr, humanize } from "@/lib/format";
 import { P } from "@/lib/iam/permission-keys";
 import { Can } from "./can";
 import { AdminRowActions } from "./admin-row-actions";
@@ -224,9 +224,6 @@ export function AdminRecordsView({ kind }: { kind: "bookings" | "listings" }) {
   );
 }
 
-function humanize(value: string) {
-  return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
-}
 
 function messageOf(caught: unknown, fallback: string) {
   return caught instanceof ApiError ? caught.message : fallback;

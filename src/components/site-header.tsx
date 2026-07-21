@@ -17,6 +17,7 @@ import { notificationsApi } from "@/lib/api/notifications";
 import type { UserProfile } from "@/lib/api/users";
 import { ADMIN_ENTRY_KEYS } from "@/lib/iam/admin-entry-keys";
 import { usePermissions } from "./permissions-provider";
+import { initials } from "@/lib/format";
 // Split out of the shared chunk: the header is in the root layout, so statically
 // importing these put ~440 lines of closed-by-default UI into every route's bundle,
 // including logged-out marketing pages. All three already render only after `ready`
@@ -286,6 +287,3 @@ function AvatarMenu({ user, profilePhoto, admin }: { user: UserProfile; profileP
   );
 }
 
-function initials(name: string) {
-  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-}

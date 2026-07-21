@@ -27,7 +27,7 @@ import { ApiError } from "@/lib/api/client";
 import { assetUrl } from "@/lib/api/assets";
 import { listingsApi } from "@/lib/api/listings";
 import { reviewsApi } from "@/lib/api/reviews";
-import { formatNpr } from "@/lib/format";
+import { formatNpr, humanize, initials } from "@/lib/format";
 
 export function BookingDetailView({ bookingId }: { bookingId: string }) {
   const { user } = useAuth();
@@ -748,20 +748,6 @@ function formatDates(booking: Booking) {
   return booking.startDate === booking.endDate
     ? f(booking.startDate)
     : `${f(booking.startDate)} – ${f(booking.endDate)}`;
-}
-function humanize(value: string) {
-  return value
-    .toLowerCase()
-    .replaceAll("_", " ")
-    .replace(/^./, (letter) => letter.toUpperCase());
-}
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 }
 function actionHeading(booking: Booking, owner: boolean) {
   if (booking.status === "REQUESTED")
