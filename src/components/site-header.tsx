@@ -92,11 +92,22 @@ export function SiteHeader() {
     };
 
     refreshUnreadCounts();
-    const intervalId = window.setInterval(refreshUnreadCounts, 60_000);
+    // Poll only while the tab is actually being looked at. Without this the pair of count
+    // requests ran every 60s forever in every background tab, on every route.
+    const tick = () => {
+      if (document.visibilityState === "visible") refreshUnreadCounts();
+    };
+    const intervalId = window.setInterval(tick, 60_000);
+    // Refresh on return so a tab that was hidden for a while isn't showing a stale badge.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshUnreadCounts();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       active = false;
       window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [admin, ready, userId]);
 
