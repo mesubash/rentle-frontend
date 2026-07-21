@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { sharedRead } from "./dedupe";
 import type { Booking } from "./bookings";
 import type { Kyc, KycAdminRow } from "./kyc";
 import type { ListingSummary } from "./listings";
@@ -21,6 +22,12 @@ export function citizenshipImageUrl(userId: UUID, side: "front" | "back") {
   return `/api/rentle/admin/users/${userId}/citizenship?side=${side}`;
 }
 
+// The shell badge and the dashboard both read this queue on the dashboard route.
+const readKycQueue = sharedRead<PageResponse<KycAdminRow>>((key) => {
+  const [page, size] = key.split(":").map(Number);
+  return apiRequest<PageResponse<KycAdminRow>>("/admin/kyc", { query: { page, size } });
+}, 30_000);
+
 export const adminApi = {
   users: (status?: UserProfile["status"], page = 0, size = 100) => apiRequest<PageResponse<UserProfile>>("/admin/users", { query: { status, page, size } }),
   suspend: (id: UUID) => apiRequest<UserProfile>(`/admin/users/${id}/suspend`, { method: "PUT" }),
@@ -28,7 +35,8 @@ export const adminApi = {
   resetPassword: (id: UUID, password: string) =>
     apiRequest<string>(`/admin/users/${id}/password`, { method: "PUT", body: { password } }),
   // KYC review
-  kycQueue: (page = 0, size = 50) => apiRequest<PageResponse<KycAdminRow>>("/admin/kyc", { query: { page, size } }),
+  kycQueue: (page = 0, size = 50) => readKycQueue(`${page}:${size}`),
+  invalidateKycQueue: () => readKycQueue.clear(),
   kycDetail: (userId: UUID) => apiRequest<Kyc>(`/admin/kyc/${userId}`),
   approveKyc: (userId: UUID) => apiRequest<Kyc>(`/admin/users/${userId}/verify`, { method: "PUT" }),
   rejectKyc: (userId: UUID, reason: string) =>

@@ -41,6 +41,7 @@ export function VerificationDetail({ userId }: { userId: string }) {
     setActing(true);
     try {
       await adminApi.approveKyc(userId);
+      adminApi.invalidateKycQueue();
       showToast(`${detail?.realName ?? "Applicant"} was verified.`, { tone: "success" });
       router.push("/admin/verifications");
     } catch (caught) {
@@ -54,6 +55,7 @@ export function VerificationDetail({ userId }: { userId: string }) {
     setActing(true);
     try {
       await adminApi.rejectKyc(userId, reason.trim());
+      adminApi.invalidateKycQueue();
       showToast(`${detail?.realName ?? "Applicant"}'s submission was rejected.`, { tone: "success" });
       router.push("/admin/verifications");
     } catch (caught) {

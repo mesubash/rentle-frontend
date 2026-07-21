@@ -100,10 +100,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [pendingKyc, setPendingKyc] = useState<number | null>(null);
 
   const hasAdminEntry = ready && canAny(...ADMIN_ENTRY_KEYS);
+  // Same page size as the dashboard so the shared read collapses both into one request.
+  // Keyed on pathname so the badge refreshes as you move around admin instead of being
+  // set once for the whole session (the layout never remounts).
   useEffect(() => {
     if (!ready || !can(P.KYC_SUBMISSION_READ)) return;
-    adminApi.kycQueue(0, 1).then((page) => setPendingKyc(page.totalElements)).catch(() => undefined);
-  }, [can, ready]);
+    adminApi.kycQueue(0, 5).then((page) => setPendingKyc(page.totalElements)).catch(() => undefined);
+  }, [can, ready, pathname]);
 
   const visibleGroups = useMemo(() => navGroups.map((group) => ({
     ...group,
