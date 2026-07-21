@@ -19,10 +19,13 @@ type ListingCardProps = {
 export function ListingCard({ listing, priority = false, hideFavorite = false, compact = false, actions }: ListingCardProps) {
   const href = `/listing/${listing.id}`;
   const image = assetUrl(listing.coverImage);
+  // The ambient glow is a 28px-blurred backdrop, so a 64px source is visually identical
+  // to the full-size original it used to download a second time per card.
+  const ambient = image ? `/_next/image?url=${encodeURIComponent(image)}&w=64&q=50` : null;
   const type = listing.type === "PRODUCT" ? "Product" : "Service";
   return (
     <article className={compact ? `${styles.card} ${styles.compact}` : styles.card}>
-      {image && <span className="listing-card__ambient" style={{ backgroundImage: `url("${image}")` }} aria-hidden="true" />}
+      {ambient && <span className="listing-card__ambient" style={{ backgroundImage: `url("${ambient}")` }} aria-hidden="true" />}
       <Link className="listing-card__image" href={href} aria-label={`View ${listing.title}`}>
         {image ? <Image src={image} alt={listing.title} fill sizes="(max-width: 700px) 100vw, (max-width: 1024px) 50vw, 33vw" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} /> : <span className="listing-card__placeholder">No photo yet</span>}
         <span className={`type-chip type-chip--${type.toLowerCase()}`}>{type}</span>

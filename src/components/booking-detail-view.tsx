@@ -483,7 +483,7 @@ export function BookingDetailView({ bookingId }: { bookingId: string }) {
             <Link className="listing-peek" href={`/listing/${booking.listingId}`}>
               <span className="listing-peek__image">
                 {coverImage ? (
-                  <Image src={coverImage} alt="" fill sizes="72px" unoptimized />
+                  <Image src={coverImage} alt="" fill sizes="72px" />
                 ) : (
                   <ImageIcon size={18} aria-hidden="true" />
                 )}
@@ -637,7 +637,6 @@ function ConditionCapture({
                 width={960}
                 height={720}
                 sizes="(max-width: 959px) calc(100vw - 68px), 600px"
-                unoptimized
                 style={{
                   display: "block",
                   height: "auto",

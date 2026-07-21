@@ -50,7 +50,7 @@ export default function FavoritesPage() {
           )}
           {ready && user && listings.length > 0 && (
             <div className="listing-grid">
-              {listings.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+              {listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 4} />)}
             </div>
           )}
         </div>
