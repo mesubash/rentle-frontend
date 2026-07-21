@@ -41,9 +41,11 @@ export const adminApi = {
   approveKyc: (userId: UUID) => apiRequest<Kyc>(`/admin/users/${userId}/verify`, { method: "PUT" }),
   rejectKyc: (userId: UUID, reason: string) =>
     apiRequest<Kyc>(`/admin/users/${userId}/reject-kyc`, { method: "PUT", body: { reason } }),
-  bookings: (page = 0, size = 100) => apiRequest<PageResponse<Booking>>("/admin/bookings", { query: { page, size } }),
+  bookings: (params: { q?: string; status?: string; type?: string; page?: number; size?: number } = {}) =>
+    apiRequest<PageResponse<Booking>>("/admin/bookings", { query: { page: 0, size: 25, ...params } }),
   booking: (id: UUID) => apiRequest<Booking>(`/admin/bookings/${id}`),
-  listings: (page = 0, size = 100) => apiRequest<PageResponse<ListingSummary>>("/admin/listings", { query: { page, size } }),
+  listings: (params: { q?: string; status?: string; type?: string; page?: number; size?: number } = {}) =>
+    apiRequest<PageResponse<ListingSummary>>("/admin/listings", { query: { page: 0, size: 25, ...params } }),
   deactivateListing: (id: UUID, reason: string) =>
     apiRequest<ListingSummary>(`/admin/listings/${id}/deactivate`, {
       method: "PUT",

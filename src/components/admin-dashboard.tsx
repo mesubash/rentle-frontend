@@ -138,7 +138,7 @@ export function AdminDashboard() {
       }
 
       if (can(P.LISTING_LISTING_READ)) {
-        jobs.push(adminApi.listings(0, 5).then((page) => {
+        jobs.push(adminApi.listings({ page: 0, size: 5 }).then((page) => {
           if (!active) return;
           setStats((current) => ({ ...current, listings: page.totalElements }));
           setListings(page.content);
@@ -146,7 +146,7 @@ export function AdminDashboard() {
       }
 
       if (can(P.BOOKING_BOOKING_READ)) {
-        jobs.push(adminApi.bookings(0, 5).then((page) => {
+        jobs.push(adminApi.bookings({ page: 0, size: 5 }).then((page) => {
           if (!active) return;
           setStats((current) => ({ ...current, bookings: page.totalElements }));
           setBookings(page.content);

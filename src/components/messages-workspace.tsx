@@ -6,13 +6,13 @@ import { ArrowLeft, CalendarDays, CheckCheck, CircleHelp, Info, Send, ShieldChec
 import { useAuth } from "./auth-provider";
 import { useOrg } from "./org-provider";
 import { useToast } from "./toast-provider";
-import { bookingsApi, type Booking } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
-import { messagesApi, type Message } from "@/lib/api/messages";
+import { bookingsApi } from "@/lib/api/bookings";
+import { messagesApi, type Message, type MessageThreadSummary } from "@/lib/api/messages";
 import { humanize, initials } from "@/lib/format";
 
 const messageable = new Set(["REQUESTED", "APPROVED", "DEPOSIT_PENDING", "ACTIVE", "COMPLETED", "CANCELLED"]);
-type BookingThread = Booking & { lastMessageAt: string | null; unreadCount: number };
+type BookingThread = MessageThreadSummary & { id: string };
 
 export function MessagesWorkspace({ activeId }: { activeId?: string }) {
   const { user } = useAuth();
@@ -27,29 +27,42 @@ export function MessagesWorkspace({ activeId }: { activeId?: string }) {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    // The thread summary now carries the listing title, both party names and the status, so
+    // the personal inbox no longer fetches every booking the user participates in just to
+    // look those up.
+    //
+    // Org context still needs the booking list: the summary query matches on renter or
+    // listing owner, so bookings on org listings owned by a different member would not
+    // appear otherwise. Only paid when an org is actually selected.
     Promise.all([
-      bookingsApi.asRenter(0, 50),
-      bookingsApi.asOwner(0, 50, activeOrgId ?? undefined),
       messagesApi.threads(),
+      activeOrgId ? bookingsApi.asOwner(0, 50, activeOrgId) : Promise.resolve(null),
     ])
-      .then(([renter, owner, summaries]) => {
-        const unique = new Map(
-          [...renter.content, ...owner.content]
-            .filter((booking) => messageable.has(booking.status))
-            .map((booking) => [booking.id, booking]),
-        );
-        const summaryByBooking = new Map(
-          summaries.map((summary) => [summary.bookingId, summary]),
-        );
-        const merged = [...unique.values()].map((booking): BookingThread => {
-          const summary = summaryByBooking.get(booking.id);
-          return {
-            ...booking,
-            lastMessageAt: summary?.lastMessageAt ?? null,
-            unreadCount: Math.max(0, summary?.unreadCount ?? 0),
-          };
-        });
-        setThreads(merged.sort((a, b) => {
+      .then(([summaries, orgBookings]) => {
+        const byBooking = new Map(summaries.map((summary) => [summary.bookingId, summary]));
+
+        for (const booking of orgBookings?.content ?? []) {
+          if (byBooking.has(booking.id)) continue;
+          byBooking.set(booking.id, {
+            bookingId: booking.id,
+            lastMessageAt: "",
+            unreadCount: 0,
+            listingTitle: booking.listingTitle,
+            ownerId: booking.ownerId,
+            ownerName: booking.ownerName,
+            renterName: booking.renterName,
+            status: booking.status,
+          });
+        }
+
+        const rows = [...byBooking.values()]
+          .filter((summary) => messageable.has(summary.status))
+          .map((summary): BookingThread => ({
+            ...summary,
+            id: summary.bookingId,
+            unreadCount: Math.max(0, summary.unreadCount ?? 0),
+          }));
+        setThreads(rows.sort((a, b) => {
           if (!a.lastMessageAt) return b.lastMessageAt ? 1 : 0;
           if (!b.lastMessageAt) return -1;
           return b.lastMessageAt.localeCompare(a.lastMessageAt);
